@@ -1,0 +1,74 @@
+/* Custom Switch Styles for Bootstrap 4 */
+.form-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-switch input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch-slider {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    background-color: #ccc;
+    border-radius: 24px;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+}
+
+.switch-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: white;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.form-switch input:checked + .switch-slider {
+    background-color: #28a745; /* أخضر Bootstrap */
+}
+
+.form-switch input:checked + .switch-slider::before {
+    transform: translateX(26px);
+}
+
+.form-switch input:disabled + .switch-slider {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.form-switch .switch-label {
+    cursor: pointer;
+    margin-left: 8px;
+    font-weight: 500;
+    user-select: none;
+}
+
+/* حالة التركيز */
+.form-switch input:focus + .switch-slider {
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+}
+
+/* اللون الأحمر للحالة غير المفعلة */
+.form-switch input:not(:checked) + .switch-slider {
+    background-color: #dc3545; /* أحمر Bootstrap */
+}
+
+/* تأثير الحركة المحسن */
+.switch-slider,
+.switch-slider::before {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

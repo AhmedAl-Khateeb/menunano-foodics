@@ -1,0 +1,177 @@
+// USERS
+Table users {
+  id integer [pk, increment]
+  email string [unique, not null]
+  password string [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// EMPLOYEES
+Table employees {
+  id integer [pk, increment]
+  user_id integer [not null, ref: > users.id]
+  branch_id integer [not null]
+  job_type varchar [not null] // cashier, waiter, manager
+  status enum('active', 'suspended') [default: 'active']
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ROLES
+Table roles {
+  id integer [pk, increment]
+  name varchar [not null]      // admin, supervisor
+  created_at timestamp
+  updated_at timestamp
+}
+
+// PERMISSIONS
+Table permissions {
+  id integer [pk, increment]
+  key varchar [not null]       // close_shift, manage_menu, view_reports
+  name varchar [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table permission_role {
+  id integer [pk, increment]
+  permission_id int [not null, ref: > permissions.id]
+  role_id int [not null, ref: > roles.id]
+}
+
+Table role_user {
+  id integer [pk, increment]
+  user_id int [not null, ref: > users.id]
+  role_id int [not null, ref: > roles.id]
+}
+
+// SHIFTS
+Table shifts {
+  id integer [pk, increment]
+  employee_id int [not null, ref: > employees.id]
+  start_time timestamp [not null]
+  end_time timestamp [null]
+  status enum('open', 'closed') [default: 'open']
+  created_at timestamp
+  updated_at timestamp
+}
+
+// CATEGORIES & PRODUCTS
+Table categories {
+  id integer [pk, increment]
+  name string [not null]
+  cover string [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table products {
+  id integer [pk, increment]
+  name string [not null]
+  description text [null]
+  cover string [not null]
+  category_id integer [not null, ref: > categories.id]
+  sale_price decimal [not null]  // ثابت
+  type varchar [default: 'item']  // item, ingredient, combo
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ORDERS
+Table orders {
+  id integer [pk, increment]
+  name string [not null]
+  phone string [not null]
+  address string [null]
+  total_price float [default: 0]
+  status enum('served', 'pending') [default: 'pending']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table order_products {
+  id integer [pk, increment]
+  order_id integer [not null, ref: > orders.id]
+  product_id integer [not null, ref: > products.id]
+  price decimal [not null]
+  quantity integer [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// RECIPES (منتجات مركبة)
+Table recipes {
+  id integer [pk, increment]
+  product_id integer [not null, ref: > products.id] // sellable item
+}
+
+Table recipe_items {
+  id integer [pk, increment]
+  recipe_id integer [not null, ref: > recipes.id]
+  ingredient_id integer [not null, ref: > products.id]
+  quantity decimal [not null]
+  unit varchar [not null] // g, ml, pcs
+}
+
+// INVENTORIES
+Table inventories {
+  id integer [pk, increment]
+  product_id integer [not null, ref: > products.id] // only ingredients
+  branch_id integer [not null]
+  quantity decimal [default: 0]
+}
+
+// SUPPLIERS
+Table suppliers {
+  id integer [pk, increment]
+  name string [not null]
+  email string [null]
+  phone string [null]
+  address text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table supplier_products {
+  id integer [pk, increment]
+  supplier_id integer [not null, ref: > suppliers.id]
+  product_id integer [not null, ref: > products.id] // ingredient
+  cost_price decimal [not null]
+  lead_time int [default: 0] // days
+}
+
+// SETTINGS / BUSINESS
+Table settings {
+  id integer [pk, increment]
+  key string [not null]
+  value text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table business_settings {
+  id integer [pk, increment]
+  key string [unique, not null]
+  value text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// RELATIONS
+Ref: employees.user_id > users.id
+Ref: permission_role.permission_id > permissions.id
+Ref: permission_role.role_id > roles.id
+Ref: role_user.user_id > users.id
+Ref: role_user.role_id > roles.id
+Ref: shifts.employee_id > employees.id
+Ref: products.category_id > categories.id
+Ref: order_products.order_id > orders.id
+Ref: order_products.product_id > products.id
+Ref: recipes.product_id > products.id
+Ref: recipe_items.recipe_id > recipes.id
+Ref: recipe_items.ingredient_id > products.id
+Ref: inventories.product_id > products.id
+Ref: supplier_products.supplier_id > suppliers.id
+Ref: supplier_products.product_id > products.id

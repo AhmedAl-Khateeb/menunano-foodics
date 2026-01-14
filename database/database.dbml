@@ -1,0 +1,92 @@
+Table users {
+  id integer [primary key, increment]
+  email string [unique, not null]
+  password string [not null]
+  two_factor_secret text [null]
+  two_factor_recovery_codes text [null]
+  two_factor_confirmed_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table categories {
+  id integer [primary key, increment]
+  name string [not null]
+  cover string [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table products {
+  id integer [primary key, increment]
+  name string [not null]
+  description text [null]
+  cover string [not null]
+  category_id integer [not null, ref: > categories.id]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table orders {
+  id integer [primary key, increment]
+  name string [not null]
+  phone string [not null]
+  address string [null]
+  total_price float [default: 0]
+  status enum('served', 'pending') [default: 'pending']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table settings {
+  id integer [primary key, increment]
+  key string [not null]
+  value text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table socials {
+  id integer [primary key, increment]
+  name string [not null]
+  url string [not null]
+  icon string [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table sliders {
+  id integer [primary key, increment]
+  title string [null]
+  description string [null]
+  image string [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table product_sizes {
+  id integer [primary key, increment]
+  size string [not null]
+  price float [not null]
+  product_id integer [not null, ref: > products.id]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table order_product_sizes {
+  id integer [primary key, increment]
+  order_id integer [not null, ref: > orders.id]
+  product_size_id integer [not null, ref: > product_sizes.id]
+  price float [not null]
+  quantity integer [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table business_settings {
+  id integer [primary key, increment]
+  key string [unique, not null]
+  value text [null]
+  created_at timestamp
+  updated_at timestamp
+}

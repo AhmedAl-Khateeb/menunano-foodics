@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Category extends Model
+{
+    protected $fillable = ['name', 'cover','user_id'];
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function user()
+{
+    return $this->belongsTo(User::class, 'user_id');
+}
+
+    public function getCoverUrlAttribute()
+    {
+        return env('APP_IMAGES_URL').$this->cover;
+    }
+}
