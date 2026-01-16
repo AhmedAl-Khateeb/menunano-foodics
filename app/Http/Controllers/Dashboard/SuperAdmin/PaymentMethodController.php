@@ -10,7 +10,15 @@ class PaymentMethodController extends Controller
 {
     public function index()
     {
-        $methods = PaymentMethod::orderByDesc('id')->paginate(15);
+        $query = PaymentMethod::query();
+
+        if (auth()->user()->role === 'super_admin') {
+            $query->whereNull('created_by');
+        } else {
+            $query->where('created_by', auth()->id());
+        }
+
+        $methods = $query->orderByDesc('id')->paginate(15);
         return view('super_admin.payment_methods.index', compact('methods'));
     }
 
@@ -33,6 +41,7 @@ class PaymentMethodController extends Controller
             'description' => $request->description,
             'phone'       => $request->phone,
             'is_active'   => $request->has('is_active') ? 1 : 0,
+            'created_by'  => auth()->user()->role === 'super_admin' ? null : auth()->id(),
         ]);
 
         return redirect()->route('payment-methods.index')->with('success', 'تمت إضافة وسيلة الدفع بنجاح');

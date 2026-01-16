@@ -23,8 +23,10 @@ class ProductController extends Controller
         $user = $this->getUserByStoreName($storeName);
 
         // نفلتر المنتجات الخاصة بالمستخدم ده فقط
-        $products = Product::with('category', 'sizes')
+        $products = Product::query()
             ->where('user_id', $user->id)
+            ->whereHas('category')
+            ->with('category', 'sizes')
             ->get();
 
         return ApiResponse::success(ProductResource::collection($products));
@@ -55,17 +57,17 @@ class ProductController extends Controller
      * Display the specified resource.
      */
     public function show($storeName, string $id)
-{
-    // نجيب المستخدم
-    $user = $this->getUserByStoreName($storeName);
+    {
+        // نجيب المستخدم
+        $user = $this->getUserByStoreName($storeName);
 
-    // نجيب المنتج بشرط يكون مملوك للمستخدم ده
-    $product = Product::with('category', 'sizes')
-        ->where('user_id', $user->id)
-        ->findOrFail($id);
+        // نجيب المنتج بشرط يكون مملوك للمستخدم ده
+        $product = Product::with('category', 'sizes')
+            ->where('user_id', $user->id)
+            ->findOrFail($id);
 
-    return ApiResponse::success(new ProductResource($product));
-}
+        return ApiResponse::success(new ProductResource($product));
+    }
 
     /**
      * Update the specified resource in storage.
@@ -74,10 +76,12 @@ class ProductController extends Controller
     {
         $product = DB::transaction(function () use ($request, $id) {
             $product = Product::findOrFail($id);
-            $product->update($request->only([
-                'name',
-                'description',
-                'category_id'])
+            $product->update(
+                $request->only([
+                    'name',
+                    'description',
+                    'category_id'
+                ])
             );
 
             if ($request->hasFile('cover')) {

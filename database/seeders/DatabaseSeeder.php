@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            PermissionSeeder::class,
             //CategorySeeder::class,
             SliderSeeder::class,
             SettingSeeder::class,
@@ -29,6 +30,5 @@ class DatabaseSeeder extends Seeder
             // ProductSizeSeeder::class,
             // OrderSeeder::class,
         ]);
-
     }
 }

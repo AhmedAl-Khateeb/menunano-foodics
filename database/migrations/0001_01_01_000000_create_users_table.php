@@ -15,6 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('email')->unique();
             $table->string('password');
+            $table->string('phone')->nullable();
+            $table->string('store_name')->nullable();
+            $table->string('image')->nullable();
+            $table->boolean('status')->default(1);
+            $table->date('subscription_start')->nullable();
+            $table->date('subscription_end')->nullable();
+            $table->foreignId('package_id')->nullable(); // Assuming unsignedBigInteger for ID
+            $table->string('role')->default('user');
             $table->timestamps();
         });
 
