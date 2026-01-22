@@ -15,9 +15,9 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::filter()
-        ->where('user_id', auth()->id())
-        ->latest()
-        ->get();
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->paginate(15);
         return view('orders.index', compact('orders'));
     }
 
@@ -31,7 +31,7 @@ class OrderController extends Controller
             }
             return view('orders.show', compact('order'));
         } catch (\Exception $exception) {
-            Alert::toast('order not found','error');
+            Alert::toast('order not found', 'error');
             return redirect()->back();
         }
     }
@@ -48,22 +48,22 @@ class OrderController extends Controller
             Alert::success('success');
             return redirect()->route('orders.index');
         } catch (\Exception $exception) {
-            Alert::toast('order not found','error');
+            Alert::toast('order not found', 'error');
             return redirect()->back();
         }
     }
 
-//    public function destroy(Order $order)
-//    {
-//        try {
-//            $order->delete();
-//            ApiResponse::deleted();
-//            Alert::success('success', 'slider deleted successfully');
-//            return redirect()->route('sliders.index');
-//        } catch (\Exception $exception) {
-//            Alert::toast('slider not deleted','error');
-//            return redirect()->back();
-//        }
-//    }
+    //    public function destroy(Order $order)
+    //    {
+    //        try {
+    //            $order->delete();
+    //            ApiResponse::deleted();
+    //            Alert::success('success', 'slider deleted successfully');
+    //            return redirect()->route('sliders.index');
+    //        } catch (\Exception $exception) {
+    //            Alert::toast('slider not deleted','error');
+    //            return redirect()->back();
+    //        }
+    //    }
 
 }

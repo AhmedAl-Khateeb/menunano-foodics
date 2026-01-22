@@ -17,15 +17,15 @@ class SettingController extends Controller
         $user = $this->getUserByStoreName($storeName);
 
         $settings = Setting::select('key', 'value')
-        ->where('user_id', $user->id)
-        ->get()
-        ->map(function ($setting) {
-            // إذا القيمة صورة نخليها لينك كامل
-            if ($setting->value && str_contains($setting->value, 'images/setting/')) {
-                $setting->value = asset('storage/app/public/' . $setting->value);
-            }
-            return $setting;
-        });
+            ->where('user_id', $user->id)
+            ->get()
+            ->map(function ($setting) {
+                // إذا القيمة صورة نخليها لينك كامل
+                if ($setting->value && str_contains($setting->value, 'images/setting/')) {
+                    $setting->value = asset('storage/app/public/' . $setting->value);
+                }
+                return $setting;
+            });
 
         return ApiResponse::success($settings);
     }
@@ -42,37 +42,43 @@ class SettingController extends Controller
         return ApiResponse::success([$setting => $value]);
     }
     public function getAdminImages()
-{
-    $images = User::where('role', 'admin')
-        ->whereNotNull('image')
-        ->pluck('image')
-        ->map(function ($image) {
-            return asset('storage/app/public/' . $image);
-        });;
+    {
+        $admins = User::where('role', 'admin')
+            ->where('status', 1)
+            // ->whereNotNull('image')
+            ->get(['image', 'store_name', 'name'])
+            ->map(function ($admin) {
+                return [
+                    'image' => asset('storage/app/public/' . $admin->image),
+                    'store_name' => $admin->store_name,
+                    'name' => $admin->name ?: $admin->store_name,
+                ];
+            });
 
-    return response()->json([
-        'status' => true,
-        'images' => $images,
-    ]);
-}
-public function getAdminStatus(Request $request): JsonResponse
-{
-    $request->validate([
-        'store_name' => 'required|string|exists:users,store_name'
-    ]);
+        // dd($admins);
 
-    $admin = User::where('store_name', $request->store_name)
-        ->where('role', 'admin')
-        ->first();
+        return response()->json([
+            'status' => true,
+            'images' => $admins,
+        ]);
+    }
+    public function getAdminStatus(Request $request): JsonResponse
+    {
+        $request->validate([
+            'store_name' => 'required|string|exists:users,store_name'
+        ]);
 
-    return response()->json([
-        'success' => true,
-        'message' => 'تم جلب حالة الأدمن بنجاح',
-        'data' => [
-            'store_name' => $admin->store_name,
-            'status' => $admin->status,
-        ]
-    ]);
-}
+        $admin = User::where('store_name', $request->store_name)
+            ->where('role', 'admin')
+            ->first();
 
+        return response()->json([
+            'success' => true,
+            'message' => 'تم جلب حالة الأدمن بنجاح',
+            'data' => [
+                'store_name' => $admin->store_name,
+                'status' => $admin->status,
+            ]
+        ]);
+    }
 }

@@ -13,7 +13,27 @@ use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\TermController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SectionController;
+use App\Http\Controllers\CustomerAuthController;
+use App\Http\Controllers\CartController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
+
+// cron job
+Route::get('cron', function () {
+    $efected = User::query()
+        ->where('role', 'admin')
+        ->where('status', 1)
+        ->where('subscription_start', '<', now())
+        ->where('subscription_end', '<=', now())
+        ->update([
+            'status' => 0,
+        ]);
+
+    return response()->json([
+        'message' => 'cron job done',
+        'efected' => $efected,
+    ]);
+});
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
@@ -56,10 +76,18 @@ Route::prefix('{storeName}')->group(function () {
     Route::get('sliders', [SliderController::class, 'index']);
     Route::get('sliders/{slider}', [SliderController::class, 'show']);
 
-    Route::post('order/make', [OrderController::class, 'store']);
+    // Customer Authentication
+    Route::post('customer/login', [CustomerAuthController::class, 'login']);
+
+    Route::get('payment-methods', [PaymentMethodController::class, 'storeMethods']);
+
+    // Cart and Order Management (requires customer authentication)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('cart', [CartController::class, 'index']);
+        Route::post('cart/add', [CartController::class, 'add']);
+        Route::put('cart/update/{id}', [CartController::class, 'update']);
+        Route::delete('cart/remove/{id}', [CartController::class, 'destroy']);
+        Route::delete('cart/clear', [CartController::class, 'clear']);
+        Route::post('order/make', [OrderController::class, 'store']);
+    });
 });
-
-
-
-
-

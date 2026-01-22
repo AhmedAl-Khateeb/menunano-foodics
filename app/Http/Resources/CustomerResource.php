@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class OrderResource extends JsonResource
+class CustomerResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -18,12 +18,7 @@ class OrderResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'phone' => $this->phone,
-            'address' => $this->address,
-            'total_price' => $this->total_price,
-            'payment_method' => $this->payment_method,
-            'payment_proof' => $this->payment_proof ? asset('storage/' . $this->payment_proof) : null,
-            'status' => $this->status,
-            'created_at' => $this->created_at->diffForHumans()
+            'created_at' => $this->created_at?->toDateTimeString(),
         ];
     }
 }

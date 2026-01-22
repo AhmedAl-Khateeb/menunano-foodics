@@ -11,10 +11,18 @@ class Order extends Model
         'name',
         'phone',
         'user_id',
+        'customer_id',
         'address',
         'total_price',
+        'payment_method',
+        'payment_proof',
         'status',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 
     public function items()
     {
@@ -35,8 +43,8 @@ class Order extends Model
     public function scopeFilter(Builder $builder)
     {
         $status = request()->query('status') ?? null;
-        $builder->when($status,function ($builder,$value){
-            $builder->where('status',$value);
+        $builder->when($status, function ($builder, $value) {
+            $builder->where('status', $value);
         });
     }
 }

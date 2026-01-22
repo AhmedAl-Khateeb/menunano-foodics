@@ -10,7 +10,7 @@ class FileHandlerLogic
      * @param $file
      * @return string
      */
-   public function storeFile($file, $path = 'images', $extension = null, $name = null)
+    public function storeFile($file, $path = 'images', $extension = null, $name = null)
     {
         try {
             $newName = ($name ?? time()) . "." . ($extension ?? $file->getClientOriginalExtension());
@@ -45,7 +45,7 @@ class FileHandlerLogic
      * @param string $name
      * @return bool
      */
-     public function deleteFile(string $name)
+    public function deleteFile(string $name)
     {
         try {
             // نتأكد نحول storage/ إلى public/ قبل الحذف
@@ -55,6 +55,4 @@ class FileHandlerLogic
             throw new \Exception($e->getMessage());
         }
     }
-
-
 }

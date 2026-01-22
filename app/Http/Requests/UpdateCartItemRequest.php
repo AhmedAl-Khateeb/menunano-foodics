@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class OrderStoreRequest extends FormRequest
+class UpdateCartItemRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,9 +22,18 @@ class OrderStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'address' => 'required|string|max:500',
-            'payment_method' => 'required|string',
-            'payment_proof' => 'nullable|image|max:2048', // Max 2MB if image
+            'quantity' => 'required|integer|min:1',
+        ];
+    }
+
+    /**
+     * Get custom error messages for validation rules.
+     */
+    public function messages(): array
+    {
+        return [
+            'quantity.required' => 'Quantity is required',
+            'quantity.min' => 'Quantity must be at least 1',
         ];
     }
 }

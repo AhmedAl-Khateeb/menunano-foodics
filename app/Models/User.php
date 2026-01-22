@@ -158,6 +158,11 @@ class User extends Authenticatable
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
+    }
+
     public function setPhoneAttribute($value)
     {
         $this->attributes['phone'] = str_starts_with($value, '+2')

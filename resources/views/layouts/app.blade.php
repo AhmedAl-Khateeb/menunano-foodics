@@ -9,661 +9,392 @@
     <!-- Google Font: Tajawal -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap">
     <!-- Font Awesome -->
-    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-u0y+9j5xFjP3Lo4bix5Kz8N0Oz8LQsvrwb0zWn3ENBN6heOyD0u5D4b4OZlKmwReXfwD3D7jzRj2PdvX2cC2Ww==" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <!-- Bootstrap 4 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    <!-- AdminLTE CSS -->
+    <!-- AdminLTE CSS (Only for components, Sidebar overridden) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
     <!-- Custom switch form -->
     <link rel="stylesheet" href="{{ asset('css/custom-switch.css') }}">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            corePlugins: {
+                preflight: false,
+            },
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#007bff',
+                        secondary: '#6c757d',
+                        dark: '#343a40',
+                        sidebar: {
+                            DEFAULT: '#1e293b',
+                            dark: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
         body {
             font-family: 'Tajawal', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-
-        .sidebar-dark-primary {
-            background: linear-gradient(180deg, #1a252f 0%, #2c3b41 100%);
-            width: 250px;
-            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-            border-right: 3px solid #007bff;
-        }
-
-        .nav-link {
-            font-size: 1.1rem;
-            padding: 0.75rem 1.5rem;
-            transition: all 0.3s ease;
-            text-align: right;
-            white-space: normal;
-            border-radius: 8px;
-            margin: 2px 8px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-link::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: right 0.5s;
-        }
-
-        .nav-link:hover::before {
-            right: 100%;
-        }
-
-        .nav-link:hover {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            color: #fff !important;
-            transform: translateX(-5px);
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-        }
-
-        .nav-link.active {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            color: #fff !important;
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-        }
-
-        .nav-icon {
-            margin-left: 0.5rem;
-            margin-right: 0;
-            font-size: 1.2rem;
-            transition: transform 0.3s ease;
-        }
-
-        .nav-link:hover .nav-icon {
-            transform: scale(1.1);
-        }
-
-        .brand-link {
-            background: linear-gradient(135deg, #15202b, #1a252f);
-            border-bottom: 2px solid #007bff;
-            padding: 1rem 0;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .brand-text {
-            color: #fff !important;
-            font-size: 1.3rem;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .navbar-white {
-            background: linear-gradient(135deg, #ffffff, #f8f9fa);
-            border-bottom: 1px solid #dee2e6;
-            padding: 0.5rem 0 0.5rem 1rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-right: 0 !important;
-            margin-left: 0 !important;
-        }
-
-        .content-wrapper {
-            margin-right: 250px !important;
-            margin-left: 0 !important;
-            margin-top: 0 !important;
-            min-height: calc(100vh - 120px);
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 0 15px 0 0;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .main-footer {
-            background: linear-gradient(135deg, #ffffff, #f8f9fa);
-            border-top: 2px solid #007bff;
-            padding: 1rem;
-            text-align: center;
-            position: relative;
-            bottom: 0;
-            width: 100%;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .main-sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            left: auto;
-            height: 100%;
-            z-index: 1038;
-        }
-
-        .content-header {
-            padding: 1rem;
-            background: linear-gradient(135deg, #ffffff, #f8f9fa);
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        /* تحسين شريط التنقل العلوي */
-        .navbar-nav .nav-item .nav-link {
-            color: #495057 !important;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border-radius: 20px;
-            padding: 8px 16px;
-            margin: 0 4px;
-        }
-
-        .navbar-nav .nav-item .nav-link:hover {
-            background-color: #007bff;
-            color: #fff !important;
-            transform: translateY(-2px);
-        }
-
-        /* تحسين أيقونة الطلبات */
-        .navbar-nav .nav-item .nav-link i.fa-shopping-cart {
-            font-size: 1.2rem;
-            margin-left: 5px;
-        }
-
-        .badge-danger {
-            background: linear-gradient(45deg, #dc3545, #c82333);
-            border-radius: 50%;
-            padding: 4px 8px;
-            font-size: 0.75rem;
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
-        }
-
-        /* تحسين الأزرار */
-        .btn {
-            border-radius: 25px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 8px 20px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .text-danger {
-            background: linear-gradient(45deg, #dc3545, #c82333);
-            color: #fff !important;
-            border: none;
-        }
-
-        .text-danger:hover {
-            background: linear-gradient(45deg, #c82333, #a71e2a);
-        }
-
-        /* Badge للإشعارات */
-        .badge.bg-warning {
-            background: linear-gradient(45deg, #ffc107, #e0a800) !important;
-            color: #212529 !important;
-            border-radius: 12px;
-            padding: 4px 8px;
-            margin-right: 5px;
-            font-weight: bold;
-        }
-
-        /* تأثيرات التمرير */
-        .nav-pills .nav-link {
-            border-radius: 10px;
-        }
-
-        .nav-sidebar .nav-item {
-            margin-bottom: 3px;
-        }
-
-        /* تحسين الظلال والحدود */
-        .elevation-4 {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
-        }
-
-        /* تحسين التمرير السلس */
-        * {
-            scroll-behavior: smooth;
-        }
-
-        /* تأثير عند التحميل */
-        .nav-item {
-            animation: slideInRight 0.3s ease-out;
-        }
-
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-
-        /* إصلاح مشكلة العرض على الشاشات الصغيرة */
-        @media (max-width: 576px) {
-            .modal-dialog {
-                margin: 0.5rem;
-            }
-        }
-
-        /* تأخير الرسوم المتحركة للعناصر */
-        .nav-item:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .nav-item:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .nav-item:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-
-        .nav-item:nth-child(4) {
-            animation-delay: 0.4s;
-        }
-
-        .nav-item:nth-child(5) {
-            animation-delay: 0.5s;
-        }
-
-        .nav-item:nth-child(6) {
-            animation-delay: 0.6s;
-        }
-
-        .nav-item:nth-child(7) {
-            animation-delay: 0.7s;
-        }
-
-        .nav-item:nth-child(8) {
-            animation-delay: 0.8s;
-        }
-
-        /* إصلاح مشكلة أيقونة عربة التسوق */
-        .fa-shopping-cart::before {
-            content: "\f07a";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-        }
-
-        .nav.nav-pills.nav-sidebar.flex-column {
-            padding: 0 !important;
-        }
-
-        .main-header.navbar.navbar-expand.navbar-white.navbar-light {
-            /* Removed direction: ltr to support RTL */
-        }
-
-        /* Force RTL for all content */
-        body {
-            direction: rtl !important;
-            margin: 0 !important;
-        }
-
-        .wrapper {
-            margin: 0 !important;
-        }
-
-        .content-wrapper {
-            margin-right: 250px !important;
-            margin-left: 0 !important;
-            transition: margin-right .3s ease-in-out;
-            direction: rtl !important;
-        }
-
-        /* Ensure navbar items align properly in RTL */
-        .navbar-nav {
-            flex-direction: row;
-        }
-
-        /* Fix footer alignment */
-        .main-footer {
-            margin-right: 250px !important;
-            margin-left: 0 !important;
-            transition: margin-right .3s ease-in-out;
-        }
-
-        /* Make navbar full width but respect sidebar */
-        .main-header {
-            margin-right: 250px !important;
-            margin-left: 0 !important;
-            width: auto !important;
-            transition: margin-right .3s ease-in-out;
-            padding-top: 0.5rem !important;
-        }
-
-        /* Ensure all text is RTL */
-        * {
+            background-color: #f3f4f6;
+            margin: 0;
             direction: rtl;
         }
 
-        /* Keep specific elements LTR if needed */
-        input[type="email"],
-        input[type="url"],
-        code,
-        pre {
-            direction: ltr;
+        /* Custom Sidebar Styling */
+        #custom-sidebar {
+            transition: transform 0.3s ease-in-out;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
         }
 
-        /* Fix text visibility in sidebar */
-        .nav-sidebar .nav-link p {
-            display: inline-block;
-            margin: 0;
+        /* Nav Link Styling */
+        .nav-link-custom {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: #cbd5e1;
+            transition: all 0.2s;
+            border-radius: 0.5rem;
+            margin-bottom: 0.25rem;
+            text-decoration: none;
+            background: transparent;
+            /* Reset button background */
+            width: 100%;
+            /* Ensure buttons take full width */
+            border: none;
+            /* Reset button border */
+            outline: none;
+            cursor: pointer;
         }
 
-        /* Ensure sidebar text is visible */
-        .sidebar .nav-link {
-            color: #c2c7d0 !important;
+        .nav-link-custom:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            text-decoration: none;
+            transform: translateX(-2px);
         }
 
-        .sidebar .nav-treeview .nav-link:hover {
-            color: #fff !important;
-            background-color: rgba(255, 255, 255, 0.1);
+        .nav-link-custom.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        /* Remove hover from parent dropdown */
-        .sidebar .nav-item.menu-open>.nav-link {
-            background-color: transparent !important;
-            color: #c2c7d0 !important;
+        /* Content Wrapper Transition */
+        #content-wrapper {
+            transition: margin-right 0.3s ease-in-out;
         }
 
-
-
-        /* Fix collapsed sidebar */
-        .sidebar-collapse .main-sidebar {
-            margin-right: 0 !important;
-            /* width: 4.6rem !important;  removed to allow hover expand */
+        /* Mobile Overlay */
+        #mobile-overlay {
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
         }
 
-        .sidebar-collapse .content-wrapper,
-        .sidebar-collapse .main-footer,
-        .sidebar-collapse .main-header {
-            margin-right: 4.6rem !important;
+        /* Disable Tailwind Preflight reset for borders to keep Bootstrap happy */
+        *,
+        ::before,
+        ::after {
+            border-width: 0;
+            border-style: solid;
+            border-color: #e5e7eb;
+        }
+
+        /* Navbar Tweaks */
+        .main-header {
+            margin-right: 0;
+            /* Managed by JS/Tailwind now */
+            border-bottom: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
         }
     </style>
 </head>
 
-<body class="hold-transition sidebar-mini layout-fixed">
-    <div class="wrapper">
+<body class="bg-gray-100 overflow-x-hidden">
+
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"
+        onclick="toggleSidebar()"></div>
+
+    <!-- Main Sidebar -->
+    <aside id="custom-sidebar"
+        class="fixed top-0 right-0 h-screen w-64 bg-slate-900 border-l border-slate-700 z-50 transform translate-x-full lg:translate-x-0 overflow-y-auto">
+        <!-- Brand -->
+        <div
+            class="h-16 flex items-center justify-center border-b border-slate-700 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
+            <a href="{{ env('WEB_URL') }}"
+                class="flex items-center space-x-2 space-x-reverse text-white hover:text-blue-400 transition">
+                <i class="fas fa-store text-xl"></i>
+                <span
+                    class="font-bold text-lg mr-2">{{ \App\Models\Setting::where('user_id', auth()->id())->where('key', 'name')->value('value') ?? 'لوحة التحكم' }}</span>
+            </a>
+        </div>
+
+        <!-- Sidebar Menu -->
+        <nav class="p-4 space-y-1">
+            @if (auth()->user()->role === 'admin')
+                <a href="{{ route('dashboard') }}" class="nav-link-custom {{ Route::is('dashboard') ? 'active' : '' }}">
+                    <i class="fas fa-home w-6 text-center ml-2"></i>
+                    <span>الرئيسية</span>
+                </a>
+
+                <a href="{{ route('categories.index') }}"
+                    class="nav-link-custom {{ Route::is('categories.*') ? 'active' : '' }}">
+                    <i class="fas fa-layer-group w-6 text-center ml-2"></i>
+                    <span>الفئات</span>
+                </a>
+
+                <a href="{{ route('products.index') }}"
+                    class="nav-link-custom {{ Route::is('products.*') ? 'active' : '' }}">
+                    <i class="fas fa-utensils w-6 text-center ml-2"></i>
+                    <span>المنتجات</span>
+                </a>
+
+                <a href="{{ route('sliders.index') }}"
+                    class="nav-link-custom {{ Route::is('sliders.*') ? 'active' : '' }}">
+                    <i class="fas fa-images w-6 text-center ml-2"></i>
+                    <span>البانرات</span>
+                </a>
+
+                @if (
+                    (auth()->user()->role === 'super_admin' || auth()->user()->role === 'admin') &&
+                        !request()->is('admins*') &&
+                        !request()->is('super*'))
+                    <!-- Multi-level Dropdown for Persons -->
+                    <div x-data="{ open: {{ request('open') == 'persons' || Route::is('users.*') || Route::is('roles.*') ? 'true' : 'false' }} }">
+                        <button onclick="toggleSubmenu('persons-menu', this)"
+                            class="nav-link-custom w-full flex justify-between group">
+                            <div class="flex items-center">
+                                <i class="fas fa-users w-6 text-center ml-2"></i>
+                                <span>الأشخاص</span>
+                            </div>
+                            <i
+                                class="fas fa-chevron-left text-xs transition-transform transform group-[.open]:-rotate-90"></i>
+                        </button>
+                        <div id="persons-menu"
+                            class="hidden pr-6 space-y-1 mt-1 {{ request('open') == 'persons' || Route::is('users.*') || Route::is('roles.*') ? '!block' : '' }}">
+                            <a href="{{ route('users.index') }}"
+                                class="nav-link-custom text-sm {{ Route::is('users.index') ? 'active' : '' }}">
+                                <i class="far fa-circle text-[10px] ml-2"></i> المستخدمين
+                            </a>
+                            <a href="{{ route('roles.index') }}"
+                                class="nav-link-custom text-sm {{ Route::is('roles.*') ? 'active' : '' }}">
+                                <i class="far fa-circle text-[10px] ml-2"></i> الأدوار
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div x-data="{ open: {{ request('open') == 'payment' || Route::is('payment-methods.*') ? 'true' : 'false' }} }">
+                        <button onclick="toggleSubmenu('payment-menu', this)"
+                            class="nav-link-custom w-full flex justify-between group">
+                            <div class="flex items-center">
+                                <i class="fas fa-wallet w-6 text-center ml-2"></i>
+                                <span>الدفع</span>
+                            </div>
+                            <i class="fas fa-chevron-left text-xs transition-transform transform"></i>
+                        </button>
+                        <div id="payment-menu"
+                            class="hidden pr-6 space-y-1 mt-1 {{ request('open') == 'payment' || Route::is('payment-methods.*') ? '!block' : '' }}">
+                            <a href="{{ route('payment-methods.index') }}"
+                                class="nav-link-custom text-sm {{ Route::is('payment-methods.index') ? 'active' : '' }}">
+                                <i class="far fa-circle text-[10px] ml-2"></i> وسائل الدفع
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
+                <a href="{{ route('orders.index') }}"
+                    class="nav-link-custom {{ Route::is('orders.*') ? 'active' : '' }}">
+                    <i class="fas fa-shopping-cart w-6 text-center ml-2"></i>
+                    <span>الطلبات</span>
+                </a>
+
+                <a href="{{ route('settings.index') }}"
+                    class="nav-link-custom {{ Route::is('settings.*') ? 'active' : '' }}">
+                    <i class="fas fa-cog w-6 text-center ml-2"></i>
+                    <span>الإعدادات</span>
+                </a>
+            @endif
+
+            @if (auth()->check() && auth()->user()->role === 'super_admin')
+                <div class="pt-4 pb-2">
+                    <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">الإدارة العليا</p>
+                </div>
+
+                <a href="{{ route('business_settings.index') }}" class="nav-link-custom">
+                    <i class="fas fa-cogs w-6 text-center ml-2"></i> إعدادات النشاط
+                </a>
+                <a href="{{ route('admins.index') }}" class="nav-link-custom">
+                    <i class="fas fa-users w-6 text-center ml-2"></i> إدارة الإدمن
+                </a>
+                <a href="{{ route('terms.index') }}" class="nav-link-custom">
+                    <i class="fas fa-file-contract w-6 text-center ml-2"></i> الشروط والأحكام
+                </a>
+                <a href="{{ route('packages.index') }}" class="nav-link-custom">
+                    <i class="fas fa-box w-6 text-center ml-2"></i> إدارة الباقات
+                </a>
+                <a href="{{ route('payment-methods.index') }}" class="nav-link-custom">
+                    <i class="fas fa-credit-card w-6 text-center ml-2"></i> وسائل الدفع
+                </a>
+                <a href="{{ route('subscriptions.index') }}" class="nav-link-custom flex justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-invoice-dollar w-6 text-center ml-2"></i> إدارة الطلبات
+                    </div>
+                    @if ($pendingSubscriptionsCount > 0)
+                        <span
+                            class="bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">{{ $pendingSubscriptionsCount }}</span>
+                    @endif
+                </a>
+                <a href="{{ route('sections.index') }}" class="nav-link-custom">
+                    <i class="fas fa-list-alt w-6 text-center ml-2"></i> الأقسام
+                </a>
+            @endif
+        </nav>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div id="content-wrapper" class="min-h-screen bg-gray-50 lg:mr-64 transition-all duration-300">
+
         <!-- Navbar -->
-        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-
-
-            <!-- Right side - User menu and notifications -->
-            <ul class="navbar-nav" style="flex-direction: row;">
-                <!-- Pushmenu Button - Rightmost -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light sticky top-0 z-30 shadow-sm">
+            <!-- Hamburger Button -->
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i
-                            class="fas fa-bars"></i></a>
+                    <button class="p-2 rounded-md hover:bg-gray-100 focus:outline-none" onclick="toggleSidebar()">
+                        <i class="fas fa-bars text-gray-600 text-xl"></i>
+                    </button>
                 </li>
+            </ul>
 
-                <!-- User Menu - Second from right -->
-                <li class="nav-item dropdown" style="margin-left: 10px;">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-user-circle" style="font-size: 24px;"></i>
+            <!-- Left Navbar Items -->
+            <ul class="navbar-nav mr-auto flex items-center gap-2">
+                @if (auth()->user()->role === 'admin')
+                    <li class="nav-item relative">
+                        <a href="{{ route('orders.index') }}" class="p-2 text-gray-600 hover:text-blue-600 relative">
+                            <i class="fas fa-shopping-cart text-xl"></i>
+                            <span
+                                class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                {{ \App\Models\Order::where('status', 'pending')->where('user_id', auth()->id())->count() }}
+                            </span>
+                        </a>
+                    </li>
+                @endif
+
+                <!-- User Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle flex items-center gap-2" href="#" id="userDropdown"
+                        role="button" data-toggle="dropdown">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                            <i class="fas fa-user"></i>
+                        </div>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                    <div class="dropdown-menu dropdown-menu-left shadow-lg border-0 rounded-xl mt-2"
+                        aria-labelledby="userDropdown">
                         <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                             @csrf
                         </form>
-                        <a class="dropdown-item text-danger" href="#"
+                        <a class="dropdown-item text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2 px-4 py-2"
+                            href="#"
                             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                         </a>
                     </div>
                 </li>
-
-                <!-- Notifications Icon - Second -->
-                @if (auth()->user()->role === 'admin')
-                    <li class="nav-item dropdown" style="margin-left: 15px;">
-                        <a href="{{ route('orders.index') }}" class="nav-link"
-                            style="position: relative; display: inline-block; min-width: auto; max-width: 50px; text-align: center;">
-                            <span class="badge badge-danger"
-                                style="position: absolute; top: 5px; left: 0px; font-size: 10px; min-width: 18px; height: 18px; line-height: 18px; border-radius: 50%; padding: 0 5px; z-index: 1000; overflow: visible;">
-                                {{ \App\Models\Order::where('status', 'pending')->where('user_id', auth()->id())->count() }}
-                            </span>
-                            <i class="fas fa-shopping-cart" style="font-size: 20px;"></i>
-                        </a>
-                    </li>
-                @endif
             </ul>
         </nav>
-        <!-- /.navbar -->
 
-        <!-- Main Sidebar Container -->
-        <aside class="main-sidebar sidebar-dark-primary elevation-4">
-            <!-- Brand Logo -->
-            <a href="{{ env('WEB_URL') }}" class="brand-link text-center">
-                <span class="brand-text font-weight-light">
-                    <i class="fas fa-store"></i>
-                    <b>{{ \App\Models\Setting::where('user_id', auth()->id())->where('key', 'name')->value('value') }}</b>
-                </span>
-            </a>
-
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <nav class="mt-2">
-                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
-                        data-accordion="false">
-                        @if (auth()->user()->role === 'admin')
-                            <li class="nav-item">
-                                <a href="{{ route('dashboard') }}"
-                                    class="nav-link {{ Route::is('dashboard') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-home"></i>
-                                    <p>الرئيسية</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('categories.index') }}"
-                                    class="nav-link {{ Route::is('categories.*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-layer-group"></i>
-                                    <p>الفئات</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('products.index') }}"
-                                    class="nav-link {{ Route::is('products.*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-utensils"></i>
-                                    <p>المنتجات</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('sliders.index') }}"
-                                    class="nav-link {{ Route::is('sliders.*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-images"></i>
-                                    <p>البانرات</p>
-                                </a>
-                            </li>
-
-                            @if (
-                                (auth()->user()->role === 'super_admin' || auth()->user()->role === 'admin') &&
-                                    request()->is('admins*') == false &&
-                                    request()->is('super*') == false)
-                                <li
-                                    class="nav-item {{ request('open') == 'persons' || Route::is('users.*') || Route::is('roles.*') ? 'menu-open' : '' }}">
-                                    <a href="#" class="nav-link">
-                                        <i class="nav-icon fas fa-users"></i>
-                                        <p>
-                                            الأشخاص
-                                            <i class="fas fa-angle-left right"></i>
-                                        </p>
-                                    </a>
-                                    <ul class="nav nav-treeview">
-                                        <li class="nav-item">
-                                            <a href="{{ route('users.index') }}"
-                                                class="nav-link {{ Route::is('users.index') ? 'active' : '' }}">
-                                                <i class="far fa-circle nav-icon"></i>
-                                                <p>المستخدمين</p>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a href="{{ route('roles.index') }}"
-                                                class="nav-link {{ Route::is('roles.*') ? 'active' : '' }}">
-                                                <i class="far fa-circle nav-icon"></i>
-                                                <p>الأدوار</p>
-                                            </a>
-                                        </li>
-
-                                    </ul>
-                                </li>
-
-                                <li
-                                    class="nav-item {{ request('open') == 'payment' || Route::is('payment-methods.*') ? 'menu-open' : '' }}">
-                                    <a href="#" class="nav-link">
-                                        <i class="nav-icon fas fa-wallet"></i>
-                                        <p>
-                                            الدفع
-                                            <i class="fas fa-angle-left right"></i>
-                                        </p>
-                                    </a>
-                                    <ul class="nav nav-treeview">
-                                        <li class="nav-item">
-                                            <a href="{{ route('payment-methods.index') }}"
-                                                class="nav-link {{ Route::is('payment-methods.index') ? 'active' : '' }}">
-                                                <i class="far fa-circle nav-icon"></i>
-                                                <p>وسائل الدفع</p>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                            @endif
-                            <li class="nav-item">
-                                <a href="{{ route('orders.index') }}"
-                                    class="nav-link {{ Route::is('orders.*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-shopping-cart"></i>
-                                    <p>الطلبات</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('settings.index') }}"
-                                    class="nav-link {{ Route::is('settings.*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-cog"></i>
-                                    <p>الإعدادات</p>
-                                </a>
-                            </li>
-                        @endif
-
-                        @if (auth()->check() && auth()->user()->role === 'super_admin')
-                            <li class="nav-item">
-                                <a href="{{ route('business_settings.index') }}" class="nav-link">
-                                    <i class="nav-icon fas fa-cogs"></i>
-                                    <p>إعدادات النشاط</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admins.index') }}" class="nav-link">
-                                    <i class="nav-icon fas fa-users"></i>
-                                    <p>إدارة الإدمن</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('terms.index') }}" class="nav-link">
-                                    <i class="nav-icon fas fa-file-contract"></i>
-                                    <p>الشروط والأحكام</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('packages.index') }}" class="nav-link">
-                                    <i class="nav-icon fas fa-box"></i>
-                                    <p>إدارة الباقات</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('payment-methods.index') }}" class="nav-link">
-                                    <i class="nav-icon fas fa-credit-card"></i>
-                                    <p>وسائل الدفع</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('subscriptions.index') }}" class="nav-link">
-                                    <i class="nav-icon fas fa-file-invoice-dollar"></i>
-                                    <p>
-                                        إدارة الطلبات
-                                        @if ($pendingSubscriptionsCount > 0)
-                                            <span
-                                                class="badge bg-warning text-dark">{{ $pendingSubscriptionsCount }}</span>
-                                        @endif
-                                    </p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('sections.index') }}" class="nav-link">
-                                    <i class="nav-icon fas fa-list-alt"></i>
-                                    <p>الأقسام</p>
-                                </a>
-                            </li>
-                        @endif
-                    </ul>
-                </nav>
-            </div>
-        </aside>
-
-        <!-- Content Wrapper -->
-        <div class="content-wrapper">
-            <section class="content-header">
+        <!-- Page Content -->
+        <div class="p-4 sm:p-6 lg:p-8">
+            <section class="content-header mb-6">
                 <div class="container-fluid">
+                    <!-- Breadcrumbs can go here -->
                 </div>
             </section>
-            <section class="content">
-                @yield('main-content')
-            </section>
+
+            @yield('main-content')
         </div>
 
         <!-- Footer -->
-        <footer class="main-footer">
+        <footer class="bg-white border-t border-gray-200 p-4 text-center text-sm text-gray-600">
             <strong>
-                <i class="fas fa-heart text-danger"></i>
+                <i class="fas fa-heart text-red-500 mx-1"></i>
                 لوحة التحكم &copy; {{ date('Y') }}
-                <i class="fas fa-code text-primary"></i>
+                <i class="fas fa-code text-blue-500 mx-1"></i>
             </strong>
         </footer>
-
-        <!-- Control Sidebar -->
-        <aside class="control-sidebar control-sidebar-dark"></aside>
     </div>
 
-    <!-- jQuery -->
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap 4 JS -->
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
-    <!-- AdminLTE JS -->
+    <!-- AdminLTE JS (Optional components only) -->
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/resumablejs@1.1.0/resumable.min.js"></script>
 
     @include('sweetalert::alert', ['cdn' => 'https://cdn.jsdelivr.net/npm/sweetalert2@9'])
 
-    @php
-        $role = auth()->user()->role;
-        $redirectUrl = $role === 'super_admin' ? route('admins.index') : route('dashboard');
-    @endphp
-
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Redirect based on user role after login
-            if (window.location.pathname === '/login' || window.location.pathname === '/') {
-                window.location.href = '{{ $redirectUrl }}';
-            }
+        function toggleSidebar() {
+            const sidebar = document.getElementById('custom-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            const wrapper = document.getElementById('content-wrapper');
 
-            // إضافة تأثير للروابط النشطة
-            const navLinks = document.querySelectorAll('.nav-sidebar .nav-link');
-            navLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    // إزالة الفئة النشطة من جميع الروابط
-                    navLinks.forEach(l => l.classList.remove('active'));
-                    // إضافة الفئة النشطة للرابط الحالي
-                    this.classList.add('active');
-                });
-            });
-        });
+            // Check if mobile (default translate-x-full on mobile means hidden)
+            const isMobile = window.innerWidth < 1024;
+
+            if (isMobile) {
+                if (sidebar.classList.contains('translate-x-full')) {
+                    // Open Sidebar
+                    sidebar.classList.remove('translate-x-full');
+                    overlay.classList.remove('hidden');
+                } else {
+                    // Close Sidebar
+                    sidebar.classList.add('translate-x-full');
+                    overlay.classList.add('hidden');
+                }
+            } else {
+                // Desktop Toggle (Collapse)
+                if (sidebar.classList.contains('lg:translate-x-0')) {
+                    // Collapse
+                    sidebar.classList.remove('lg:translate-x-0');
+                    sidebar.classList.add('lg:translate-x-full'); // Hide off-screen right
+                    wrapper.classList.remove('lg:mr-64'); // Remove margin
+                } else {
+                    // Expand
+                    sidebar.classList.remove('lg:translate-x-full');
+                    sidebar.classList.add('lg:translate-x-0');
+                    wrapper.classList.add('lg:mr-64'); // Restore margin
+                }
+            }
+        }
+
+        function toggleSubmenu(id, btn) {
+            const menu = document.getElementById(id);
+            const icon = btn.querySelector('.fa-chevron-left');
+
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                btn.classList.add('open');
+                if (icon) icon.style.transform = 'rotate(-90deg)';
+            } else {
+                menu.classList.add('hidden');
+                btn.classList.remove('open');
+                if (icon) icon.style.transform = 'rotate(0deg)';
+            }
+        }
     </script>
 </body>
 
