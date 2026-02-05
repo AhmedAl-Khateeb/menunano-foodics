@@ -24,7 +24,9 @@ class ProductController extends Controller
         ->get();
         $products = Product::with('category')
         ->where('user_id', Auth::id())
-        ->categoryFilter()
+        ->when(request('category_id'), function ($q) {
+            $q->where('category_id', request('category_id'));
+        })
         ->paginate();
         return view('products.index', compact('products', 'categories'));
     }
@@ -36,13 +38,14 @@ class ProductController extends Controller
     {
 
         try {
-            $data = $request->only(['name', 'description', 'category_id','price']);
+            $data = $request->only(['name', 'description', 'price']);
             if ($request->hasFile('cover')) {
                 // نخزنها في مجلد products داخل public
                 $data['cover'] = $request->file('cover')->store('products', 'public');
             }
             $data['user_id'] = Auth::id();
-            $product = Product::create($data);
+            $product = Product::create($data + ['user_id' => Auth::id(), 'category_id' => $request->category_id]);
+
             if ($request->has('sizes') && is_array($request->sizes)) {
     foreach ($request->sizes as $size) {
         if (!empty($size['size']) || !empty($size['price'])) {
@@ -73,18 +76,18 @@ class ProductController extends Controller
             abort(403, 'Unauthorized action.');
         }
         try {
-            $data = $request->only(['name', 'description', 'category_id','price']);
+            $data = $request->only(['name', 'description', 'price']);
             
             if ($request->hasFile('cover')) {
                 // لو فيه صورة قديمة نحذفها
-                if ($product->cover && \Storage::disk('public')->exists($product->cover)) {
-                    \Storage::disk('public')->delete($product->cover);
+                if ($product->cover && Storage::disk('public')->exists($product->cover)) {
+                    Storage::disk('public')->delete($product->cover);
                 }
 
                 $data['cover'] = $request->file('cover')->store('products', 'public');
             }
 
-            $product->update($data);
+            $product->update($data + ['category_id' => $request->category_id]);
 
             // Delete old sizes
             $product->sizes()->delete();

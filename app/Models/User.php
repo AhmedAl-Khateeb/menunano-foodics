@@ -203,4 +203,14 @@ class User extends Authenticatable
             }
         }
     }
+
+    /**
+     * Get logo url
+     */
+    public function getLogoUrlAttribute()
+    {
+        // get logo from settings
+        $logoPathFromSetting = $this->settings()->firstWhere('key', 'logo')?->value;
+        return $logoPathFromSetting ? asset('storage/' . $logoPathFromSetting) : null;
+    }
 }

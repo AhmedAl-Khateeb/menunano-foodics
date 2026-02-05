@@ -1,0 +1,178 @@
+# System Analysis & Architecture Overview (MenuNano)
+
+## 1. Project Overview
+**Name:** MenuNano
+**Type:** SaaS E-Menu & Lightweight POS System
+**Purpose:** Allows merchants (Store Admins) to create digital menus, receive orders via a dashboard, and manage simple point-of-sale operations. The system is designed as a Multi-tenant SaaS where a Super Admin manages subscriptions and packages.
+
+## 2. Core Functionality & Modules
+
+### A. Roles & Permissions
+*   **Super Admin:**
+    *   Full system control.
+    *   Manages "Admins" (Store Owners), Packages, and Subscriptions.
+    *   Access to system-wide settings and "Persons" management.
+*   **Store Admin (User):**
+    *   The business owner.
+    *   Manages their specific store's Products, Categories, Sliders (Banners).
+    *   Receives orders in real-time.
+    *   Manages their own staff (Users/Cashiers) with restricted roles.
+*   **Cashier/Staff (User):**
+    *   Created by Store Admin.
+    *   Limited access (primarily for order handling, as defined by "static" roles).
+*   **Customer (End-User):**
+    *   Accesses the public E-Menu.
+    *   Registers/Logins via phone number (Sanctum Auth).
+    *   Places orders.
+
+### B. Order Management System (OMS)
+*   **Customer Side:**
+    *   Cart functionality via API.
+    *   Order placement with payment proof uploads.
+*   **Admin Side:**
+    *   **Dashboard:** Real-time order receiving interface.
+    *   **Quick Sale (POS):** Livewire-based single-page interface for Cashiers to process in-store orders.
+    *   **Audio Alerts:** JavaScript-based notifications for "Pending" orders.
+    *   **Status Workflow:** Pending -> Served (or other statuses).
+
+### C. SaaS & Subscriptions
+*   **Packages:** Defined by Super Admin.
+*   **Subscriptions:** Stores subscribe to packages to access features.
+*   **Tenant Isolation:** Data (products, orders) is isolated by `user_id` / `store_name`.
+
+### D. Advanced Features
+*   **Impersonation:** Secure feature allowing Store Admins to log in as their staff members for debugging or assistance.
+*   **Dynamic Sidebar:** Configuration-based navigation (`config/navigation.php`) that adapts to user roles.
+*   **Mobile-First Admin UI:** Responsive design with card views for mobile and tables for desktop.
+
+---
+
+## 3. Technology Stack
+
+### Backend (Server-Side)
+*   **Framework:** Laravel 11 (PHP).
+*   **Database:** MySQL.
+*   **Authentication:**
+    *   **Web:** Standard Laravel Session Auth (for Admins).
+    *   **API:** Laravel Sanctum (Token-based for Customers).
+*   **Authorization:** Spatie Laravel Permission (Roles & Permissions).
+*   **Architecture:** MVC (Model-View-Controller) with "Actions" pattern (`app/Actions`) for encapsulating business logic.
+
+### Frontend (User Interface)
+*   **Templating Engine:** Laravel Blade.
+*   **Livewire (v3):** Full-stack framework for dynamic interfaces (replaces complex JS).
+    *   Used for: **Quick Sale (POS)** page.
+*   **CSS Frameworks (Hybrid Approach):**
+    *   **Bootstrap 4.6:** Legacy core structure, grid system, and AdminLTE components.
+    *   **Tailwind CSS (v3.4):** Modern utility-first styling for new components, responsive layouts, and custom designs (e.g., Sidebar, modern Cards).
+    *   **AdminLTE 3.2:** Base admin theme structure.
+*   **JavaScript:**
+    *   **Alpine.js:** Lightweight reactivity (Dropdowns, Sidebar toggles, Modal interactions).
+    *   **jQuery:** Legacy support for Bootstrap 4 components.
+    *   **Vite:** Asset bundling and compilation.
+*   **Fonts:** Google Fonts (Tajawal) for full Arabic RTL support.
+
+---
+
+## 4. Architecture & Design Patterns
+
+*   **MVC Pattern:** strictly followed for routing to controllers to views.
+*   **Multi-Tenancy:** Implemented via column-based isolation (e.g., `where('created_by', auth()->id())`) rather than separate databases.
+*   **Action Classes:** Business logic (potentially complex operations) is moved to `App\Actions` to keep Controllers skinny.
+*   **Config-Driven UI:** Sidebar navigation is decoupled from Views and driven by `config/navigation.php` for easier maintenance.
+*   **Responsive Hybrid UI:**
+    *   **Desktop:** Data-dense Tables.
+    *   **Mobile:** touch-friendly Card views (implemented via Bootstrap display utilities `d-none d-md-block`).
+
+## 5. Database Considerations
+*   **Users Table:**
+    *   Central authentication table.
+    *   `role` column: Recently refactored from `ENUM` to `VARCHAR` to support flexible roles (e.g., 'cashier').
+    *   `created_by`: Self-referential FK to establish hierarchy (Super Admin -> Admin -> Staff).
+*   **Polymorphism:** Used for Roles/Permissions (`spatie_permission`) and likely Tokens (`Sanctum`).
+
+---
+
+## 6. Future Scalability Notes
+*   **API-First E-Menu:** The public facing menu is decoupled via API, allowing for potential future React/Vue/Mobile App frontends.
+*   **Event-Driven:** Order events (Observers) can be hooked for Notifications (SMS/Email).
+
+---
+## 7. Database Entity Relationships (ERD Conceptualization)
+
+The database follows a **Multi-Tenant** model where the `User` (as Store Admin) is the central anchor for all business data.
+
+### 🏛️ Core Identity & SaaS
+*   **User (The Tenant/Owner)**
+    *   `id`: PK
+    *   `role`: (super_admin, admin, cashier)
+    *   `created_by`: Self-Ref (Hierarchy: Super Admin -> Admin -> Cashier)
+    *   `package_id`: FK -> Packages (Which plan they are on)
+    *   **One-to-Many** -> Products
+    *   **One-to-Many** -> Categories
+    *   **One-to-Many** -> Orders
+*   **Package** (SaaS Plan)
+    *   `id`: PK
+    *   `name`, `price`, `duration`
+    *   **One-to-Many** -> Subscriptions
+*   **Subscription**
+    *   `user_id`: FK -> User
+    *   `package_id`: FK -> Package
+    *   `status`: (active/expired)
+
+---
+
+### 📦 Store Content (Catalog)
+*   **Category**
+    *   `id`: PK
+    *   `user_id`: FK -> User (Tenant Owner)
+    *   `name`, `image`
+    *   **One-to-Many** -> Products
+*   **Product**
+    *   `id`: PK
+    *   `user_id`: FK -> User (Tenant Owner)
+    *   `category_id`: FK -> Category
+    *   `name`, `price`, `description`
+    *   **One-to-Many** -> ProductSizes
+    *   **One-to-Many** -> ProductAddons
+
+---
+
+### 🛒 Commerce & Orders
+*   **Customer** (The End User)
+    *   `id`: PK
+    *   `phone`: Unique Auth Identifier
+    *   `store_id` (conceptually linked via orders or last visited store)
+    *   **One-to-Many** -> Orders
+    *   **One-to-Many** -> CartItems
+*   **Order**
+    *   `id`: PK
+    *   `user_id`: FK -> User (The Store receiving the order)
+    *   `customer_id`: FK -> Customer (The buyer)
+    *   `status`: (pending, served, completed, cancelled)
+    *   `total_price`
+    *   **One-to-Many** -> OrderItems
+*   **OrderItem**
+    *   `order_id`: FK -> Order
+    *   `product_id`: FK -> Product
+    *   `quantity`, `price` (snapshot price at time of order)
+
+---
+
+### 🖇️ Visual Relationship Summary
+```mermaid
+erDiagram
+    User ||--o{ User : "manages staff"
+    User ||--o{ Product : "owns"
+    User ||--o{ Category : "owns"
+    User ||--o{ Order : "receives"
+    
+    Package ||--o{ Subscription : "has"
+    User ||--o{ Subscription : "subscribes"
+    
+    Category ||--o{ Product : "contains"
+    
+    Customer ||--o{ Order : "places"
+    Order ||--o{ OrderItem : "contains"
+    Product ||--o{ OrderItem : "included in"
+```

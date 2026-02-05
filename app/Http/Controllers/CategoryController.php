@@ -22,7 +22,9 @@ class CategoryController extends Controller
     {
         $user = $this->getUserByStoreName($storeName);
 
-        $categories = Category::where('user_id', $user->id)->get();
+        $categories = Category::where('user_id', $user->id)
+            ->where('type', Category::TYPE_MENU)
+            ->get();
 
         return ApiResponse::success(CategoryResource::collection($categories));
     }
@@ -53,9 +55,14 @@ class CategoryController extends Controller
     {
         $user = $this->getUserByStoreName($storeName);
 
-        $category = Category::with('products')
+        $category = Category::with(['products' => function($q) {
+                $q->whereHas('categories', function($subQ) {
+                     $subQ->where('type', Category::TYPE_MENU);
+                });
+            }])
             ->where('user_id', $user->id)
             ->where('name', $name)
+            ->where('type', Category::TYPE_MENU)
             ->firstOrFail();
 
         return ApiResponse::success(new CategoryResource($category));

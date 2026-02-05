@@ -48,7 +48,15 @@ class AdminController extends Controller
     // فورم الإضافة
     public function create()
     {
-        return view('super_admin.admins.create');
+        $admins = User::where('role', 'admin')->where('status', 1)->get();
+        return view('super_admin.admins.create', compact('admins'));
+    }
+
+    // جلب تصنيفات متجر معين (للكلوننج)
+    public function getCategories($id)
+    {
+        $categories = \App\Models\Category::where('user_id', $id)->get(['id', 'name']);
+        return response()->json($categories);
     }
 
     // تخزين المدير الجديد
@@ -59,8 +67,11 @@ class AdminController extends Controller
             'password'   => 'required|confirmed|min:6',
             'phone'      => 'nullable|string|max:20|unique:users',
             'store_name' => 'required|string|max:255',
+            'name'       => 'required|string|max:255',
             'image'      => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'status'     => 'required|in:0,1',
+            'clone_from_user_id' => 'nullable|exists:users,id',
+            'categories' => 'nullable|array'
         ]);
 
         $data = $request->only(['name', 'email', 'phone', 'store_name', 'status']);
@@ -71,9 +82,58 @@ class AdminController extends Controller
             $data['image'] = $request->file('image')->store('admins', 'public');
         }
 
-        User::create($data);
+        $newAdmin = User::create($data);
 
-        return redirect()->route('admins.index')->with('success', 'تم إضافة المدير بنجاح');
+        // منطق الاستنساخ (Clone Logic)
+        if ($request->filled('clone_from_user_id') && $request->filled('categories')) {
+            foreach ($request->categories as $categoryId) {
+                $sourceCategory = \App\Models\Category::find($categoryId);
+                if ($sourceCategory) {
+                    $newCategory = $sourceCategory->replicate();
+                    $newCategory->user_id = $newAdmin->id;
+
+                    // استنساخ صورة القسم إن وجدت
+                    if ($sourceCategory->cover && Storage::disk('public')->exists($sourceCategory->cover)) {
+                        $newPath = 'categories/' . uniqid() . '_' . basename($sourceCategory->cover);
+                        Storage::disk('public')->copy($sourceCategory->cover, $newPath);
+                        $newCategory->cover = $newPath;
+                    }
+
+                    $newCategory->save();
+
+                    // استنساخ المنتجات التابعة لهذا القسم
+                    // products is now a belongsToMany relationship
+                    $originalProducts = $sourceCategory->products;
+                    foreach ($originalProducts as $product) {
+                        $newProduct = $product->replicate();
+                        // Removing category_id assignment as it no longer exists
+                        $newProduct->user_id = $newAdmin->id;
+                        // type is already copied via replicate if it exists in fillable/attributes
+                        
+                        // استنساخ صورة المنتج إن وجدت
+                        if ($product->cover && Storage::disk('public')->exists($product->cover)) {
+                            $newPath = 'products/' . uniqid() . '_' . basename($product->cover);
+                            Storage::disk('public')->copy($product->cover, $newPath);
+                            $newProduct->cover = $newPath;
+                        }
+
+                        $newProduct->save();
+
+                        // Attach to the new category
+                        $newProduct->categories()->attach($newCategory->id);
+
+                        // استنساخ أحجام المنتجات
+                        foreach ($product->sizes as $size) {
+                            $newSize = $size->replicate();
+                            $newSize->product_id = $newProduct->id;
+                            $newSize->save();
+                        }
+                    }
+                }
+            }
+        }
+
+        return redirect()->route('admins.index')->with('success', 'تم إضافة المدير بنجاح مع استنساخ البيانات المطلوبة');
     }
 
     public function show($id)

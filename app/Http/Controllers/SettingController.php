@@ -22,7 +22,7 @@ class SettingController extends Controller
             ->map(function ($setting) {
                 // إذا القيمة صورة نخليها لينك كامل
                 if ($setting->value && str_contains($setting->value, 'images/setting/')) {
-                    $setting->value = asset('storage/app/public/' . $setting->value);
+                    $setting->value = asset('storage/' . $setting->value);
                 }
                 return $setting;
             });
@@ -46,14 +46,19 @@ class SettingController extends Controller
         $admins = User::where('role', 'admin')
             ->where('status', 1)
             // ->whereNotNull('image')
-            ->get(['image', 'store_name', 'name'])
+            ->get(['id', 'store_name', 'name'])
             ->map(function ($admin) {
+                $image = $admin->logo_url;
+                if (!$image) return;
+
                 return [
-                    'image' => asset('storage/app/public/' . $admin->image),
+                    // 'image' => asset('storage/app/public/' . $admin->image),
+                    'image' => $image,
                     'store_name' => $admin->store_name,
                     'name' => $admin->name ?: $admin->store_name,
                 ];
-            });
+            })->filter()
+            ->toArray();
 
         // dd($admins);
 

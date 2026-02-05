@@ -31,8 +31,10 @@
                             </div>
                         </div>
                         <!-- /.card-header -->
-                        <div class="card-body table-responsive p-0">
-                            <table class="table table-hover text-nowrap">
+                        <div class="card-body p-0">
+                            {{-- Desktop View --}}
+                            <div class="table-responsive d-none d-md-block">
+                            <table class="table table-hover">
                                 <thead>
                                     <tr>
                                         <th>#</th>
@@ -65,23 +67,82 @@
                                             </td>
 
                                             <td>
-                                                <a href="{{ route('users.edit', $user->id) }}" class="btn btn-info btn-sm">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST"
-                                                    style="display:inline-block;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm"
-                                                        onclick="return confirm('هل أنت متأكد؟')">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
+                                                <div class="d-flex gap-1 justify-content-center">
+                                                    @if(auth()->user()->role === 'admin' && $user->id !== auth()->id())
+                                                        <a href="{{ route('impersonate', $user->id) }}" class="btn btn-warning btn-sm" title="دخول كـ المستخدم">
+                                                            <i class="fas fa-user-secret"></i>
+                                                        </a>
+                                                    @endif
+                                                    <a href="{{ route('users.edit', $user->id) }}" class="btn btn-info btn-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST"
+                                                        style="display:inline-block;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                            onclick="return confirm('هل أنت متأكد؟')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
+                                </tbody>
                             </table>
+                            </div>
+
+                            {{-- Mobile View --}}
+                            <div class="d-block d-md-none p-3">
+                                @foreach ($users as $user)
+                                    <div class="card mb-3 border shadow-none rounded-lg">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h5 class="mb-0 font-weight-bold text-primary">{{ $user->name }}</h5>
+                                                <span class="badge badge-{{ $user->role == 'admin' ? 'success' : ($user->role == 'super_admin' ? 'danger' : 'info') }} px-2 py-1">
+                                                    {{ $user->role }}
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="text-muted small mb-3">
+                                                <div class="mb-1">
+                                                    <i class="fas fa-envelope mr-1 w-4 text-center"></i> {{ $user->email }}
+                                                </div>
+                                                <div class="mb-1">
+                                                     <i class="fas fa-user-plus mr-1 w-4 text-center"></i>
+                                                    أنشئ بواسطة: 
+                                                    @if ($user->creator)
+                                                        <span class="font-weight-bold">{{ $user->creator->name }}</span>
+                                                    @else
+                                                        <span class="text-muted">نظام</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex gap-2 border-top pt-3">
+                                                @if(auth()->user()->role === 'admin' && $user->id !== auth()->id())
+                                                    <a href="{{ route('impersonate', $user->id) }}" class="btn btn-warning btn-sm flex-grow-1" title="دخول كـ المستخدم">
+                                                        <i class="fas fa-user-secret"></i> دخول
+                                                    </a>
+                                                @endif
+                                                <a href="{{ route('users.edit', $user->id) }}" class="btn btn-info btn-sm flex-grow-1">
+                                                    <i class="fas fa-edit"></i> تعديل
+                                                </a>
+                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="flex-grow-1">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm w-100"
+                                                        onclick="return confirm('هل أنت متأكد؟')">
+                                                        <i class="fas fa-trash"></i> حذف
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
                         <!-- /.card-body -->
                         <div class="card-footer clearfix">

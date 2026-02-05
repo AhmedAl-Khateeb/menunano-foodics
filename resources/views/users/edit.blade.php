@@ -69,7 +69,7 @@
                                         <option value="">اختر الدور</option>
                                         @foreach ($roles as $r)
                                             <option value="{{ $r->id }}"
-                                                {{ old('role_id', $user->roles->first()?->id) == $r->id ? 'selected' : '' }}>
+                                                {{ old('role_id', $user->roles->first()?->id ?? ($user->role === 'cashier' && $r->id === 'cashier' ? 'cashier' : null)) == $r->id ? 'selected' : '' }}>
                                                 {{ $r->name }}
                                             </option>
                                         @endforeach

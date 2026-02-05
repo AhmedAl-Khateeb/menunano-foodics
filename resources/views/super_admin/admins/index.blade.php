@@ -225,13 +225,13 @@
 
                                         {{-- <td class="text-center">
                                             @if ($admin->image)
-                                                <img src="{{ asset('storage/app/public/'.$admin->image) }}"
+                                                <img src="{{ asset('storage/'.$admin->image) }}"
                                                      alt="صورة المدير"
                                                      class="rounded-circle shadow-sm"
                                                      width="50" height="50"
                                                      style="object-fit: cover;">
                                             @else
-                                                <img src="{{ asset('storage/app/public/images/default-user.png') }}"
+                                                <img src="{{ asset('storage/images/default-user.png') }}"
                                                       alt="صورة افتراضية"
                                                       class="rounded-circle shadow-sm"
                                                       width="50" height="50"

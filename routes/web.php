@@ -15,7 +15,10 @@ use App\Http\Controllers\Dashboard\SuperAdmin\SectionController;
 use App\Http\Controllers\Web\UserController;
 use App\Http\Controllers\Web\RoleController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
+use App\Models\Order;
 
+Route::redirect('/', '/dashboard');
 
 Route::get('/inactive', function () {
     return view('inactive');
@@ -33,6 +36,7 @@ Route::get('/clear-cache', function () {
 Route::middleware(['auth', 'super_admin'])->prefix('super')->group(function () {
     Route::get('business-settings', [BusinessSettingController::class, 'index'])->name('business_settings.index');
     Route::post('business-settings', [BusinessSettingController::class, 'update'])->name('business_settings.update');
+    Route::get('/admins/get-categories/{id}', [AdminController::class, 'getCategories'])->name('admins.categories');
     Route::resource('admins', AdminController::class);
     Route::patch('/admins/{id}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admins.toggleStatus');
     Route::post('/admins/deactivate-all', [AdminController::class, 'deactivateAll'])->name('admins.deactivateAll');
@@ -49,10 +53,13 @@ Route::middleware(['auth', 'super_admin'])->prefix('super')->group(function () {
 Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
 
     Route::get('/dashboard', function () {
+        // dd(auth()->user()->role);
+        if (in_array(auth()->user()->role, ['user', 'cashier'])) {
+            return redirect()->route('pos.index');
+        }
         return view('dashboard');
     })->name('dashboard');
 
-    Route::get('', [CategoryController::class, 'index']);
     Route::resource(
         'categories',
         CategoryController::class
@@ -106,4 +113,58 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::resource('users', UserController::class);
     Route::resource('roles', RoleController::class);
     Route::resource('payment-methods', PaymentMethodController::class);
+    
+    // Impersonation
+    Route::get('/impersonate/leave', [\App\Http\Controllers\ImpersonationController::class, 'leave'])->name('impersonate.leave');
+    Route::get('/impersonate/{id}', [\App\Http\Controllers\ImpersonationController::class, 'impersonate'])->name('impersonate');
+
+    // POS / Quick Sale
+    Route::get('/pos', \App\Livewire\PosPage::class)->name('pos.index');
+
+    // Under Development Route
+    Route::get('/under-development', function () {
+        return view('under-development');
+    })->name('under.development');
+
+    // Placeholders for new structure
+    // Users
+    Route::get('/users/store-admins', function() { return redirect()->route('under.development'); })->name('users.store-admins');
+    Route::get('/users/staff', function() { return redirect()->route('under.development'); })->name('users.staff');
+    Route::get('/users/customers', function() { return redirect()->route('under.development'); })->name('users.customers');
+
+    // Orders
+    Route::get('/orders/new', function() { return redirect()->route('under.development'); })->name('orders.new');
+    Route::get('/orders/ongoing', function() { return redirect()->route('under.development'); })->name('orders.ongoing');
+    Route::get('/orders/completed', function() { return redirect()->route('under.development'); })->name('orders.completed');
+    Route::get('/orders/filter', function() { return redirect()->route('under.development'); })->name('orders.filter');
+
+    // Products
+    Route::get('/products/addons', function() { return redirect()->route('under.development'); })->name('products.addons');
+    Route::get('/products/active', function() { return redirect()->route('under.development'); })->name('products.active');
+
+    // Inventory
+    Route::get('/inventory/ready', function() { return redirect()->route('under.development'); })->name('inventory.ready');
+    Route::get('/inventory/manufactured', function() { return redirect()->route('under.development'); })->name('inventory.manufactured');
+    Route::get('/inventory/logs', function() { return redirect()->route('under.development'); })->name('inventory.logs');
+
+    // Tables & Areas
+    Route::resource('dining-areas', \App\Http\Controllers\Dashboard\DiningAreaController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('tables', \App\Http\Controllers\Dashboard\TableController::class)->except(['create', 'edit', 'show']);
+    Route::resource('units', \App\Http\Controllers\UnitController::class)->except(['create', 'edit', 'show']);
+    Route::resource('settings/charges', \App\Http\Controllers\ChargeController::class)->names('charges')->except(['create', 'edit', 'show']);
+    // Legacy Redirect for Taxes
+    Route::redirect('settings/taxes', 'settings/charges');
+
+
+
+
+    // Reports
+    Route::get('/reports/sales', function() { return redirect()->route('under.development'); })->name('reports.sales');
+    Route::get('/reports/top-products', function() { return redirect()->route('under.development'); })->name('reports.top-products');
+    Route::get('/reports/staff-performance', function() { return redirect()->route('under.development'); })->name('reports.staff-performance');
+
+    // Settings
+    Route::get('/settings/pos', function() { return redirect()->route('under.development'); })->name('settings.pos');
+    Route::get('/settings/printing', function() { return redirect()->route('under.development'); })->name('settings.printing');
+    Route::get('/settings/notifications', function() { return redirect()->route('under.development'); })->name('settings.notifications');
 });

@@ -48,7 +48,7 @@
                         <div class="card-body text-center py-4">
                             @if($setting->key == 'logo')
                                 <div class="image-container">
-                                    <img src="{{ $setting->value }}" alt="شعار الموقع" class="setting-image">
+                                    <img src="{{ asset('storage/' . $setting->value) }}" alt="شعار الموقع" class="setting-image">
                                 </div>
                             @elseif(in_array($setting->key,['maincolor','maintextcolor','thirdtextcolor','secoundtextcolor','secondcolor']))
                                 <div class="color-preview-container">

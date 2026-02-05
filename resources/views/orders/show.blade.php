@@ -46,7 +46,7 @@
                         <div class="col-12">
                             <h5 class="mb-3 text-secondary font-weight-bold">إثبات الدفع:</h5>
                             <div class="border rounded p-2 d-inline-block bg-light shadow-sm">
-                                <a href="{{ asset('storage/app/public/' . $order->payment_proof) }}" target="_blank">
+                                <a href="{{ asset('storage/' . $order->payment_proof) }}" target="_blank">
                                     <img src="{{ asset('storage/' . $order->payment_proof) }}" alt="إثبات الدفع"
                                         class="img-fluid rounded" style="max-height: 250px; cursor: pointer;">
                                 </a>

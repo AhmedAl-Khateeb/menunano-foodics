@@ -19,12 +19,12 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'price' => $this->price,
-            'cover' =>  $this->cover 
-            ? url('storage/app/public/' . $this->cover)
-            : null,
+            'cover' =>  $this->cover
+                ? asset('storage/' . $this->cover)
+                : null,
             'category' => [
-                'name' => $this->category->name,
-                'id' => $this->category->id
+                'name' => $this->category?->name,
+                'id' => $this->category?->id
             ],
             'sizes' => $this->sizes->map(function ($size) {
                 return [

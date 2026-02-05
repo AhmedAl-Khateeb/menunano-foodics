@@ -28,7 +28,14 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = \Spatie\Permission\Models\Role::where('created_by', auth()->id())->get();
+        if (auth()->user()->role === 'super_admin') {
+            $roles = \Spatie\Permission\Models\Role::where('created_by', auth()->id())->get();
+        } else {
+            // Static roles for Store Admin
+            $roles = collect([
+                (object)['id' => 'cashier', 'name' => 'cashier']
+            ]);
+        }
         return view('users.create', compact('roles'));
     }
 
@@ -42,7 +49,8 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             // 'role' => 'required|in:admin,super_admin,user', // Removed as we force 'user'
-            'role_id' => 'required|exists:roles,id',
+            // 'role_id' => 'required|exists:roles,id', // Modified to allow static 'cashier'
+             'role_id' => 'required',
         ]);
 
         $user = User::create([
@@ -53,8 +61,13 @@ class UserController extends Controller
             'created_by' => auth()->id(),
         ]);
 
-        // Assign Spatie Role
-        if ($request->filled('role_id')) {
+        // Store Admin logic: update role if user is admin
+        if ($request->filled('role_id') && auth()->user()->role == 'admin') {
+            $user->role = $request->role_id;
+            $user->save();
+        }
+        // Super Admin logic: sync roles if user is super admin
+        else if ($request->filled('role_id') && auth()->user()->role == 'super_admin') {
             $role = \Spatie\Permission\Models\Role::find($request->role_id);
             if ($role) {
                 $user->assignRole($role);
@@ -77,7 +90,13 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $roles = \Spatie\Permission\Models\Role::where('created_by', auth()->id())->get();
+        if (auth()->user()->role === 'super_admin') {
+            $roles = \Spatie\Permission\Models\Role::where('created_by', auth()->id())->get();
+        } else {
+            $roles = collect([
+                (object)['id' => 'cashier', 'name' => 'cashier']
+            ]);
+        }
         return view('users.edit', compact('user', 'roles'));
     }
 
@@ -90,7 +109,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             // 'role' => 'required|in:admin,super_admin,user',
-            'role_id' => 'required|exists:roles,id',
+            // 'role_id' => 'required|exists:roles,id',
+            'role_id' => 'required',
         ]);
 
         $user->update([
@@ -98,8 +118,12 @@ class UserController extends Controller
             'email' => $request->email,
         ]);
 
-        // Sync Spatie Role
-        if ($request->filled('role_id')) {
+        // Store Admin logic: update role if user is admin
+        if ($request->filled('role_id') && auth()->user()->role == 'admin') {
+            $user->update(['role' => $request->role_id]);
+        }
+        // Super Admin logic: sync roles if user is super admin
+        else if ($request->filled('role_id') && auth()->user()->role == 'super_admin') {
             $role = \Spatie\Permission\Models\Role::find($request->role_id);
             if ($role) {
                 $user->syncRoles([$role]);

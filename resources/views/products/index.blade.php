@@ -118,14 +118,20 @@
                                 <td>{{ $loop->iteration }}</td>
                                 <td class="font-weight-bold text-primary">{{ $product->name }}</td>
                                 <td>{{ Str::limit($product->description, 50) ?? '—' }}</td>
-                                <td>{{ $product->category?->name ?? '—' }}</td>
+                                <td>
+                                    @if($product->category)
+                                        <span class="badge badge-info">{{ $product->category->name }}</span>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td>
     {{ $product->price !== null ? number_format($product->price, 2) . '' : '—' }}
 </td>
 
                                 <td>
                                     @if($product->cover)
-                                        <img src="{{ asset('storage/app/public/'.$product->cover) }}" alt="Cover Image" class="img-thumbnail rounded" style="width: 80px; height: 80px; object-fit: cover;">
+                                        <img src="{{ asset('storage/'.$product->cover) }}" alt="Cover Image" class="img-thumbnail rounded" style="width: 80px; height: 80px; object-fit: cover;">
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
@@ -164,9 +170,10 @@
                                                             <div class="col-md-6 mb-3">
                                                                 <label for="category_id-{{ $product->id }}">الفئة</label>
                                                                 <select name="category_id" id="category_id-{{ $product->id }}" class="form-control form-select-lg shadow-sm @error('category_id') is-invalid @enderror" required>
-                                                                    <option value="" disabled>اختر فئة</option>
                                                                     @foreach ($categories as $category)
-                                                                        <option value="{{ $category->id }}" {{ (old('category_id', $product->category_id) == $category->id) ? 'selected' : '' }}>{{ $category->name }}</option>
+                                                                        <option value="{{ $category->id }}" {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
+                                                                            {{ $category->name }}
+                                                                        </option>
                                                                     @endforeach
                                                                 </select>
                                                                 @error('category_id') <div class="invalid-feedback">{{ $message }}</div> @enderror

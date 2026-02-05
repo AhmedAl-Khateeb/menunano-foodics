@@ -17,10 +17,10 @@ class CategoryResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'cover' => $this->cover 
-            ? url('storage/app/public/' . $this->cover)
-            : null,
-            'products' => $this->whenLoaded('products',ProductResource::collection($this->products)) ?? null
+            'cover' => $this->cover
+                ? asset('storage/' . $this->cover)
+                : null,
+            'products' => $this->whenLoaded('products', ProductResource::collection($this->products)) ?? null
         ];
     }
 }

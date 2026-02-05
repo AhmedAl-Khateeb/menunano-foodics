@@ -9,11 +9,23 @@ export default {
         './resources/**/*.js',
         './resources/**/*.vue',
     ],
+    corePlugins: {
+        preflight: false,
+    },
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Tajawal', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                primary: '#007bff',
+                secondary: '#6c757d',
+                dark: '#343a40',
+                sidebar: {
+                    DEFAULT: '#1e293b',
+                    dark: '#0f172a',
+                }
+            }
         },
     },
     plugins: [],

@@ -23,10 +23,16 @@ class ProductController extends Controller
         $user = $this->getUserByStoreName($storeName);
 
         // نفلتر المنتجات الخاصة بالمستخدم ده فقط
+        // نفلتر المنتجات الخاصة بالمستخدم ده فقط 
+                // والتي تتبع فئة من نوع منيو
         $products = Product::query()
             ->where('user_id', $user->id)
-            ->whereHas('category')
-            ->with('category', 'sizes')
+            ->whereHas('categories', function ($q) {
+                $q->where('type', \App\Models\Category::TYPE_MENU);
+            })
+            ->with(['categories' => function ($q) {
+                $q->where('type', \App\Models\Category::TYPE_MENU);
+            }, 'sizes'])
             ->get();
 
         return ApiResponse::success(ProductResource::collection($products));
@@ -62,8 +68,13 @@ class ProductController extends Controller
         $user = $this->getUserByStoreName($storeName);
 
         // نجيب المنتج بشرط يكون مملوك للمستخدم ده
-        $product = Product::with('category', 'sizes')
+        $product = Product::with(['categories' => function ($q) {
+                $q->where('type', \App\Models\Category::TYPE_MENU);
+            }, 'sizes'])
             ->where('user_id', $user->id)
+            ->whereHas('categories', function ($q) {
+                $q->where('type', \App\Models\Category::TYPE_MENU);
+            })
             ->findOrFail($id);
 
         return ApiResponse::success(new ProductResource($product));

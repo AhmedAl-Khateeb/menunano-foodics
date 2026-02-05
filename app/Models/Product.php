@@ -7,13 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
+    const TYPE_READY = 'ready';
+    const TYPE_MANUFACTURED = 'manufactured';
+    const TYPE_COMPONENT = 'component';
+
     protected $fillable = [
         'name',
-        'user_id',
         'description',
-        'cover',
         'price',
-        'category_id'
+        'image_url',
+        'is_active',
+        'store_id',
+        'category_id',
+        'type'
     ];
 
     public function category()
@@ -35,7 +41,9 @@ class Product extends Model
     {
         $category_id = request()->query('category') ?? null;
         $builder->when($category_id,function ($builder,$value){
-            $builder->where('category_id',$value);
+            $builder->whereHas('categories', function($q) use ($value) {
+                $q->where('categories.id', $value);
+            });
         });
     }
 
