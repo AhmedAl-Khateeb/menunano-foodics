@@ -128,6 +128,46 @@ return [
                 ],
             ]
         ],
+        // Inventory & Items Module
+        [
+            'title' => 'الأصناف والمخزون',
+            'icon' => 'fas fa-boxes',
+            'type' => 'dropdown',
+            'id' => 'inventory-menu',
+            'active_routes' => ['inventory.*'],
+            'children' => [
+                [
+                    'title' => 'المنتجات الجاهزة',
+                    'icon' => 'far fa-circle',
+                    'route' => 'inventory.ready.index',
+                    'active_routes' => ['inventory.ready.*'],
+                ],
+                [
+                    'title' => 'المنتجات المركبة',
+                    'icon' => 'far fa-circle',
+                    'route' => 'inventory.composite.index',
+                    'active_routes' => ['inventory.composite.*'],
+                ],
+                [
+                    'title' => 'المواد الخام',
+                    'icon' => 'far fa-circle',
+                    'route' => 'inventory.raw.index',
+                    'active_routes' => ['inventory.raw.*'],
+                ],
+                [
+                    'title' => 'فئات المخزون',
+                    'icon' => 'far fa-circle',
+                    'route' => 'inventory.categories.index',
+                    'active_routes' => ['inventory.categories.*'],
+                ],
+                [
+                    'title' => 'حركات المخزون',
+                    'icon' => 'far fa-circle',
+                    'route' => 'inventory.movements.index',
+                    'active_routes' => ['inventory.movements.*'],
+                ],
+            ]
+        ],
 
         // Reports Group
         [

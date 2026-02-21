@@ -19,6 +19,9 @@ class Slider extends Model
 
     public function getImageUrlAttribute()
     {
-        return env('APP_IMAGES_URL').$this->image;
+        if ($this->image && file_exists(storage_path('app/public/sliders/' . $this->image))) {
+            return asset('storage/sliders/' . $this->image);
+        }
+        return asset('images/' . $this->image);
     }
 }

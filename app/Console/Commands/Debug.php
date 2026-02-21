@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -28,9 +29,16 @@ class Debug extends Command
     public function handle()
     {
         $storeUser = User::firstWhere('store_name', 'nanocity');
-        dd($storeUser->logo_url);
+        // dd($storeUser->logo_url);
 
         // $settings = Setting::where('key', 'logo')->pluck('value')->toArray();
         // dd($settings);
+
+        $product = Product::where('user_id', $storeUser->id)
+        ->where('type', 'raw')
+        ->with(['inventory.movements'])
+            ->first();
+
+        dd($product?->toArray());
     }
 }

@@ -7,20 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    const TYPE_READY = 'ready';
-    const TYPE_MANUFACTURED = 'manufactured';
-    const TYPE_COMPONENT = 'component';
-
     protected $fillable = [
         'name',
+        'user_id',
         'description',
+        'cover',
         'price',
-        'image_url',
-        'is_active',
-        'store_id',
         'category_id',
         'type'
     ];
+
+    public function inventory()
+    {
+        return $this->morphOne(Inventory::class, 'inventoriable');
+    }
+
+    public function recipes()
+    {
+        return $this->hasMany(ProductRecipe::class, 'product_id');
+    }
 
     public function category()
     {
@@ -41,15 +46,40 @@ class Product extends Model
     {
         $category_id = request()->query('category') ?? null;
         $builder->when($category_id,function ($builder,$value){
-            $builder->whereHas('categories', function($q) use ($value) {
-                $q->where('categories.id', $value);
-            });
+            $builder->where('category_id',$value);
         });
     }
 
     public function getCoverUrlAttribute()
     {
-        return env('APP_IMAGES_URL').$this->cover;
+        return asset("storage/{$this->cover}");
     }
 
+    public function getMaxProductionQuantityAttribute()
+    {
+        if ($this->recipes->isEmpty())  return 0;
+        
+        $min_production = null;
+        foreach ($this->recipes->whereNull('product_size_id') as $recipe) {
+            if (!$recipe->ingredient || !$recipe->ingredient->inventory) continue;
+
+            $ingredient_stock = max(0, $recipe->ingredient->inventory->current_quantity ?? 0);
+            
+            // If any ingredient is out of stock, max production is zero
+            if ($ingredient_stock <= 0) {
+                $min_production = 0;
+                break;
+            }
+            
+            // Prevent division by zero and invalid recipe quantities
+            if ($recipe->quantity <= 0) continue;
+            
+            $possible = (int) floor($ingredient_stock / $recipe->quantity);
+            
+            if ($min_production === null || $possible < $min_production) {
+                $min_production = $possible;
+            }
+        }
+        return $min_production ?? 0;
+    }
 }

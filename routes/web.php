@@ -142,10 +142,43 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::get('/products/addons', function() { return redirect()->route('under.development'); })->name('products.addons');
     Route::get('/products/active', function() { return redirect()->route('under.development'); })->name('products.active');
 
-    // Inventory
-    Route::get('/inventory/ready', function() { return redirect()->route('under.development'); })->name('inventory.ready');
-    Route::get('/inventory/manufactured', function() { return redirect()->route('under.development'); })->name('inventory.manufactured');
-    Route::get('/inventory/logs', function() { return redirect()->route('under.development'); })->name('inventory.logs');
+    // Inventory & Items Module
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        // Ready Items
+        Route::get('/ready', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'index'])->name('ready.index');
+        Route::get('/ready/create', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'create'])->name('ready.create');
+        Route::post('/ready', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'store'])->name('ready.store');
+        Route::get('/ready/{id}/edit', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'edit'])->name('ready.edit');
+        Route::put('/ready/{id}', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'update'])->name('ready.update');
+        Route::put('/ready/{id}/convert', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'convertToComposite'])->name('ready.convert');
+        Route::post('/ready/{id}/adjust', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'adjustStock'])->name('ready.adjust');
+        Route::get('/ready/{id}/history', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'history'])->name('ready.history');
+
+        // Composite Items
+        Route::get('/composite', [\App\Http\Controllers\Dashboard\CompositeItemController::class, 'index'])->name('composite.index');
+        Route::get('/composite/create', [\App\Http\Controllers\Dashboard\CompositeItemController::class, 'create'])->name('composite.create');
+        Route::post('/composite', [\App\Http\Controllers\Dashboard\CompositeItemController::class, 'store'])->name('composite.store');
+        Route::get('/composite/{id}/edit', [\App\Http\Controllers\Dashboard\CompositeItemController::class, 'edit'])->name('composite.edit');
+        Route::put('/composite/{id}', [\App\Http\Controllers\Dashboard\CompositeItemController::class, 'update'])->name('composite.update');
+        Route::get('/composite/{id}/recipe', [\App\Http\Controllers\Dashboard\CompositeItemController::class, 'editRecipe'])->name('composite.recipe.edit');
+        Route::post('/composite/{id}/recipe', [\App\Http\Controllers\Dashboard\CompositeItemController::class, 'addIngredient'])->name('composite.recipe.add');
+        Route::delete('/composite/recipe/{recipe_id}', [\App\Http\Controllers\Dashboard\CompositeItemController::class, 'removeIngredient'])->name('composite.recipe.remove');
+
+        // Inventory Categories
+        Route::resource('categories', \App\Http\Controllers\Dashboard\InventoryCategoryController::class)->except(['create', 'edit', 'show']);
+
+        // Inventory Movements
+        Route::get('/movements', [\App\Http\Controllers\Dashboard\InventoryMovementController::class, 'index'])->name('movements.index');
+
+        // Raw Materials
+        Route::get('/raw', [\App\Http\Controllers\Dashboard\RawMaterialController::class, 'index'])->name('raw.index');
+        Route::get('/raw/create', [\App\Http\Controllers\Dashboard\RawMaterialController::class, 'create'])->name('raw.create');
+        Route::post('/raw', [\App\Http\Controllers\Dashboard\RawMaterialController::class, 'store'])->name('raw.store');
+        Route::get('/raw/{id}/edit', [\App\Http\Controllers\Dashboard\RawMaterialController::class, 'edit'])->name('raw.edit');
+        Route::put('/raw/{id}', [\App\Http\Controllers\Dashboard\RawMaterialController::class, 'update'])->name('raw.update');
+        Route::post('/raw/{id}/adjust', [\App\Http\Controllers\Dashboard\RawMaterialController::class, 'adjustStock'])->name('raw.adjust');
+        Route::get('/raw/{id}/history', [\App\Http\Controllers\Dashboard\RawMaterialController::class, 'history'])->name('raw.history');
+    });
 
     // Tables & Areas
     Route::resource('dining-areas', \App\Http\Controllers\Dashboard\DiningAreaController::class)->only(['store', 'update', 'destroy']);

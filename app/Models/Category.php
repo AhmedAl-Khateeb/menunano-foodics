@@ -9,7 +9,7 @@ class Category extends Model
     const TYPE_MENU = 'menu';
     const TYPE_INTERNAL = 'internal';
 
-    protected $fillable = ['name', 'image_url', 'is_active', 'store_id', 'type'];
+    protected $fillable = ['name', 'cover', 'is_active', 'store_id', 'type', 'user_id'];
 
     public function products()
     {
@@ -23,6 +23,9 @@ class Category extends Model
 
     public function getCoverUrlAttribute()
     {
-        return env('APP_IMAGES_URL') . $this->cover;
+        if ($this->cover) {
+            return asset('storage/categories/' . $this->cover);
+        }
+        return null;
     }
 }
