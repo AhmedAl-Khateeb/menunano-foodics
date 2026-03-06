@@ -63,9 +63,12 @@
 
 <body class="bg-gray-100 fixed inset-0 w-full h-full overflow-hidden flex flex-col font-sans antialiased" 
       x-data="{ 
-          sidebarOpen: window.innerWidth >= 900 && {{ in_array(auth()->user()->role, ['admin', 'super_admin', 'supper_admin']) ? 'true' : 'false' }},
+          sidebarOpen: localStorage.getItem('sidebarOpen') === null 
+                       ? (window.innerWidth >= 900 && {{ in_array(auth()->user()->role, ['admin', 'super_admin', 'supper_admin']) ? 'true' : 'false' }}) 
+                       : localStorage.getItem('sidebarOpen') === 'true',
           isMobile: window.innerWidth < 1024
       }" 
+      x-init="$watch('sidebarOpen', val => localStorage.setItem('sidebarOpen', val))"
       @resize.window="isMobile = window.innerWidth < 1024">
     
     <!-- Navbar -->
@@ -142,9 +145,9 @@
                         </a>
                     @endif
 
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}" id="logout-from">
                         @csrf
-                        <button type="submit" class="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors">
+                        <button type="button" onclick="handleCustomLogout(event)" class="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors">
                             <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                         </button>
                     </form>
@@ -200,7 +203,25 @@
                         @php
                             $hasActiveChild = false;
                             foreach ($item['children'] as $child) {
-                                if (request()->routeIs($child['active_routes'])) {
+                                $isActiveRoute = request()->routeIs($child['active_routes']);
+                                $isActiveQuery = true;
+                                if (isset($child['query']) && is_array($child['query'])) {
+                                    // If query is explicitly empty array [], it means it MUST NOT have any of the specific queries
+                                    if (empty($child['query'])) {
+                                        if (request()->has('source') || request()->has('type')) {
+                                            $isActiveQuery = false;
+                                        }
+                                    } else {
+                                        foreach ($child['query'] as $key => $val) {
+                                            if (request()->query($key) !== $val) {
+                                                $isActiveQuery = false;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if ($isActiveRoute && $isActiveQuery) {
                                     $hasActiveChild = true;
                                     break;
                                 }
@@ -217,8 +238,27 @@
                             </button>
                             <div x-show="openSub" class="bg-[#1a1a1a] space-y-1 mt-1 border-r-2 border-gray-700">
                                  @foreach ($item['children'] as $child)
-                                    <a href="{{ route($child['route']) }}" 
-                                       class="flex items-center gap-3 px-6 py-2 text-sm {{ request()->routeIs($child['active_routes']) ? 'bg-white text-black font-bold' : 'text-gray-400 hover:text-white hover:bg-gray-800' }} transition-colors">
+                                    @php
+                                        $isActiveChildRoute = request()->routeIs($child['active_routes']);
+                                        $isActiveChildQuery = true;
+                                        if (isset($child['query']) && is_array($child['query'])) {
+                                            if (empty($child['query'])) {
+                                                if (request()->has('source') || request()->has('type')) {
+                                                    $isActiveChildQuery = false;
+                                                }
+                                            } else {
+                                                foreach ($child['query'] as $key => $val) {
+                                                    if (request()->query($key) !== $val) {
+                                                        $isActiveChildQuery = false;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        $isChildActive = $isActiveChildRoute && $isActiveChildQuery;
+                                    @endphp
+                                    <a href="{{ route($child['route'], $child['query'] ?? []) }}" 
+                                       class="flex items-center gap-3 px-6 py-2 text-sm {{ $isChildActive ? 'bg-white text-black font-bold' : 'text-gray-400 hover:text-white hover:bg-gray-800' }} transition-colors">
                                         <i class="{{ $child['icon'] }} text-xs"></i>
                                         <span>{{ $child['title'] }}</span>
                                     </a>
@@ -230,8 +270,27 @@
                             {{ $item['title'] }}
                         </div>
                     @else
-                        <a href="{{ route($item['route']) }}" 
-                           class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs($item['active_routes']) ? 'bg-white text-black' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }} font-bold transition-colors">
+                        @php
+                            $isActiveItemRoute = request()->routeIs($item['active_routes']);
+                            $isActiveItemQuery = true;
+                            if (isset($item['query']) && is_array($item['query'])) {
+                                if (empty($item['query'])) {
+                                    if (request()->has('source') || request()->has('type')) {
+                                        $isActiveItemQuery = false;
+                                    }
+                                } else {
+                                    foreach ($item['query'] as $key => $val) {
+                                        if (request()->query($key) !== $val) {
+                                            $isActiveItemQuery = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            $isItemActive = $isActiveItemRoute && $isActiveItemQuery;
+                        @endphp
+                        <a href="{{ route($item['route'], $item['query'] ?? []) }}" 
+                           class="flex items-center gap-3 px-4 py-3 {{ $isItemActive ? 'bg-white text-black' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }} font-bold transition-colors">
                             <i class="{{ $item['icon'] }} text-lg w-6 text-center"></i>
                             <span>{{ $item['title'] }}</span>
                         </a>
@@ -258,6 +317,40 @@
     <script src="https://cdn.jsdelivr.net/npm/resumablejs@1.1.0/resumable.min.js"></script>
 
     @include('sweetalert::alert', ['cdn' => 'https://cdn.jsdelivr.net/npm/sweetalert2@9'])
+    
+    <script>
+        function handleCustomLogout(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'خيارات تسجيل الخروج',
+                text: 'هل ترغب في إنهاء المناوبة الحالية أم التوقف مؤقتاً (استراحة)؟',
+                icon: 'question',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'تسجيل خروج (مؤقت/استراحة)',
+                denyButtonText: 'إنهاء المناوبة (الشفت بقيمة)',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#3085d6',
+                denyButtonColor: '#d33',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Pause/Logout normally
+                    fetch('/shifts/pause', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    }).finally(() => {
+                        document.getElementById('logout-from').submit();
+                    });
+                } else if (result.isDenied) {
+                    window.location.href = "{{ route('pos.index') }}?showEndShift=true";
+                }
+            });
+        }
+    </script>
+    
     @stack('scripts')
     @livewireScripts
 </body>

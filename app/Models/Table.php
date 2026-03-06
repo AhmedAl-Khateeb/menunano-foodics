@@ -12,4 +12,9 @@ class Table extends Model
     {
         return $this->belongsTo(DiningArea::class);
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

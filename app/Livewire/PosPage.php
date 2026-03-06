@@ -43,6 +43,22 @@ class PosPage extends Component
     public $customerName = '';
     public $selectedCustomerId = null;
 
+    // Order Type Properties
+    #[Session]
+    public $orderType = 'takeaway'; // takeaway, table, free_seating, delivery
+    public $selectedTableId = null;
+    public $deliveryFee = 0;
+    public $selectedDeliveryManId = null;
+    public $tables = [];
+    public $deliveryMen = [];
+
+    // Shift Properties
+    public $requiresShiftStart = false;
+    public $shiftStartingCash = "";
+    public $showEndShiftModal = false;
+    public $shiftEndingCash = "";
+
+
     // Computed Property to fetch product safely
     public function getSelectedProductForSizeProperty()
     {
@@ -98,16 +114,113 @@ class PosPage extends Component
         $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', true)
                                 ->where('created_by', $storeId)
                                 ->get();
+                                
+        // Fetch Tables with active orders
+        $this->tables = \App\Models\Table::with(['diningArea', 'orders' => function($q) {
+            $q->where('status', 'pending');
+        }])->where('user_id', $storeId)->where('is_active', true)->get();
+        
+        // Fetch Delivery Men
+        $this->deliveryMen = \App\Models\DeliveryMan::where('user_id', $storeId)->where('is_active', true)->get();
         
         // Default payment method
-        if($this->paymentMethods->isNotEmpty()) {
-            $this->paymentMethod = $this->paymentMethods->first()->id;
+        /** @var \App\Models\PaymentMethod $firstPaymentMethod */
+        $firstPaymentMethod = $this->paymentMethods->first();
+        if($firstPaymentMethod) {
+            $this->paymentMethod = $firstPaymentMethod->id;
         }
+
+        if (request()->has('showEndShift') && request()->get('showEndShift') == 'true') {
+            $this->showEndShiftModal = true;
+        }
+
+        $this->checkActiveShift();
 
         // Fix: Recalculate total if cart has items (persisted in session)
         if(!empty($this->cart)) {
             $this->calculateTotal();
         }
+    }
+
+    public function checkActiveShift()
+    {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        if (!$user) return;
+        
+        // If there's an active or paused shift for this user, they can proceed
+        $activeShift = \App\Models\Shift::where('user_id', $user->id)
+                        ->whereIn('status', ['active', 'paused'])
+                        ->first();
+
+        if (!$activeShift) {
+            $this->requiresShiftStart = true;
+        } else {
+            $this->requiresShiftStart = false;
+            // If it was paused, automatically resume it upon login/mounting POS
+            if ($activeShift->status === 'paused') {
+                $activeShift->update(['status' => 'active']);
+            }
+        }
+    }
+
+    public function startShift()
+    {
+        $this->validate([
+            'shiftStartingCash' => 'required|numeric|min:0'
+        ], [
+            'shiftStartingCash.required' => 'يرجى إدخال مبلغ الدرج الافتتاحي',
+            'shiftStartingCash.numeric' => 'يجب أن يكون المبلغ رقماً',
+            'shiftStartingCash.min' => 'لا يمكن أن يكون المبلغ بالسالب',
+        ]);
+
+        \App\Models\Shift::create([
+            'user_id' => auth()->id(),
+            'store_id' => \App\Services\StoreService::getStoreOwnerId(),
+            'starting_cash' => $this->shiftStartingCash,
+            'start_time' => now(),
+            'status' => 'active'
+        ]);
+
+        $this->requiresShiftStart = false;
+        $this->shiftStartingCash = "";
+    }
+
+    public function openEndShiftModal()
+    {
+        $this->shiftEndingCash = "";
+        $this->showEndShiftModal = true;
+    }
+
+    public function closeEndShiftModal()
+    {
+        $this->showEndShiftModal = false;
+    }
+
+    public function endShift()
+    {
+        $this->validate([
+            'shiftEndingCash' => 'required|numeric|min:0'
+        ], [
+            'shiftEndingCash.required' => 'يرجى إدخال مبلغ الدرج النهائي',
+            'shiftEndingCash.numeric' => 'يجب أن يكون المبلغ رقماً',
+            'shiftEndingCash.min' => 'لا يمكن أن يكون المبلغ بالسالب',
+        ]);
+
+        $activeShift = \App\Models\Shift::where('user_id', auth()->id())
+                        ->where('status', 'active')
+                        ->first();
+
+        if ($activeShift) {
+            $activeShift->update([
+                'ending_cash' => $this->shiftEndingCash,
+                'end_time' => now(),
+                'status' => 'closed'
+            ]);
+        }
+
+        $this->showEndShiftModal = false;
+        $this->requiresShiftStart = true;
     }
 
     #[Layout('layouts.app')]
@@ -134,6 +247,60 @@ class PosPage extends Component
             'categories' => $categories,
             'cartProductIds' => collect($this->cart)->pluck('id')->toArray()
         ]);
+    }
+
+    // Open Orders Interface
+    public $showOpenOrdersModal = false;
+    public $openOrders = [];
+    public $selectedOpenOrderId = null;
+
+    public function loadOpenOrders()
+    {
+        $storeId = \App\Services\StoreService::getStoreOwnerId();
+        $this->openOrders = \App\Models\Order::with('table', 'customer')
+            ->where('user_id', $storeId)
+            ->whereIn('status', ['pending', 'dining'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $this->showOpenOrdersModal = true;
+        $this->selectedOpenOrderId = null;
+    }
+
+    public function closeOpenOrdersModal()
+    {
+        $this->showOpenOrdersModal = false;
+    }
+
+    public function selectOpenOrderForPayment($orderId)
+    {
+        $this->selectedOpenOrderId = $orderId;
+        $order = \App\Models\Order::find($orderId);
+        if ($order) {
+            $this->paidAmount = $order->total_price;
+            $this->total = $order->total_price;
+        }
+    }
+
+    public function payOpenOrder()
+    {
+        $order = \App\Models\Order::find($this->selectedOpenOrderId);
+        if ($order) {
+            if ($this->paymentMethod === 'cash' && $this->paidAmount < $order->total_price) {
+                session()->flash('open_order_error', 'المبلغ المدفوع أقل من الإجمالي!');
+                return;
+            }
+
+            $order->update([
+                'status' => 'served',
+                'paid_amount' => $this->paidAmount,
+                'change_amount' => max(0, $this->paidAmount - $order->total_price),
+                'payment_method' => $this->paymentMethod,
+            ]);
+            
+            $this->lastOrderId = $order->id;
+            $this->closeOpenOrdersModal();
+            $this->showSuccessModal = true;
+        }
     }
 
     public function setCategory($id)
@@ -334,7 +501,22 @@ class PosPage extends Component
         foreach($this->cart as $item) {
             $this->total += $item['price'] * $item['quantity'];
         }
+        
+        if ($this->orderType === 'delivery') {
+            $this->total += (float)$this->deliveryFee;
+        }
+
         $this->updatedPaidAmount();
+    }
+
+    public function updatedOrderType()
+    {
+        $this->calculateTotal();
+    }
+
+    public function updatedDeliveryFee()
+    {
+        $this->calculateTotal();
     }
 
     public $showSuccessModal = false;
@@ -349,13 +531,25 @@ class PosPage extends Component
             return;
         }
 
-        if ($this->paymentMethod === 'cash' && $this->paidAmount < $this->total) {
+        if ($this->orderType === 'table' && empty($this->selectedTableId)) {
+            session()->flash('error', 'يرجى تحديد الطاولة!');
+            return;
+        }
+
+        if ($this->orderType === 'delivery' && (empty($this->customerPhone) || empty($this->customerName))) {
+            session()->flash('error', 'يرجى إدخال بيانات العميل (الهاتف والاسم) للتوصيل!');
+            return;
+        }
+
+        $isDraft = in_array($this->orderType, ['table', 'free_seating']) && floatval($this->paidAmount) == 0;
+
+        if (!$isDraft && $this->paymentMethod === 'cash' && $this->paidAmount < $this->total) {
             session()->flash('error', 'المبلغ المدفوع أقل من الإجمالي!');
             return;
         }
 
         // DB Transaction to ensure data integrity
-        \Illuminate\Support\Facades\DB::transaction(function () {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($isDraft) {
             // Determine Store Owner ID
             $userId = auth()->id();
             $storeOwnerId = auth()->user()->role === 'super_admin' ? $userId : (auth()->user()->created_by ?? $userId);
@@ -373,17 +567,44 @@ class PosPage extends Component
                 $finalCustomerId = $customer->id;
             }
 
-            // Create Order
-            $order = \App\Models\Order::create([
-                'user_id' => $storeOwnerId,
-                'customer_id' => $finalCustomerId, // Linked Customer
-                'status' => 'served', // Direct sale
-                'total_price' => $this->total,
-                'payment_method' => $this->paymentMethod,
-                'source' => 'pos', 
-                'paid_amount' => $this->paidAmount,
-                'change_amount' => $this->changeAmount,
-            ]);
+            // Handle Existing Table Order
+            $order = null;
+            if ($this->orderType === 'table' && $this->selectedTableId) {
+                $order = \App\Models\Order::where('table_id', $this->selectedTableId)
+                                          ->where('status', 'pending')
+                                          ->where('user_id', $storeOwnerId)
+                                          ->first();
+            }
+
+            $orderStatus = $isDraft ? 'pending' : 'served';
+
+            if ($order) {
+                // Append to existing Order
+                $order->update([
+                    'total_price' => $order->total_price + $this->total,
+                    // If it's being paid now, update status and payment details
+                    'status' => $orderStatus,
+                    'payment_method' => $isDraft ? $order->payment_method : $this->paymentMethod,
+                    'paid_amount' => $isDraft ? $order->paid_amount : $this->paidAmount,
+                    'change_amount' => $isDraft ? $order->change_amount : $this->changeAmount,
+                ]);
+            } else {
+                // Create New Order
+                $order = \App\Models\Order::create([
+                    'user_id' => $storeOwnerId,
+                    'customer_id' => $finalCustomerId, // Linked Customer
+                    'status' => $orderStatus, 
+                    'type' => $this->orderType,
+                    'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
+                    'total_price' => $this->total,
+                    'payment_method' => $isDraft ? null : $this->paymentMethod,
+                    'source' => 'pos', 
+                    'paid_amount' => $isDraft ? 0 : $this->paidAmount,
+                    'change_amount' => $isDraft ? 0 : $this->changeAmount,
+                    'delivery_fee' => $this->orderType === 'delivery' ? $this->deliveryFee : 0,
+                    'delivery_man_id' => $this->orderType === 'delivery' ? $this->selectedDeliveryManId : null,
+                ]);
+            }
 
             // Create Order Product Sizes (Pivot Table)
             foreach ($this->cart as $item) {
@@ -418,11 +639,95 @@ class PosPage extends Component
             $this->lastOrderId = $order->id;
         });
 
-        // Don't reset cart here immediately, wait for user confirmation or new order
-        // But to prevent double submit we might want to clear or lock. 
-        // Requirement says: "When he creates the order... asks him if he wants to return to products"
-        // So successful state should be shown.
         $this->showSuccessModal = true;
+    }
+
+    // Merge Tables Functionality
+    public $showMergeModal = false;
+    public $mergeSourceOrderId = null;
+    public $mergeTargetTableId = null;
+
+    public function openMergeModal($orderId)
+    {
+        $this->mergeSourceOrderId = $orderId;
+        $this->mergeTargetTableId = null;
+        $this->showMergeModal = true;
+        // Close OpenOrdersModal while merging
+        $this->showOpenOrdersModal = false; 
+    }
+
+    public function closeMergeModal()
+    {
+        $this->showMergeModal = false;
+        $this->mergeSourceOrderId = null;
+        $this->mergeTargetTableId = null;
+        // Re-open previous modal
+        $this->loadOpenOrders();
+        $this->showOpenOrdersModal = true;
+    }
+
+    public function mergeTable()
+    {
+        $this->validate([
+            'mergeTargetTableId' => 'required|exists:tables,id'
+        ], [
+            'mergeTargetTableId.required' => 'يرجى اختيار طاولة للدمج إليها.'
+        ]);
+
+        $sourceOrder = \App\Models\Order::find($this->mergeSourceOrderId);
+        if (!$sourceOrder || $sourceOrder->type !== 'table') {
+            session()->flash('merge_error', 'طلب المصدر غير صالح للدمج.');
+            return;
+        }
+
+        if ($sourceOrder->table_id == $this->mergeTargetTableId) {
+            session()->flash('merge_error', 'لا يمكن دمج الطاولة مع نفسها.');
+            return;
+        }
+
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $storeOwnerId = $user->role === 'super_admin' ? $user->id : ($user->getAttribute('created_by') ?? $user->id);
+
+        // Find Target Order (if exists and pending)
+        $targetOrder = \App\Models\Order::where('table_id', $this->mergeTargetTableId)
+            ->where('status', 'pending')
+            ->where('user_id', $storeOwnerId)
+            ->first();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($sourceOrder, $targetOrder) {
+            if ($targetOrder) {
+                // Target has an active order, transfer items and update totals
+                foreach ($sourceOrder->items as $item) {
+                    \Illuminate\Support\Facades\DB::table('order_product_sizes')->insert([
+                        'order_id' => $targetOrder->id,
+                        'product_size_id' => $item->pivot->product_size_id,
+                        'quantity' => $item->pivot->quantity,
+                        'price' => $item->pivot->price,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+                $targetOrder->update([
+                    'total_price' => $targetOrder->total_price + $sourceOrder->total_price
+                ]);
+                $sourceOrder->items()->detach(); // clear items from source
+                $sourceOrder->delete(); // delete the empty source order
+            } else {
+                // Target table is empty, simply move the table ID
+                $sourceOrder->update([
+                    'table_id' => $this->mergeTargetTableId
+                ]);
+            }
+        });
+
+        $this->showMergeModal = false;
+        $this->mergeSourceOrderId = null;
+        $this->mergeTargetTableId = null;
+        
+        $this->loadOpenOrders();
+        $this->showOpenOrdersModal = true;
+        session()->flash('open_order_success', 'تم دمج الطاولات بنجاح.');
     }
 
     public function startNewOrder()
@@ -436,6 +741,66 @@ class PosPage extends Component
         $this->selectedCustomerId = null;
         $this->lastOrderId = null;
         $this->showSuccessModal = false;
-        $this->activeTab = 'products'; // Return to products
+        $this->orderType = 'takeaway';
+        $this->selectedTableId = null;
+        $this->deliveryFee = 0;
+        $this->selectedDeliveryManId = null;
+        $this->activeTab = 'products';
+    }
+
+    public function selectTable($tableId)
+    {
+        if ($this->selectedTableId == $tableId) {
+            $this->selectedTableId = null; // Toggle Off
+            $this->startNewOrder();
+            $this->orderType = 'table';
+            return;
+        }
+
+        $this->selectedTableId = $tableId;
+        $this->orderType = 'table';
+        
+        // Find if this table has a pending order
+        $order = \App\Models\Order::with(['items.product', 'items.inventory', 'customer'])
+            ->where('table_id', $tableId)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($order) {
+            $this->cart = [];
+            foreach ($order->items as $item) {
+                $product = $item->product;
+                if (!$product) continue;
+                
+                $this->cart[] = [
+                    'cart_item_id' => $product->id . '-' . $item->pivot->product_size_id,
+                    'id' => $product->id,
+                    'size_id' => $item->pivot->product_size_id, 
+                    'name' => $product->name,
+                    'size_name' => $item->size ?? 'Standard',
+                    'price' => floatval($item->pivot->price),
+                    'quantity' => $item->pivot->quantity,
+                    'cover' => $product->cover
+                ];
+            }
+            
+            if ($order->customer) {
+                $this->customerName = $order->customer->name;
+                $this->customerPhone = $order->customer->phone;
+                $this->selectedCustomerId = $order->customer->id;
+            }
+            
+            $this->total = $order->total_price;
+            $this->paidAmount = $order->paid_amount;
+            $this->changeAmount = $order->change_amount;
+            $this->paymentMethod = $order->payment_method ?? 'cash';
+        } else {
+            // Empty Table -> Clear cart but keep table selected
+            $this->cart = [];
+            $this->calculateTotal();
+            $this->customerPhone = '';
+            $this->customerName = '';
+            $this->selectedCustomerId = null;
+        }
     }
 }

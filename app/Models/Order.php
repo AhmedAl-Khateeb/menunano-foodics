@@ -16,8 +16,25 @@ class Order extends Model
         'total_price',
         'payment_method',
         'payment_proof',
+        'source',
+        'paid_amount',
+        'change_amount',
         'status',
+        'type',
+        'table_id',
+        'delivery_fee',
+        'delivery_man_id',
     ];
+
+    public function table()
+    {
+        return $this->belongsTo(Table::class);
+    }
+
+    public function deliveryMan()
+    {
+        return $this->belongsTo(DeliveryMan::class);
+    }
 
     public function customer()
     {

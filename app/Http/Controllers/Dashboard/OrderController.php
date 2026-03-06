@@ -13,12 +13,22 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        $orders = Order::filter()
-            ->where('user_id', auth()->id())
-            ->latest()
-            ->paginate(15);
+        $query = Order::query()
+            ->filter()
+            ->where('user_id', auth()->id());
+            
+        if ($request->has('source')) {
+            $query->where('source', $request->source);
+        }
+        
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $orders = $query->latest()->paginate(15);
+        
         return view('orders.index', compact('orders'));
     }
 

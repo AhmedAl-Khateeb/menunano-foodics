@@ -13,48 +13,49 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-     public function register(RegisterRequest $request)
-{
-    $imagePath = null;
-    if ($request->hasFile('receipt_image')) {
-        $imagePath = $request->file('receipt_image')->store('users', 'public');
-    }
-    $package = Package::find($request->package_id);
-    $status = 0;
-    $subscriptionStart = null;
-    $subscriptionEnd = null;
-
-    if ($package) {
-        if ($package->price == 0) {
-            $status = 1;
-            $subscriptionStart = now();
-            $subscriptionEnd = now()->addDays($package->duration);
+    public function register(RegisterRequest $request)
+    {
+        $imagePath = null;
+        if ($request->hasFile('receipt_image')) {
+            $imagePath = $request->file('receipt_image')->store('users', 'public');
         }
+        $package = Package::find($request->package_id);
+        $status = 0;
+        $subscriptionStart = null;
+        $subscriptionEnd = null;
+
+        if ($package) {
+            if ($package->price == 0) {
+                $status = 1;
+                $subscriptionStart = now();
+                $subscriptionEnd = now()->addDays($package->duration);
+            }
+        }
+
+
+        // إنشاء المستخدم
+        $user = User::create([
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'name' => $request->store_name,
+            'store_name' => $request->store_name,
+            'password' => Hash::make($request->password),
+            'image' => $imagePath,
+            'package_id' => $request->package_id,
+            'status' => $status,
+            'subscription_start' => $subscriptionStart,
+            'subscription_end' => $subscriptionEnd,
+            'role' => 'admin',
+        ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return ApiResponse::success([
+            'user' => $user,
+            'access_token' => $token,
+            'token_type' => 'bearer',
+        ], 'registered successfully');
     }
-
-
-    // إنشاء المستخدم
-    $user = User::create([
-        'email' => $request->email,
-        'phone' => $request->phone,
-        'store_name' => $request->store_name,
-        'password' => Hash::make($request->password),
-        'image' => $imagePath,
-        'package_id' => $request->package_id,
-        'status' => $status,
-        'subscription_start' => $subscriptionStart,
-        'subscription_end' => $subscriptionEnd,
-        'role' => 'admin',
-    ]);
-
-    $token = $user->createToken('auth_token')->plainTextToken;
-
-    return ApiResponse::success([
-        'user' => $user,
-        'access_token' => $token,
-        'token_type' => 'bearer',
-    ], 'registered successfully');
-}
 
 
 
@@ -69,16 +70,16 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
-        
+
         $redirectTo = null;
 
-    if ($user->role === 'admin' && $user->status == 1) {
-        $redirectTo = route('dashboard');
-    }
+        if ($user->role === 'admin' && $user->status == 1) {
+            $redirectTo = route('dashboard');
+        }
 
-    if ($user->role === 'super_admin') {
-        $redirectTo = route('admins.index');
-    }
+        if ($user->role === 'super_admin') {
+            $redirectTo = route('admins.index');
+        }
 
         return ApiResponse::success([
             [
@@ -87,7 +88,7 @@ class AuthController extends Controller
                 'redirect_to'  => $redirectTo,
                 'token_type' => 'bearer',
             ]
-        ],'logged in successfully');
+        ], 'logged in successfully');
     }
 
 
@@ -115,4 +116,3 @@ class AuthController extends Controller
         return ApiResponse::message('Password successfully changed');
     }
 }
-

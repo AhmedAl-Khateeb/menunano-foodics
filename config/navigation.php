@@ -56,6 +56,7 @@ return [
             'route' => 'dashboard',
             'active_routes' => ['dashboard'],
         ],
+
         // E-Menu Module
         [
             'title' => 'المنيو الإلكتروني',
@@ -85,12 +86,49 @@ return [
                     'route' => 'sliders.index',
                     'active_routes' => ['sliders.*'],
                 ],
-                // Orders
+            ]
+        ],
+        // Orders Group
+        [
+            'title' => 'الطلبات ونقاط البيع',
+            'icon' => 'fas fa-shopping-bag',
+            'type' => 'dropdown',
+            'id' => 'orders-menu',
+            'active_routes' => ['pos.index', 'orders.*'],
+            'children' => [
                 [
-                    'title' => 'الطلبات',
+                    'title' => 'نقطة البيع (POS)',
+                    'icon' => 'fas fa-cash-register',
+                    'route' => 'pos.index',
+                    'active_routes' => ['pos.index'],
+                ],
+                [
+                    'title' => 'كل الطلبات',
                     'icon' => 'far fa-circle',
                     'route' => 'orders.index',
                     'active_routes' => ['orders.index', 'orders.show'],
+                    'query' => [],
+                ],
+                [
+                    'title' => 'طلبات المنيو',
+                    'icon' => 'far fa-circle',
+                    'route' => 'orders.index',
+                    'active_routes' => ['orders.index'],
+                    'query' => ['source' => 'menu'],
+                ],
+                [
+                    'title' => 'طلبات نقاط البيع',
+                    'icon' => 'far fa-circle',
+                    'route' => 'orders.index',
+                    'active_routes' => ['orders.index'],
+                    'query' => ['source' => 'pos'],
+                ],
+                [
+                    'title' => 'طلبات الطاولات',
+                    'icon' => 'far fa-circle',
+                    'route' => 'orders.index',
+                    'active_routes' => ['orders.index'],
+                    'query' => ['type' => 'table'],
                 ],
             ]
         ],
@@ -102,12 +140,6 @@ return [
             'id' => 'users-menu',
             'active_routes' => ['users.*', 'roles.*'],
             'children' => [
-                [
-                    'title' => 'أصحاب المتجر',
-                    'icon' => 'far fa-circle',
-                    'route' => 'users.store-admins',
-                    'active_routes' => ['users.store-admins'],
-                ],
                 [
                     'title' => 'الموظفين (الكاشير)',
                     'icon' => 'far fa-circle',
@@ -125,6 +157,12 @@ return [
                     'icon' => 'far fa-circle',
                     'route' => 'roles.index',
                     'active_routes' => ['roles.*'],
+                ],
+                [
+                    'title' => 'عمال التوصيل',
+                    'icon' => 'far fa-circle',
+                    'route' => 'delivery_men.index',
+                    'active_routes' => ['delivery_men.*'],
                 ],
             ]
         ],
@@ -166,10 +204,34 @@ return [
                     'route' => 'inventory.movements.index',
                     'active_routes' => ['inventory.movements.*'],
                 ],
+                [
+                    'title' => 'تسوية وجرد المخزون',
+                    'icon' => 'far fa-circle text-warning',
+                    'route' => 'inventory.reconcile',
+                    'active_routes' => ['inventory.reconcile'],
+                ],
+            ]
+        ],
+
+        // Purchases Module
+        [
+            'title' => 'المشتريات',
+            'icon' => 'fas fa-shopping-cart',
+            'type' => 'dropdown',
+            'id' => 'purchases-menu',
+            'active_routes' => ['suppliers.*', 'purchases.*'],
+            'children' => [
+                [
+                    'title' => 'الموردين',
+                    'icon' => 'far fa-circle',
+                    'route' => 'suppliers.index',
+                    'active_routes' => ['suppliers.*'],
+                ],
             ]
         ],
 
         // Reports Group
+
         [
             'title' => 'التقارير',
             'icon' => 'fas fa-chart-line',

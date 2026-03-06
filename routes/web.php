@@ -109,11 +109,19 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings/{setting}', [SettingController::class, 'update'])->name('settings.update');
 
+    // Specific User Routes (MUST be defined before resource route)
+    Route::get('/users/staff', function() { return redirect()->route('under.development'); })->name('users.staff');
+    Route::get('/users/customers', [\App\Http\Controllers\Dashboard\CustomerController::class, 'index'])->name('users.customers');
+
     // User Management
     Route::resource('users', UserController::class);
     Route::resource('roles', RoleController::class);
     Route::resource('payment-methods', PaymentMethodController::class);
-    
+    Route::resource('delivery_men', \App\Http\Controllers\DeliveryManController::class)->except(['show']);
+    Route::resource('suppliers', \App\Http\Controllers\SupplierController::class)->except(['show']);
+    Route::resource('purchases', \App\Http\Controllers\PurchaseInvoiceController::class)->except(['edit', 'update']);
+
+
     // Impersonation
     Route::get('/impersonate/leave', [\App\Http\Controllers\ImpersonationController::class, 'leave'])->name('impersonate.leave');
     Route::get('/impersonate/{id}', [\App\Http\Controllers\ImpersonationController::class, 'impersonate'])->name('impersonate');
@@ -127,10 +135,17 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     })->name('under.development');
 
     // Placeholders for new structure
-    // Users
-    Route::get('/users/store-admins', function() { return redirect()->route('under.development'); })->name('users.store-admins');
-    Route::get('/users/staff', function() { return redirect()->route('under.development'); })->name('users.staff');
-    Route::get('/users/customers', function() { return redirect()->route('under.development'); })->name('users.customers');
+
+    // Shift Pause Route (Called via AJAX on logout)
+    Route::post('/shifts/pause', function() {
+        $activeShift = \App\Models\Shift::where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->first();
+        if ($activeShift) {
+            $activeShift->update(['status' => 'paused']);
+        }
+        return response()->json(['success' => true]);
+    })->name('shifts.pause');
 
     // Orders
     Route::get('/orders/new', function() { return redirect()->route('under.development'); })->name('orders.new');
@@ -144,6 +159,7 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
 
     // Inventory & Items Module
     Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/reconcile', \App\Livewire\StockReconciliation::class)->name('reconcile');
         // Ready Items
         Route::get('/ready', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'index'])->name('ready.index');
         Route::get('/ready/create', [\App\Http\Controllers\Dashboard\ReadyItemController::class, 'create'])->name('ready.create');
