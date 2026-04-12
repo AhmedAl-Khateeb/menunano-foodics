@@ -1,385 +1,332 @@
 @extends('layouts.app')
 @section('title', 'Dashboard')
+
 @section('content_header')
     <h1>مرحبا بك في لوحة التحكم الخاصة بك</h1>
 @stop
 
 @section('main-content')
-@php
-    $qrBaseUrl = env('QR_BASE_URL', config('app.url'));
-    $storeName = auth()->user()->store_name;
-    $storeUrl = $qrBaseUrl . '/' . $storeName;
-@endphp
+    <div class="container-fluid dashboard-page">
 
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-lg border-0 rounded-3">
-                <div class="card-header bg-gradient-primary text-white text-center py-4">
-                    <h3 class="mb-0">
-                        <i class="fas fa-store ml-2"></i>
-                        متجرك الإلكتروني
-                    </h3>
-                </div>
+        {{-- الجزء العلوي --}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="dashboard-top-bar">
+                    <div class="dashboard-top-content">
 
-                <div class="card-body text-center py-5">
-                    <!-- Store Link Section -->
-                    <div class="mb-5">
-                        <h4 class="text-primary mb-3">
-                            <i class="fas fa-link ml-2"></i>
-                            رابط متجرك الخاص
-                        </h4>
-                        <div class="input-group mb-3" dir="ltr">
-                            <div class="input-group-prepend">
-                                <button class="btn btn-outline-primary" type="button"
-                                        onclick="copyToClipboard()" title="نسخ الرابط">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                                <a href="{{ $storeUrl }}" target="_blank"
-                                   class="btn btn-primary" title="زيارة المتجر">
-                                    <i class="fas fa-external-link-alt"></i>
+                        {{-- اليمين: العنوان + التبويبات --}}
+                        <div class="dashboard-top-right">
+                            <h2 class="dashboard-welcome">مرحبًا، {{ auth()->user()->name }}</h2>
+
+                            <div class="dashboard-tabs">
+                                <a href="#" class="active">عام</a>
+                                <a href="#">الفروع</a>
+                                <a href="#">المخزون</a>
+                                <a href="#">مركز الاتصال</a>
+                            </div>
+                        </div>
+
+                        {{-- الشمال: الفلاتر + التاريخ --}}
+                        <div class="dashboard-top-left">
+                            <div class="btn-group filter-group" role="group">
+                                <a href="{{ route('dashboard', ['filter' => 'day']) }}"
+                                    class="btn btn-filter {{ request('filter', 'day') == 'day' ? 'active' : '' }}">
+                                    اليوم
+                                </a>
+
+                                <a href="{{ route('dashboard', ['filter' => 'week']) }}"
+                                    class="btn btn-filter {{ request('filter') == 'week' ? 'active' : '' }}">
+                                    الأسبوع
+                                </a>
+
+                                <a href="{{ route('dashboard', ['filter' => 'month']) }}"
+                                    class="btn btn-filter {{ request('filter') == 'month' ? 'active' : '' }}">
+                                    الشهر
                                 </a>
                             </div>
-                            <input type="text" class="form-control form-control-lg text-center"
-                                   id="storeUrl" value="{{ $storeUrl }}" readonly>
-                        </div>
-                        <small class="text-muted">يمكنك مشاركة هذا الرابط مع عملائك</small>
-                    </div>
 
-                    <!-- QR Code Section -->
-                    <div class="mb-4">
-                        <h4 class="text-primary mb-3">
-                            <i class="fas fa-qrcode ml-2"></i>
-                            رمز QR لمتجرك
-                        </h4>
-                        <div class="qr-container mb-3">
-                            <div id="qrcode" class="d-inline-block p-3 bg-white rounded shadow-sm"></div>
-                        </div>
-                        <div class="qr-actions">
-                            <button class="btn btn-success mx-2" onclick="downloadQR()" title="تحميل QR Code">
-                                <i class="fas fa-download ml-2"></i>
-                                تحميل الكود
-                            </button>
-                            <div class="btn-group mx-2" role="group">
-                                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="fas fa-share-alt ml-2"></i>
-                                    مشاركة
-                                </button>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="#" onclick="shareWhatsApp()">
-                                        <i class="fab fa-whatsapp text-success ml-2"></i>
-                                        واتساب
-                                    </a>
-                                    <a class="dropdown-item" href="#" onclick="shareTelegram()">
-                                        <i class="fab fa-telegram text-info ml-2"></i>
-                                        تيليجرام
-                                    </a>
-                                    <a class="dropdown-item" href="#" onclick="shareEmail()">
-                                        <i class="fas fa-envelope text-danger ml-2"></i>
-                                        البريد الإلكتروني
-                                    </a>
-                                    <a class="dropdown-item" href="#" onclick="copyStoreLink()">
-                                        <i class="fas fa-copy text-primary ml-2"></i>
-                                        نسخ الرابط
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <small class="text-muted d-block mt-2">امسح الكود باستخدام كاميرا الهاتف للوصول السريع لمتجرك</small>
-                    </div>
-                </div>
-
-                <div class="card-footer bg-light text-center py-3">
-                    <div class="row">
-                        <div class="col-4">
-                            <div class="text-primary">
-                                <i class="fas fa-mobile-alt fa-2x mb-2"></i>
-                                <p class="small mb-0">متوافق مع الهواتف</p>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="text-success">
-                                <i class="fas fa-shield-alt fa-2x mb-2"></i>
-                                <p class="small mb-0">آمن ومحمي</p>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="text-info">
-                                <i class="fas fa-clock fa-2x mb-2"></i>
-                                <p class="small mb-0">متاح 24/7</p>
-                            </div>
+                            <input type="date" class="form-control date-filter"
+                                value="{{ request('date', now()->toDateString()) }}">
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Toast for notifications -->
-<div class="toast-container position-fixed bottom-0 left-0 p-3">
-    <div id="toast" class="toast hide" role="alert">
-        <div class="toast-header">
-            <i class="fas fa-check-circle text-success ml-2"></i>
-            <strong class="ml-auto">نجح</strong>
-            <button type="button" class="mr-2 mb-1 close" data-dismiss="toast">
-                <span>&times;</span>
-            </button>
+        {{-- الكروت --}}
+        <div class="row">
+            @foreach ($orderCards as $card)
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                    <div class="card dashboard-stat-card shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="stat-header">
+                                <h6>{{ $card['title'] }}</h6>
+                                <h3>{{ $card['value'] }}</h3>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="{{ $card['key'] }}"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
         </div>
-        <div class="toast-body" id="toast-message">
-            تم نسخ الرابط بنجاح!
-        </div>
     </div>
-</div>
 
-<style>
-.bg-gradient-primary {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-}
-
-.qr-container {
-    border: 2px dashed #dee2e6;
-    border-radius: 10px;
-    padding: 20px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-}
-
-#qrcode {
-    border-radius: 8px;
-}
-
-.card {
-    transition: transform 0.2s ease-in-out;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.btn {
-    transition: all 0.3s ease;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.input-group input {
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-}
-
-.card-footer .col-4:hover {
-    transform: scale(1.05);
-    transition: transform 0.2s ease;
-}
-
-/* تأكد من عرض الأزرار بشكل صحيح في RTL */
-.input-group[dir="ltr"] .input-group-prepend .btn {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.input-group[dir="ltr"] .input-group-prepend .btn:last-child {
-    border-left: 0;
-}
-
-.input-group[dir="ltr"] input {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-@media (max-width: 768px) {
-    .qr-actions .btn, .qr-actions .btn-group {
-        display: block;
-        width: 100%;
-        margin: 5px 0;
-    }
-
-    .qr-actions .btn-group .btn {
-        width: 100%;
-    }
-
-    .input-group[dir="ltr"] {
-        flex-direction: column;
-    }
-
-    .input-group[dir="ltr"] .input-group-prepend {
-        width: 100%;
-        margin-bottom: 10px;
-        flex-direction: row;
-    }
-
-    .input-group[dir="ltr"] .input-group-prepend .btn {
-        flex: 1;
-        border-radius: 0.25rem;
-        margin-left: 5px;
-    }
-    
-    .input-group[dir="ltr"] .input-group-prepend .btn:first-child {
-        margin-left: 0;
-    }
-
-    .input-group[dir="ltr"] input {
-        border-radius: 0.25rem;
-    }
-}
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script>
-let qrCode;
-
-// Initialize QR Code
-document.addEventListener('DOMContentLoaded', function() {
-    const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="sr-only">جاري التحميل...</span></div>';
-
-    setTimeout(() => {
-        qrContainer.innerHTML = '';
-        qrCode = new QRCode(qrContainer, {
-            text: "{{ $storeUrl }}",
-            width: 200,
-            height: 200,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-    }, 500);
-});
-
-// Copy URL to clipboard
-function copyToClipboard() {
-    const urlInput = document.getElementById('storeUrl');
-    urlInput.select();
-    urlInput.setSelectionRange(0, 99999);
-
-    try {
-        document.execCommand('copy');
-        showToast('تم نسخ الرابط بنجاح!', 'success');
-    } catch (err) {
-        // Fallback for modern browsers
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(urlInput.value).then(() => {
-                showToast('تم نسخ الرابط بنجاح!', 'success');
-            }).catch(() => {
-                showToast('فشل في نسخ الرابط', 'error');
-            });
-        } else {
-            showToast('فشل في نسخ الرابط', 'error');
+    <style>
+        .dashboard-page {
+            direction: rtl;
         }
-    }
-}
 
-// Download QR Code
-function downloadQR() {
-    const qrCanvas = document.querySelector('#qrcode canvas');
-    if (qrCanvas) {
-        const link = document.createElement('a');
-        link.download = 'store-qr-code.png';
-        link.href = qrCanvas.toDataURL();
-        link.click();
-        showToast('تم تحميل الكود بنجاح!', 'success');
-    } else {
-        showToast('فشل في تحميل الكود', 'error');
-    }
-}
+        .dashboard-top-bar {
+            background: #eef1f5;
+            border-radius: 14px;
+            padding: 24px 28px;
+        }
 
-// Share via WhatsApp
-function shareWhatsApp() {
-    const text = encodeURIComponent(`زر متجري الإلكتروني 🛍️\n\nيمكنك زيارة متجري من خلال الرابط التالي:\n{{ $storeUrl }}\n\nأو امسح الكود المرفق للوصول السريع 📱`);
-    const url = `https://wa.me/?text=${text}`;
-    window.open(url, '_blank');
-    showToast('تم فتح واتساب للمشاركة!', 'success');
-}
+        .dashboard-top-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
 
-// Share via Telegram
-function shareTelegram() {
-    const text = encodeURIComponent(`زر متجري الإلكتروني 🛍️\n\nيمكنك زيارة متجري من خلال الرابط التالي:\n{{ $storeUrl }}`);
-    const url = `https://t.me/share/url?url={{ urlencode($storeUrl) }}&text=${text}`;
-    window.open(url, '_blank');
-    showToast('تم فتح تيليجرام للمشاركة!', 'success');
-}
+        .dashboard-top-right {
+            text-align: right;
+        }
 
-// Share via Email
-function shareEmail() {
-    const subject = encodeURIComponent('زر متجري الإلكتروني 🛍️');
-    const body = encodeURIComponent(`السلام عليكم ورحمة الله وبركاته
+        .dashboard-welcome {
+            font-size: 42px;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 12px;
+        }
 
-أدعوك لزيارة متجري الإلكتروني الجديد!
+        .dashboard-tabs {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 28px;
+            flex-wrap: wrap;
+        }
 
-رابط المتجر: {{ $storeUrl }}
+        .dashboard-tabs a {
+            text-decoration: none;
+            color: #666;
+            font-size: 18px;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 6px;
+        }
 
-يمكنك أيضاً استخدام كاميرا هاتفك لمسح الكود المرفق للوصول السريع إلى المتجر.
+        .dashboard-tabs a.active {
+            color: #7a69ac;
+        }
 
-شكراً لك ❤️`);
+        .dashboard-tabs a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            right: 0;
+            width: 100%;
+            height: 2px;
+            background: #7a69ac;
+            border-radius: 3px;
+        }
 
-    const url = `mailto:?subject=${subject}&body=${body}`;
-    window.location.href = url;
-    showToast('تم فتح تطبيق البريد الإلكتروني!', 'success');
-}
+        .dashboard-top-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
 
-// Copy store link with formatted text
-function copyStoreLink() {
-    const shareText = `زر متجري الإلكتروني 🛍️
+        .filter-group {
+            direction: rtl;
+        }
 
-رابط المتجر: {{ $storeUrl }}
+        .btn-filter {
+            background: #fff;
+            border: 1px solid #d9dde3;
+            color: #555;
+            min-width: 78px;
+            font-weight: 600;
+            border-radius: 0;
+            box-shadow: none !important;
+        }
 
-يمكنك زيارة المتجر مباشرة أو مسح الكود للوصول السريع!`;
+        .btn-filter.active {
+            background: #4a4f57;
+            color: #fff;
+            border-color: #4a4f57;
+        }
 
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(shareText).then(() => {
-            showToast('تم نسخ نص المشاركة مع الرابط!', 'success');
-        }).catch(() => {
-            fallbackCopy(shareText);
+        .filter-group .btn:first-child {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        .filter-group .btn:last-child {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .date-filter {
+            width: 150px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid #d9dde3;
+            box-shadow: none !important;
+        }
+
+        .dashboard-stat-card {
+            border-radius: 18px;
+            background: #fff;
+            min-height: 250px;
+        }
+
+        .dashboard-stat-card .card-body {
+            padding: 20px;
+        }
+
+        .stat-header {
+            text-align: right;
+            margin-bottom: 14px;
+        }
+
+        .stat-header h6 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .stat-header h3 {
+            font-size: 52px;
+            font-weight: 700;
+            color: #222;
+            line-height: 1;
+            margin: 0;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 140px;
+        }
+
+        .chart-wrapper canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-welcome {
+                font-size: 30px;
+            }
+
+            .dashboard-tabs a {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-top-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dashboard-top-right {
+                width: 100%;
+            }
+
+            .dashboard-tabs {
+                justify-content: flex-start;
+                gap: 18px;
+            }
+
+            .dashboard-top-left {
+                width: 100%;
+            }
+
+            .stat-header h3 {
+                font-size: 38px;
+            }
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function createMiniChart(chartId, data, labels) {
+            const element = document.getElementById(chartId);
+            if (!element) return;
+
+            const ctx = element.getContext('2d');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        borderColor: '#7E6AA8',
+                        backgroundColor: 'rgba(126, 106, 168, 0.25)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#7E6AA8',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: '#ececec',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#777',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f1f1f1',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#777',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const orderCards = @json($orderCards);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            orderCards.forEach(card => {
+                createMiniChart(card.key, card.data, card.labels);
+            });
         });
-    } else {
-        fallbackCopy(shareText);
-    }
-}
-
-// Fallback copy function for older browsers
-function fallbackCopy(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-9999px';
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-        document.execCommand('copy');
-        showToast('تم نسخ نص المشاركة مع الرابط!', 'success');
-    } catch (err) {
-        showToast('فشل في نسخ النص', 'error');
-    }
-    document.body.removeChild(textArea);
-}
-
-// Show toast notification
-function showToast(message, type = 'success') {
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toast-message');
-    const toastHeader = toast.querySelector('.toast-header');
-
-    // Update message
-    toastMessage.textContent = message;
-
-    // Update icon based on type
-    const icon = toastHeader.querySelector('i');
-    if (type === 'success') {
-        icon.className = 'fas fa-check-circle text-success ml-2';
-        toastHeader.querySelector('strong').textContent = 'نجح';
-    } else {
-        icon.className = 'fas fa-exclamation-circle text-danger ml-2';
-        toastHeader.querySelector('strong').textContent = 'خطأ';
-    }
-
-    // Show toast
-    $(toast).toast({
-        delay: 3000
-    }).toast('show');
-}
-</script>
-
+    </script>
 @stop
