@@ -40,7 +40,7 @@ return [
             'badge' => [
                 'type' => 'subscription_pending', // Special handler for badge logic
                 'class' => 'bg-yellow-500 text-black',
-            ]
+            ],
         ],
         [
             'title' => 'الأقسام',
@@ -65,7 +65,7 @@ return [
             'id' => 'emenu-menu',
             'active_routes' => ['categories.*', 'products.*', 'sliders.*', 'orders.*'],
             'children' => [
-                 // Categories
+                // Categories
                 [
                     'title' => 'الفئات',
                     'icon' => 'far fa-circle',
@@ -86,52 +86,64 @@ return [
                     'route' => 'sliders.index',
                     'active_routes' => ['sliders.*'],
                 ],
-            ]
+            ],
         ],
         // Orders Group
+
         [
-            'title' => 'الطلبات ونقاط البيع',
-            'icon' => 'fas fa-shopping-bag',
+            'title' => 'الطلبات',
+            'icon' => 'fas fa-shopping-cart',
             'type' => 'dropdown',
             'id' => 'orders-menu',
             'active_routes' => ['pos.index', 'orders.*'],
             'children' => [
-                [
-                    'title' => 'نقطة البيع (POS)',
-                    'icon' => 'fas fa-cash-register',
-                    'route' => 'pos.index',
-                    'active_routes' => ['pos.index'],
-                ],
+                // [
+                //     'title' => 'نقطة البيع (POS)',
+                //     'icon' => 'fas fa-cash-register',
+                //     'route' => 'pos.index',
+                //     'active_routes' => ['pos.index'],
+                // ],
                 [
                     'title' => 'كل الطلبات',
-                    'icon' => 'far fa-circle',
+                    'icon' => 'fas fa-list',
                     'route' => 'orders.index',
                     'active_routes' => ['orders.index', 'orders.show'],
-                    'query' => [],
                 ],
                 [
-                    'title' => 'طلبات المنيو',
-                    'icon' => 'far fa-circle',
-                    'route' => 'orders.index',
-                    'active_routes' => ['orders.index'],
-                    'query' => ['source' => 'menu'],
+                    'title' => 'طلبات التوصيل',
+                    'icon' => 'fas fa-motorcycle',
+                    'route' => 'orders.delivery',
+                    'active_routes' => ['orders.delivery'],
                 ],
                 [
-                    'title' => 'طلبات نقاط البيع',
-                    'icon' => 'far fa-circle',
-                    'route' => 'orders.index',
-                    'active_routes' => ['orders.index'],
-                    'query' => ['source' => 'pos'],
+                    'title' => 'طلبات الاستلام',
+                    'icon' => 'fas fa-hand-holding',
+                    'route' => 'orders.pickup',
+                    'active_routes' => ['orders.pickup'],
                 ],
                 [
-                    'title' => 'طلبات الطاولات',
-                    'icon' => 'far fa-circle',
-                    'route' => 'orders.index',
-                    'active_routes' => ['orders.index'],
-                    'query' => ['type' => 'table'],
+                    'title' => 'الطلبات المحلية',
+                    'icon' => 'fas fa-store',
+                    'route' => 'orders.local',
+                    'active_routes' => ['orders.local'],
                 ],
-            ]
+                // [
+                //     'title' => 'طلبات نقاط البيع',
+                //     'icon' => 'far fa-circle',
+                //     'route' => 'orders.index',
+                //     'active_routes' => ['orders.index'],
+                //     'query' => ['source' => 'pos'],
+                // ],
+                // [
+                //     'title' => 'طلبات الطاولات',
+                //     'icon' => 'far fa-circle',
+                //     'route' => 'orders.index',
+                //     'active_routes' => ['orders.index'],
+                //     'query' => ['type' => 'table'],
+                // ],
+            ],
         ],
+
         // Users Group
         [
             'title' => 'الأشخاص',
@@ -164,7 +176,7 @@ return [
                     'route' => 'delivery_men.index',
                     'active_routes' => ['delivery_men.*'],
                 ],
-            ]
+            ],
         ],
         // Inventory & Items Module
         [
@@ -210,7 +222,7 @@ return [
                     'route' => 'inventory.reconcile',
                     'active_routes' => ['inventory.reconcile'],
                 ],
-            ]
+            ],
         ],
 
         // Purchases Module
@@ -227,7 +239,7 @@ return [
                     'route' => 'suppliers.index',
                     'active_routes' => ['suppliers.*'],
                 ],
-            ]
+            ],
         ],
 
         // Reports Group
@@ -257,7 +269,7 @@ return [
                     'route' => 'reports.staff-performance',
                     'active_routes' => ['reports.staff-performance'],
                 ],
-            ]
+            ],
         ],
         // Settings Group
         [
@@ -267,7 +279,7 @@ return [
             'id' => 'settings-menu',
             'active_routes' => ['settings.*'],
             'children' => [
-                 [
+                [
                     'title' => 'الإعدادات العامة',
                     'icon' => 'far fa-circle',
                     'route' => 'settings.index',
@@ -297,7 +309,7 @@ return [
                     'route' => 'charges.index',
                     'active_routes' => ['charges.*'],
                 ],
-            ]
+            ],
         ],
     ],
     'cashier' => [
@@ -307,5 +319,5 @@ return [
             'route' => 'pos.index',
             'active_routes' => ['pos.*'],
         ],
-    ]
+    ],
 ];

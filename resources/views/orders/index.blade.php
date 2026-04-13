@@ -1,170 +1,179 @@
 @extends('layouts.app')
 
 @section('main-content')
-    <div class="container my-5 px-2 px-md-4">
-        <div id="clickReminder" class="alert alert-warning text-center shadow-sm mb-4" style="display: none;">
-            ⚠️ يرجى الضغط في أي مكان داخل الصفحة لمرة واحدة لتفعيل جرس إشعارات الطلبات تلقائياً.
-        </div>
+<div class="container-fluid py-4">
 
-        <div class="card shadow-lg border-0 rounded-lg overflow-hidden">
-            <div class="card-header bg-primary text-white py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 class="card-title mb-0 font-weight-bold">قائمة الطلبات الجديدة</h3>
-                    <div class="d-flex align-items-center gap-2">
-                        <button id="toggleAlarm"
-                            class="btn btn-light btn-sm rounded-pill px-3 shadow-sm border-0 d-flex align-items-center gap-2 transition-all">
-                            <i id="alarmIcon" class="fa fa-bell"></i>
-                            <span id="alarmText" class="d-none d-sm-inline">تنبيه مفعل</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-body p-0 p-md-4">
-                <div class="table-responsive d-none d-md-block">
-                    <table class="table table-hover text-center align-middle mb-0" id="ordersTable">
-                        <thead class="bg-light">
-                            <tr>
-                                <th>#</th>
-                                <th>الاسم</th>
-                                <th>الهاتف</th>
-                                <th>العنوان</th>
-                                <th>السعر</th>
-                                <th>الحالة</th>
-                                <th>نوع الدفع</th>
-                                <th>التاريخ</th>
-                                <th>الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($orders as $order)
-                                @php
-                                    $phone = preg_replace('/\D/', '', $order->phone);
-                                    if (!str_starts_with($phone, '20')) {
-                                        $phone = '20' . ltrim($phone, '0');
-                                    }
-                                @endphp
-                                <tr>
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td class="font-weight-bold text-primary">{{ $order->name }}</td>
-                                    <td>
-                                        <a href="https://wa.me/{{ $phone }}" target="_blank"
-                                            class="text-success font-weight-bold">
-                                            <i class="fab fa-whatsapp"></i> {{ $order->phone }}
-                                        </a>
-                                    </td>
-                                    <td>{{ $order->address }}</td>
-                                    <td class="font-weight-bold">{{ number_format($order->total_price, 2) }} ج.م</td>
-                                    <td>
-                                        <span
-                                            class="badge {{ $order->status == 'served' ? 'badge-success' : 'badge-danger' }} status-check py-2 px-3">
-                                            {{ $order->status == 'served' ? 'تم التوصيل' : 'قيد الانتظار' }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-info py-2 px-3">
-                                            {{ $order->payment_method == 'cash' ? 'كاش' : 'أونلاين' }}
-                                        </span>
-                                    </td>
-                                    <td>{{ $order->created_at->diffForHumans() }}</td>
-                                    <td>
-                                        <div class="d-flex gap-2 justify-content-center">
-                                            <a href="{{ route('order.show', $order->id) }}"
-                                                class="btn btn-outline-info btn-sm">عرض</a>
-                                            @if ($order->status != 'served')
-                                                <form action="{{ route('orders.serve', $order->id) }}" method="POST">
-                                                    @csrf @method('PUT')
-                                                    <button class="btn btn-success btn-sm">تم التوصيل</button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="9" class="text-center py-5 text-muted">لا توجد طلبات حالياً</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                {{-- Mobile View: Cards --}}
-                <div class="d-block d-md-none px-3 py-4">
-                    @forelse($orders as $order)
-                        @php
-                            $phone = preg_replace('/\D/', '', $order->phone);
-                            if (!str_starts_with($phone, '20')) {
-                                $phone = '20' . ltrim($phone, '0');
-                            }
-                        @endphp
-                        <div
-                            class="card mb-4 border-0 shadow-sm rounded-2xl order-card {{ $order->status != 'served' ? 'border-right-pending' : '' }}">
-                            <div class="card-body p-4">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div>
-                                        <h5 class="mb-1 font-weight-bold text-primary">{{ $order->name }}</h5>
-                                        <small class="text-muted"><i class="fa fa-clock mr-1"></i>
-                                            {{ $order->created_at->diffForHumans() }}</small>
-                                    </div>
-                                    <span
-                                        class="badge {{ $order->status == 'served' ? 'badge-success' : 'badge-danger' }} status-check-mobile px-3 py-2 rounded-pill">
-                                        {{ $order->status == 'served' ? 'تم التوصيل' : 'قيد الانتظار' }}
-                                    </span>
-                                </div>
-
-                                <div class="mb-3">
-                                    <p class="mb-1 text-secondary"><i class="fa fa-phone mr-2"></i> {{ $order->phone }}</p>
-                                    <p class="mb-1 text-secondary"><i class="fa fa-map-marker-alt mr-2"></i>
-                                        {{ $order->address ?? '-' }}</p>
-                                    <p class="mb-0 text-secondary">
-                                        <i class="fa fa-credit-card mr-2"></i>
-                                        <span
-                                            class="badge badge-soft-info">{{ $order->payment_method == 'cash' ? 'كاش' : 'أونلاين' }}</span>
-                                    </p>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center mb-3 pt-3 border-top">
-                                    <span class="text-secondary">المبلغ الإجمالي:</span>
-                                    <span
-                                        class="h5 mb-0 font-weight-bold text-dark">{{ number_format($order->total_price, 2) }}
-                                        ج.م</span>
-                                </div>
-
-                                <div class="d-flex gap-2">
-                                    <a href="{{ route('order.show', $order->id) }}"
-                                        class="btn btn-outline-info flex-grow-1 py-2 rounded-xl">تفاصيل</a>
-                                    <a href="https://wa.me/{{ $phone }}" target="_blank"
-                                        class="btn btn-outline-success flex-grow-1 py-2 rounded-xl d-flex align-items-center justify-content-center gap-2">
-                                        <i class="fab fa-whatsapp"></i> واتساب
-                                    </a>
-                                    @if ($order->status != 'served')
-                                        <form action="{{ route('orders.serve', $order->id) }}" method="POST"
-                                            class="flex-grow-2 w-100 mt-2">
-                                            @csrf @method('PUT')
-                                            <button class="btn btn-success w-100 py-2 rounded-xl">تأكيد التوصيل</button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-5 text-muted">لا توجد طلبات حالياً</div>
-                    @endforelse
-                </div>
-            </div>
-
-            @if ($orders->hasPages())
-                <div class="card-footer bg-white py-3 d-flex justify-content-center">
-                    {{ $orders->links() }}
-                </div>
-            @endif
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">إدارة الطلبات</h3>
+            <p class="text-muted mb-0">عرض جميع الطلبات مع الفلاتر</p>
         </div>
     </div>
 
-    <audio id="pendingSound" preload="auto" loop>
-        <source src="{{ asset('new-order.mp3') }}" type="audio/mpeg">
-    </audio>
+    {{-- ====== FILTERS ====== --}}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="GET" class="row">
+
+                <div class="col-md-3 mb-2">
+                    <input type="text" name="search" class="form-control"
+                           placeholder="بحث (رقم / اسم / هاتف)"
+                           value="{{ request('search') }}">
+                </div>
+
+                <div class="col-md-2 mb-2">
+                    <select name="status" class="form-control">
+                        <option value="">كل الحالات</option>
+                        <option value="pending" {{ request('status')=='pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="served" {{ request('status')=='served' ? 'selected' : '' }}>Served</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 mb-2">
+                    <select name="type" class="form-control">
+                        <option value="">كل الأنواع</option>
+                        <option value="delivery" {{ request('type')=='delivery' ? 'selected' : '' }}>توصيل</option>
+                        <option value="takeaway" {{ request('type')=='takeaway' ? 'selected' : '' }}>استلام</option>
+                        {{-- <option value="table" {{ request('type')=='table' ? 'selected' : '' }}>طاولة</option> --}}
+                        <option value="free_seating" {{ request('type')=='free_seating' ? 'selected' : '' }}>محلي</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 mb-2">
+                    <select name="source" class="form-control">
+                        <option value="">كل المصادر</option>
+                        <option value="web" {{ request('source')=='web' ? 'selected' : '' }}>Web</option>
+                        <option value="app" {{ request('source')=='app' ? 'selected' : '' }}>App</option>
+                        <option value="pos" {{ request('source')=='pos' ? 'selected' : '' }}>POS</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 mb-2">
+                    <select name="payment_method" class="form-control">
+                        <option value="">كل وسائل الدفع</option>
+                        <option value="cash" {{ request('payment_method')=='cash' ? 'selected' : '' }}>Cash</option>
+                        <option value="card" {{ request('payment_method')=='card' ? 'selected' : '' }}>Card</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1 mb-2">
+                    <button class="btn btn-primary w-100">بحث</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    {{-- ====== QUICK FILTER BUTTONS ====== --}}
+    <div class="mb-3">
+        <a href="{{ route('orders.index') }}" class="btn btn-dark">كل الطلبات</a>
+        <a href="{{ route('orders.delivery', ['type'=>'delivery']) }}" class="btn btn-info">توصيل</a>
+        <a href="{{ route('orders.pickup', ['type'=>'takeaway']) }}" class="btn btn-warning">استلام</a>
+        {{-- <a href="{{ route('orders.index', ['type'=>'table']) }}" class="btn btn-success">طاولات</a> --}}
+        <a href="{{ route('orders.local', ['type'=>'free_seating']) }}" class="btn btn-success">محلي</a>
+    </div>
+
+    {{-- ====== TABLE ====== --}}
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover text-center align-middle mb-0">
+
+                <thead class="bg-light">
+                    <tr>
+                        <th>#</th>
+                        <th>الاسم</th>
+                        <th>الهاتف</th>
+                        <th>العنوان</th>
+                        <th>النوع</th>
+                        <th>المصدر</th>
+                        <th>الدفع</th>
+                        <th>السعر</th>
+                        <th>الحالة</th>
+                        <th>التاريخ</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @forelse($orders as $order)
+
+                        <tr>
+                            <td>#{{ $order->id }}</td>
+
+                            <td>{{ $order->name ?? '-' }}</td>
+
+                            <td>{{ $order->phone ?? '-' }}</td>
+
+                            <td>{{ $order->address ?? '-' }}</td>
+
+                            <td>
+                                @if($order->type=='delivery')
+                                    <span class="badge badge-info">توصيل</span>
+                                @elseif($order->type=='takeaway')
+                                    <span class="badge badge-warning">استلام</span>
+                                @elseif($order->type=='table')
+                                <span class="badge badge-success">طاولة</span>
+                                @else
+                                <span class="badge badge-success">محلي</span>
+                                @endif
+                            </td>
+
+                            <td>{{ strtoupper($order->source) }}</td>
+
+                            <td>{{ $order->payment_method }}</td>
+
+                            <td>{{ number_format($order->total_price,2) }}</td>
+
+                            <td>
+                                @if($order->status=='served')
+                                    <span class="badge badge-success">تم</span>
+                                @else
+                                    <span class="badge badge-danger">انتظار</span>
+                                @endif
+                            </td>
+
+                            <td>{{ $order->created_at->diffForHumans() }}</td>
+
+                            <td>
+                                <a href="{{ route('orders.show', $order->id) }}"
+                                   class="btn btn-sm btn-info">
+                                    عرض
+                                </a>
+
+                                @if($order->status != 'served')
+                                    <form action="{{ route('orders.serve', $order->id) }}"
+                                          method="POST" style="display:inline;">
+                                        @csrf
+                                        @method('PUT')
+
+                                        <button class="btn btn-success btn-sm">
+                                            تم التوصيل
+                                        </button>
+                                    </form>
+                                @endif
+                            </td>
+
+                        </tr>
+
+                    @empty
+                        <tr>
+                            <td colspan="11" class="text-center text-muted py-4">
+                                لا توجد طلبات
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+
+            </table>
+        </div>
+
+        <div class="card-footer">
+            {{ $orders->withQueryString()->links() }}
+        </div>
+    </div>
+
+</div>
+@endsection
 
     <script>
         // Store mute state in sessionStorage
@@ -325,4 +334,3 @@
             }
         }
     </style>
-@endsection

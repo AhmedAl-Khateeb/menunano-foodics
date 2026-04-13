@@ -39,46 +39,22 @@ class ShowDashboardService
                 'source' => null,
             ],
             [
-                'title' => 'طلبات السفري',
-                'key' => 'takeawayChart',
-                'type' => 'takeaway',
-                'source' => null,
-            ],
-            [
-                'title' => 'طلبات الطاولات',
-                'key' => 'tableChart',
-                'type' => 'table',
-                'source' => null,
-            ],
-            [
-                'title' => 'الجلوس الحر',
-                'key' => 'freeSeatingChart',
-                'type' => 'free_seating',
-                'source' => null,
-            ],
-            [
                 'title' => 'طلبات التوصيل',
                 'key' => 'deliveryChart',
                 'type' => 'delivery',
                 'source' => null,
             ],
             [
-                'title' => 'طلبات الويب',
-                'key' => 'webOrdersChart',
-                'type' => null,
-                'source' => 'web',
+                'title' => 'طلبات الاستلام',
+                'key' => 'pickupChart',
+                'type' => 'takeaway',
+                'source' => null,
             ],
             [
-                'title' => 'طلبات التطبيق',
-                'key' => 'appOrdersChart',
-                'type' => null,
-                'source' => 'app',
-            ],
-            [
-                'title' => 'طلبات الكاشير',
-                'key' => 'posOrdersChart',
-                'type' => null,
-                'source' => 'pos',
+                'title' => 'الطلبات المحلية',
+                'key' => 'localChart',
+                'type' => 'local',
+                'source' => null,
             ],
         ];
 
@@ -86,59 +62,60 @@ class ShowDashboardService
             $labels = [];
             $data = [];
 
-            // تحديد الفترة حسب الفلتر
             $period = CarbonPeriod::create($startDate, $endDate);
 
             foreach ($period as $date) {
                 $labels[] = $date->translatedFormat($format);
 
-                // استعلام للحصول على عدد الطلبات
                 $query = Order::where('user_id', auth()->id())
-                              ->whereDate('created_at', $date->toDateString());
+                    ->whereDate('created_at', $date->toDateString());
 
-                // تطبيق الفلاتر على النوع والمصدر
                 if ($card['type']) {
-                    $query->where('type', $card['type']);
+                    if ($card['type'] === 'local') {
+                        $query->whereIn('type', ['table', 'free_seating']);
+                    } else {
+                        $query->where('type', $card['type']);
+                    }
                 }
 
                 if ($card['source']) {
                     $query->where('source', $card['source']);
                 }
 
-                $data[] = $query->count(); // إضافة العدد لكل يوم
+                $data[] = $query->count();
             }
 
-            // حساب الإجمالي بناءً على الفلتر
             $totalQuery = Order::where('user_id', auth()->id());
 
-            // إضافة الفلاتر الخاصة بالـ type و الـ source
             if ($card['type']) {
-                $totalQuery->where('type', $card['type']);
+                if ($card['type'] === 'local') {
+                    $totalQuery->whereIn('type', ['table', 'free_seating']);
+                } else {
+                    $totalQuery->where('type', $card['type']);
+                }
             }
 
             if ($card['source']) {
                 $totalQuery->where('source', $card['source']);
             }
 
-            // تطبيق الفلتر على الفترة الزمنية
             if ($filter === 'day') {
                 $totalQuery->whereDate('created_at', Carbon::today());
             } elseif ($filter === 'week') {
                 $totalQuery->whereBetween('created_at', [
                     Carbon::now()->startOfWeek(),
-                    Carbon::now()->endOfWeek()
+                    Carbon::now()->endOfWeek(),
                 ]);
             } else {
                 $totalQuery->whereBetween('created_at', [
                     Carbon::now()->startOfMonth(),
-                    Carbon::now()->endOfMonth()
+                    Carbon::now()->endOfMonth(),
                 ]);
             }
 
-            // إضافة النتائج إلى الكارت
             $card['labels'] = $labels;
             $card['data'] = $data;
-            $card['value'] = $totalQuery->count(); // مجموع الطلبات
+            $card['value'] = $totalQuery->count();
         }
 
         return view('dashboard', compact('orderCards', 'filter'));

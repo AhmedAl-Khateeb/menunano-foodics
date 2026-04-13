@@ -139,6 +139,22 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         return response()->json(['success' => true]);
     })->name('shifts.pause');
 
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+
+        Route::get('/delivery', [OrderController::class, 'delivery'])->name('delivery');
+        Route::get('/local', [OrderController::class, 'local'])->name('local');
+        Route::get('/pickup', [OrderController::class, 'pickup'])->name('pickup');
+
+        Route::get('/{order}', [OrderController::class, 'show'])
+            ->whereNumber('order')
+            ->name('show');
+
+        Route::patch('/{order}/serve', [OrderController::class, 'serve'])
+            ->whereNumber('order')
+            ->name('serve');
+    });
+
     // Orders
     Route::get('/orders/new', function () { return redirect()->route('under.development'); })->name('orders.new');
     Route::get('/orders/ongoing', function () { return redirect()->route('under.development'); })->name('orders.ongoing');
