@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
@@ -102,6 +100,12 @@ class PermissionSeeder extends Seeder
             ['name' => 'term_read', 'group' => 'Terms', 'user_role' => 'super_admin'],
             ['name' => 'term_update', 'group' => 'Terms', 'user_role' => 'super_admin'],
             ['name' => 'term_delete', 'group' => 'Terms', 'user_role' => 'super_admin'],
+
+            // Branches
+            ['name' => 'branch_create', 'group' => 'Branches', 'user_role' => 'admin'],
+            ['name' => 'branch_read', 'group' => 'Branches', 'user_role' => 'admin'],
+            ['name' => 'branch_update', 'group' => 'Branches', 'user_role' => 'admin'],
+            ['name' => 'branch_delete', 'group' => 'Branches', 'user_role' => 'admin'],
         ];
 
         // Truncate table to avoid duplicates (optional, use with caution in production)
@@ -115,7 +119,7 @@ class PermissionSeeder extends Seeder
                 ['name' => $permission['name']],
                 [
                     'group' => $permission['group'],
-                    'user_role' => $permission['user_role'] // Spatie models might not cast array automatically if not configured, better cast manually or ensure Model casts it
+                    'user_role' => $permission['user_role'], // Spatie models might not cast array automatically if not configured, better cast manually or ensure Model casts it
                 ]
             );
         }

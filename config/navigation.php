@@ -97,12 +97,6 @@ return [
             'id' => 'orders-menu',
             'active_routes' => ['pos.index', 'orders.*'],
             'children' => [
-                // [
-                //     'title' => 'نقطة البيع (POS)',
-                //     'icon' => 'fas fa-cash-register',
-                //     'route' => 'pos.index',
-                //     'active_routes' => ['pos.index'],
-                // ],
                 [
                     'title' => 'كل الطلبات',
                     'icon' => 'fas fa-list',
@@ -127,55 +121,47 @@ return [
                     'route' => 'orders.local',
                     'active_routes' => ['orders.local'],
                 ],
-                // [
-                //     'title' => 'طلبات نقاط البيع',
-                //     'icon' => 'far fa-circle',
-                //     'route' => 'orders.index',
-                //     'active_routes' => ['orders.index'],
-                //     'query' => ['source' => 'pos'],
-                // ],
-                // [
-                //     'title' => 'طلبات الطاولات',
-                //     'icon' => 'far fa-circle',
-                //     'route' => 'orders.index',
-                //     'active_routes' => ['orders.index'],
-                //     'query' => ['type' => 'table'],
-                // ],
             ],
         ],
 
         // Users Group
         [
-            'title' => 'الأشخاص',
-            'icon' => 'fas fa-users',
+            'title' => 'الأدارة',
+            'icon' => 'fas fa-user-shield',
             'type' => 'dropdown',
             'id' => 'users-menu',
             'active_routes' => ['users.*', 'roles.*'],
             'children' => [
                 [
-                    'title' => 'الموظفين (الكاشير)',
-                    'icon' => 'far fa-circle',
-                    'route' => 'users.staff',
-                    'active_routes' => ['users.staff'],
+                    'title' => 'المستخدمين',
+                    'icon' => 'fas fa-user',
+                    'route' => 'users.index',
+                    'active_routes' => ['users.index', 'users.create', 'users.edit'],
                 ],
-                [
-                    'title' => 'العملاء',
-                    'icon' => 'far fa-circle',
-                    'route' => 'users.customers',
-                    'active_routes' => ['users.customers'],
-                ],
+                // [
+                //     'title' => 'العملاء',
+                //     'icon' => 'far fa-circle',
+                //     'route' => 'users.customers',
+                //     'active_routes' => ['users.customers'],
+                // ],
                 [
                     'title' => 'الأدوار والصلاحيات',
-                    'icon' => 'far fa-circle',
+                    'icon' => 'fas fa-key',
                     'route' => 'roles.index',
                     'active_routes' => ['roles.*'],
                 ],
                 [
-                    'title' => 'عمال التوصيل',
-                    'icon' => 'far fa-circle',
-                    'route' => 'delivery_men.index',
-                    'active_routes' => ['delivery_men.*'],
+                    'title' => 'الفروع',
+                    'icon' => 'fas fa-store',
+                    'route' => 'branches.index',
+                    'active_routes' => ['branches.*'],
                 ],
+                // [
+                //     'title' => 'عمال التوصيل',
+                //     'icon' => 'far fa-circle',
+                //     'route' => 'delivery_men.index',
+                //     'active_routes' => ['delivery_men.*'],
+                // ],
             ],
         ],
         // Inventory & Items Module

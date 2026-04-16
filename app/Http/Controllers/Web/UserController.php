@@ -3,151 +3,88 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
+use App\Models\Branch;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
+use App\Services\UserService;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    public function __construct(private UserService $userService)
+    {
+    }
+
     public function index()
     {
-        $users = User::query()
-            ->where('created_by', auth()->id())
-            ->with('creator')->latest()
-            ->paginate(10);
+        $users = $this->userService->index();
 
         return view('users.index', compact('users'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         if (auth()->user()->role === 'super_admin') {
-            $roles = \Spatie\Permission\Models\Role::where('created_by', auth()->id())->get();
+            $roles = Role::where('created_by', auth()->id())->get();
         } else {
-            // Static roles for Store Admin
             $roles = collect([
-                (object)['id' => 'cashier', 'name' => 'cashier']
+                (object) ['id' => 'cashier', 'name' => 'cashier'],
             ]);
         }
-        return view('users.create', compact('roles'));
+
+        $branches = Branch::where('created_by', auth()->id())
+            ->where('is_active', true)
+            ->get();
+
+        return view('users.create', compact('roles', 'branches'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            // 'role' => 'required|in:admin,super_admin,user', // Removed as we force 'user'
-            // 'role_id' => 'required|exists:roles,id', // Modified to allow static 'cashier'
-             'role_id' => 'required',
-        ]);
+        $this->userService->store($request->validated());
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'user', // Force role column to be 'user' for created staff
-            'created_by' => auth()->id(),
-        ]);
-
-        // Store Admin logic: update role if user is admin
-        if ($request->filled('role_id') && auth()->user()->role == 'admin') {
-            $user->role = $request->role_id;
-            $user->save();
-        }
-        // Super Admin logic: sync roles if user is super admin
-        else if ($request->filled('role_id') && auth()->user()->role == 'super_admin') {
-            $role = \Spatie\Permission\Models\Role::find($request->role_id);
-            if ($role) {
-                $user->assignRole($role);
-            }
-        }
-
-        return redirect()->route('users.index')->with('success', 'User created successfully.');
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'تم إنشاء المستخدم بنجاح');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(User $user)
     {
         if (auth()->user()->role === 'super_admin') {
-            $roles = \Spatie\Permission\Models\Role::where('created_by', auth()->id())->get();
+            $roles = Role::where('created_by', auth()->id())->get();
         } else {
             $roles = collect([
-                (object)['id' => 'cashier', 'name' => 'cashier']
+                (object) ['id' => 'cashier', 'name' => 'cashier'],
             ]);
         }
-        return view('users.edit', compact('user', 'roles'));
+
+        $branches = Branch::where('created_by', auth()->id())->get();
+
+        return view('users.edit', compact('user', 'roles', 'branches'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            // 'role' => 'required|in:admin,super_admin,user',
-            // 'role_id' => 'required|exists:roles,id',
-            'role_id' => 'required',
-        ]);
+        $this->userService->update($user, $request->validated());
 
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-        ]);
-
-        // Store Admin logic: update role if user is admin
-        if ($request->filled('role_id') && auth()->user()->role == 'admin') {
-            $user->update(['role' => $request->role_id]);
-        }
-        // Super Admin logic: sync roles if user is super admin
-        else if ($request->filled('role_id') && auth()->user()->role == 'super_admin') {
-            $role = \Spatie\Permission\Models\Role::find($request->role_id);
-            if ($role) {
-                $user->syncRoles([$role]);
-            }
-        }
-
-        if ($request->filled('password')) {
-            $request->validate([
-                'password' => 'required|string|min:8|confirmed',
-            ]);
-            $user->update([
-                'password' => Hash::make($request->password),
-            ]);
-        }
-
-        return redirect()->route('users.index')->with('success', 'User updated successfully.');
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'تم تحديث المستخدم بنجاح');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(User $user)
     {
-        $user->delete();
-        return redirect()->route('users.index')->with('success', 'User deleted successfully.');
+        try {
+            $this->userService->delete($user);
+
+            return redirect()
+                ->route('users.index')
+                ->with('success', 'تم حذف المستخدم بنجاح');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', $e->getMessage() ?: 'حدث خطأ أثناء الحذف');
+        }
     }
 }

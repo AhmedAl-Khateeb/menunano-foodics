@@ -106,8 +106,9 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::get('/users/customers', [App\Http\Controllers\Dashboard\CustomerController::class, 'index'])->name('users.customers');
 
     // User Management
-    Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class)->except(['show']);
     Route::resource('roles', RoleController::class);
+    Route::resource('branches', App\Http\Controllers\Dashboard\BranchController::class);
     Route::resource('payment-methods', PaymentMethodController::class);
     Route::resource('delivery_men', App\Http\Controllers\DeliveryManController::class)->except(['show']);
     Route::resource('suppliers', App\Http\Controllers\SupplierController::class)->except(['show']);

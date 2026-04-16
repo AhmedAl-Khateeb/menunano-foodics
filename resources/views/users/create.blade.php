@@ -28,7 +28,7 @@
                         </div>
                         <!-- /.card-header -->
                         <!-- form start -->
-                        <form action="{{ route('users.store') }}" method="POST">
+                        <form action="{{ route('users.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <div class="card-body text-right">
                                 @if ($errors->any())
@@ -73,6 +73,34 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="form-group">
+                                    <label>الفروع</label>
+
+                                    <select name="branch_id" class="form-control">
+                                        <option value="">اختر الفرع</option>
+
+                                        @foreach ($branches as $branch)
+                                            <option value="{{ $branch->id }}">
+                                                {{ $branch->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+
+                                    <small class="text-muted">يمكن اختيار أكثر من فرع</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="image">صورة المستخدم</label>
+                                    <input type="file" name="image" id="image" class="form-control">
+
+                                    @if (isset($user) && $user->image)
+                                        <div class="mt-2">
+                                            <img src="{{ asset('storage/' . $user->image) }}" alt="user-image"
+                                                width="80" class="img-thumbnail">
+                                        </div>
+                                    @endif
+                                </div>
+
                             </div>
                             <!-- /.card-body -->
 
@@ -87,3 +115,11 @@
         </div>
     </section>
 @endsection
+
+
+<style>
+    .select2-container--default .select2-selection--multiple {
+        min-height: 38px;
+        border-radius: 6px;
+    }
+</style>

@@ -3,17 +3,20 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, \Spatie\Permission\Traits\HasRoles;
+    use HasFactory;
+    use Notifiable;
+    use HasApiTokens;
+    use \Spatie\Permission\Traits\HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +36,7 @@ class User extends Authenticatable
         'package_id',
         'password',
         'role',
+        'branch_id',
     ];
 
     /**
@@ -62,9 +66,7 @@ class User extends Authenticatable
 
     protected static function booted()
     {
-
         static::deleting(function ($user) {
-
             // 🟢 احذف المنتجات مع الصور
             foreach ($user->products as $product) {
                 if ($product->image) {
@@ -115,10 +117,10 @@ class User extends Authenticatable
             ];
 
             foreach ($defaultSettings as $key) {
-                \App\Models\Setting::create([
+                Setting::create([
                     'user_id' => $user->id,
-                    'key'     => $key,
-                    'value'   => null,
+                    'key' => $key,
+                    'value' => null,
                 ]);
             }
         });
@@ -128,26 +130,32 @@ class User extends Authenticatable
     {
         return $this->hasMany(Category::class, 'user_id');
     }
+
     public function products()
     {
         return $this->hasMany(Product::class, 'user_id');
     }
+
     public function sliders()
     {
         return $this->hasMany(Slider::class);
     }
+
     public function settings()
     {
         return $this->hasMany(Setting::class, 'user_id');
     }
+
     public function orders()
     {
         return $this->hasMany(Order::class, 'user_id');
     }
+
     public function package()
     {
         return $this->belongsTo(Package::class);
     }
+
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
@@ -163,17 +171,22 @@ class User extends Authenticatable
         return $this->hasMany(Customer::class);
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
     public function setPhoneAttribute($value)
     {
         $this->attributes['phone'] = str_starts_with($value, '+2')
             ? $value
-            : '+20' . ltrim($value, '0+');
+            : '+20'.ltrim($value, '0+');
     }
 
     public function setSubscriptionStart($startDate): bool
     {
         // إذا لا يوجد باقة، لا نفعل شيئاً
-        if (! $this->package) {
+        if (!$this->package) {
             return false;
         }
 
@@ -181,7 +194,7 @@ class User extends Authenticatable
         $end = (clone $start)->addDays((int) $this->package->duration);
 
         $this->subscription_start = $start->toDateString();
-        $this->subscription_end   = $end->toDateString();
+        $this->subscription_end = $end->toDateString();
         $this->status = 1; // فعّل المستخدم عند إضافة بداية
         $this->save();
 
@@ -191,7 +204,7 @@ class User extends Authenticatable
     public function checkSubscription()
     {
         // لو ما فيه تاريخ نهاية ما نعمل شيئًا
-        if (! $this->subscription_end) {
+        if (!$this->subscription_end) {
             return;
         }
 
@@ -205,12 +218,13 @@ class User extends Authenticatable
     }
 
     /**
-     * Get logo url
+     * Get logo url.
      */
     public function getLogoUrlAttribute()
     {
         // get logo from settings
         $logoPathFromSetting = $this->settings()->firstWhere('key', 'logo')?->value;
-        return $logoPathFromSetting ? asset('storage/' . $logoPathFromSetting) : null;
+
+        return $logoPathFromSetting ? asset('storage/'.$logoPathFromSetting) : null;
     }
 }

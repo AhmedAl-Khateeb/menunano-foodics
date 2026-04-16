@@ -28,7 +28,7 @@
                         </div>
                         <!-- /.card-header -->
                         <!-- form start -->
-                        <form action="{{ route('users.update', $user->id) }}" method="POST">
+                        <form action="{{ route('users.update', $user->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
                             <div class="card-body text-right">
@@ -75,6 +75,35 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="form-group">
+                                    <label>الفرع</label>
+
+                                    <select name="branch_id" class="form-control">
+                                        <option value="">اختر الفرع</option>
+
+                                        @foreach ($branches as $branch)
+                                            <option value="{{ $branch->id }}"
+                                                {{ old('branch_id', $user->branch_id) == $branch->id ? 'selected' : '' }}>
+                                                {{ $branch->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+
+                                    <small class="text-muted">اختر الفرع التابع له المستخدم</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="image">صورة المستخدم</label>
+                                    <input type="file" name="image" id="image" class="form-control">
+
+                                    @if (isset($user) && $user->image)
+                                        <div class="mt-2">
+                                            <img src="{{ asset('storage/' . $user->image) }}" alt="user-image"
+                                                width="80" class="img-thumbnail">
+                                        </div>
+                                    @endif
+                                </div>
+
                             </div>
                             <!-- /.card-body -->
 

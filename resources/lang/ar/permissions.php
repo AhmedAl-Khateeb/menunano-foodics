@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     // Group Names
     'Dashboard' => 'لوحة التحكم',
     'Categories' => 'الأقسام',
@@ -18,6 +17,7 @@ return [
     'Sections' => 'القطاعات',
     'Subscriptions' => 'الاشتراكات',
     'Terms' => 'الشروط والأحكام',
+    'Branches' => 'الفروع',
 
     // Permission Names
     'dashboard_read' => 'عرض لوحة التحكم',
@@ -87,4 +87,8 @@ return [
     'term_update' => 'تعديل شرط',
     'term_delete' => 'حذف شرط',
 
+    'branch_create' => 'إضافة فرع',
+    'branch_read' => 'عرض الفروع',
+    'branch_update' => 'تعديل فرع',
+    'branch_delete' => 'حذف فرع',
 ];
