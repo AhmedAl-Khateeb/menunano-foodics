@@ -3,127 +3,63 @@
 namespace App\Http\Controllers\Dashboard\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\PackageRequest;
+use App\Models\BusinessType;
 use App\Models\Package;
-use App\Models\PackageFeature;
+use App\Services\PackageService;
 
 class PackageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    public function __construct(private readonly PackageService $packageService)
+    {
+    }
+
     public function index()
     {
-        $packages = Package::with('features')->get();
+        $packages = $this->packageService->index();
+
         return view('super_admin.packages.index', compact('packages'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        return view('super_admin.packages.create');
+        $businessTypes = BusinessType::where('is_active', true)->get();
+
+        return view('super_admin.packages.create', compact('businessTypes'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(PackageRequest $request)
     {
-        $request->validate([
-            'name'        => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price'       => 'required|numeric|min:0',
-            'duration'    => 'required|integer|min:1',
-            'is_active'   => 'boolean',
-            'features'    => 'nullable|array',
-            'features.*'  => 'nullable|string|max:255',
-        ]);
+        $this->packageService->store($request->validated());
 
-        $package = Package::create([
-            'name'        => $request->name,
-            'description' => $request->description,
-            'price'       => $request->price,
-            'duration'    => $request->duration,
-            'is_active'   => $request->has('is_active') ? 1 : 0,
-        ]);
-
-        // إضافة الـ features لو موجودة
-        if ($request->filled('features')) {
-            foreach ($request->features as $feature) {
-                if ($feature) {
-                    PackageFeature::create([
-                        'package_id' => $package->id,
-                        'text'       => $feature,
-                    ]);
-                }
-            }
-        }
-
-        return redirect()->route('packages.index')->with('success', 'تمت إضافة الباقة بنجاح');
+        return redirect()
+            ->route('packages.index')
+            ->with('success', 'تمت إضافة الباقة بنجاح');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Package $package)
     {
         $package->load('features');
-        return view('super_admin.packages.edit', compact('package'));
+        $businessTypes = BusinessType::where('is_active', true)->get();
+
+        return view('super_admin.packages.edit', compact('package', 'businessTypes'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-   public function update(Request $request, Package $package)
+    public function update(PackageRequest $request, Package $package)
     {
-        $request->validate([
-            'name'        => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price'       => 'required|numeric|min:0',
-            'duration'    => 'required|integer|min:1',
-            'is_active'   => 'boolean',
-            'features'    => 'nullable|array',
-            'features.*.id'   => 'nullable|integer|exists:package_features,id',
-            'features.*.text' => 'nullable|string|max:255',
-        ]);
+        $this->packageService->update($package, $request->validated());
 
-        $package->update([
-            'name'        => $request->name,
-            'description' => $request->description,
-            'price'       => $request->price,
-            'duration'    => $request->duration,
-            'is_active'   => $request->has('is_active') ? 1 : 0,
-        ]);
-
-        // تحديث الـ features (مسح القديمة وإضافة الجديدة)
-        $package->features()->delete();
-
-        if ($request->filled('features')) {
-            foreach ($request->features as $featureData) {
-                $text = $featureData['text'] ?? null;
-
-                if (!empty($text)) {
-                    PackageFeature::create([
-                        'package_id' => $package->id,
-                        'text'       => $text,
-                    ]);
-                }
-            }
-        }
-
-        return redirect()->route('packages.index')->with('success', 'تم تعديل الباقة بنجاح');
+        return redirect()
+            ->route('packages.index')
+            ->with('success', 'تم تعديل الباقة بنجاح');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Package $package)
     {
-        $package->features()->delete(); // احذف الفيتشرز كمان
-        $package->delete();
+        $this->packageService->delete($package);
 
-        return redirect()->route('packages.index')->with('success', 'تم حذف الباقة بنجاح');
+        return redirect()
+            ->route('packages.index')
+            ->with('success', 'تم حذف الباقة بنجاح');
     }
 }

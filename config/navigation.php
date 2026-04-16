@@ -21,6 +21,12 @@ return [
             'active_routes' => ['terms.*'],
         ],
         [
+            'title' => 'إدارة أنواع النشاط',
+            'icon' => 'fas fa-briefcase',
+            'route' => 'business-types.index',
+            'active_routes' => ['business-types.*'],
+        ],
+        [
             'title' => 'إدارة الباقات',
             'icon' => 'fas fa-box',
             'route' => 'packages.index',

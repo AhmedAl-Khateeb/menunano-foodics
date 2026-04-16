@@ -8,6 +8,7 @@ use App\Http\Controllers\Dashboard\ShowController;
 use App\Http\Controllers\Dashboard\SliderController;
 use App\Http\Controllers\Dashboard\SuperAdmin\AdminController;
 use App\Http\Controllers\Dashboard\SuperAdmin\BusinessSettingController;
+use App\Http\Controllers\Dashboard\SuperAdmin\BusinessTypeController;
 use App\Http\Controllers\Dashboard\SuperAdmin\PackageController;
 use App\Http\Controllers\Dashboard\SuperAdmin\PaymentMethodController;
 use App\Http\Controllers\Dashboard\SuperAdmin\SectionController;
@@ -106,6 +107,7 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::get('/users/customers', [App\Http\Controllers\Dashboard\CustomerController::class, 'index'])->name('users.customers');
 
     // User Management
+    Route::resource('business-types', BusinessTypeController::class)->except(['show']);
     Route::resource('users', UserController::class)->except(['show']);
     Route::resource('roles', RoleController::class);
     Route::resource('branches', App\Http\Controllers\Dashboard\BranchController::class);
