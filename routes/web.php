@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Dashboard\AttendanceController;
 use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\OrderController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\SettingController;
+use App\Http\Controllers\Dashboard\ShiftController;
 use App\Http\Controllers\Dashboard\ShowController;
 use App\Http\Controllers\Dashboard\SliderController;
 use App\Http\Controllers\Dashboard\SuperAdmin\AdminController;
@@ -98,6 +100,12 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
             'count' => Order::count(),
         ]);
     })->name('orders.count');
+
+    // الحضور ولانصراف
+    Route::resource('attendances', AttendanceController::class)->except(['show']);
+    // الشيفتات
+    Route::resource('shifts', ShiftController::class)->except(['show']);
+    Route::post('shifts/{shift}/close', [ShiftController::class, 'close'])->name('shifts.close');
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings/{setting}', [SettingController::class, 'update'])->name('settings.update');

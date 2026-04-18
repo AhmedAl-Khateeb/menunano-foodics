@@ -162,12 +162,18 @@ return [
                     'route' => 'branches.index',
                     'active_routes' => ['branches.*'],
                 ],
-                // [
-                //     'title' => 'عمال التوصيل',
-                //     'icon' => 'far fa-circle',
-                //     'route' => 'delivery_men.index',
-                //     'active_routes' => ['delivery_men.*'],
-                // ],
+                [
+                    'title' => 'الشيفتات',
+                    'icon' => 'fas fa-user-clock',
+                    'route' => 'shifts.index',
+                    'active_routes' => ['shifts.*'],
+                ],
+                [
+                    'title' => 'تسجيل الحضور والانصراف',
+                    'icon' => 'fas fa-clock',
+                    'route' => 'attendances.index',
+                    'active_routes' => ['attendances.*'],
+                ],
             ],
         ],
         // Inventory & Items Module
