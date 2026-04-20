@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSupplierRequest;
+use App\Models\RawMaterial;
 use App\Models\Supplier;
+use App\Models\SupplierRawMaterial;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -18,6 +19,7 @@ class SupplierController extends Controller
 
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('contact_name', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%");
@@ -54,6 +56,29 @@ class SupplierController extends Controller
             ->with('success', 'تم إضافة المورد بنجاح');
     }
 
+    public function show(Supplier $supplier)
+    {
+        abort_if($supplier->user_id !== auth()->id(), 403);
+
+        $supplier->load([
+            'rawMaterials.unit',
+            'rawMaterials' => function ($q) {
+                $q->orderBy('name');
+            },
+        ]);
+
+        $materials = RawMaterial::where('user_id', auth()->id())
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $units = \App\Models\Unit::where('user_id', auth()->id())
+            ->orderBy('name')
+            ->get();
+
+        return view('dashboard.suppliers.show', compact('supplier', 'materials', 'units'));
+    }
+
     public function edit(Supplier $supplier)
     {
         abort_if($supplier->user_id !== auth()->id(), 403);
@@ -87,5 +112,70 @@ class SupplierController extends Controller
         return redirect()
             ->route('inventory.suppliers.index')
             ->with('success', 'تم حذف المورد بنجاح');
+    }
+
+    public function attachMaterial(Request $request, Supplier $supplier)
+    {
+        abort_if($supplier->user_id !== auth()->id(), 403);
+
+        $validated = $request->validate([
+            'raw_material_id' => ['required', 'exists:raw_materials,id'],
+            'unit_id' => ['nullable', 'exists:units,id'],
+            'supplier_item_code' => ['nullable', 'string', 'max:255'],
+            'order_quantity' => ['required', 'numeric', 'min:0.001'],
+            'conversion_factor' => ['required', 'numeric', 'min:0.001'],
+            'purchase_cost' => ['required', 'numeric', 'min:0'],
+            'is_preferred' => ['nullable', 'boolean'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $material = RawMaterial::where('user_id', auth()->id())
+            ->findOrFail($validated['raw_material_id']);
+
+        $supplier->rawMaterials()->syncWithoutDetaching([
+            $material->id => [
+                'user_id' => auth()->id(),
+                'unit_id' => $validated['unit_id'] ?? null,
+                'supplier_item_code' => $validated['supplier_item_code'] ?? null,
+                'order_quantity' => $validated['order_quantity'],
+                'conversion_factor' => $validated['conversion_factor'],
+                'purchase_cost' => $validated['purchase_cost'],
+                'is_preferred' => $request->boolean('is_preferred'),
+                'notes' => $validated['notes'] ?? null,
+            ],
+        ]);
+
+        return back()->with('success', 'تم ربط مادة المخزن بالمورد بنجاح');
+    }
+
+    public function updateAttachedMaterial(Request $request, Supplier $supplier, $pivotId)
+    {
+        abort_if($supplier->user_id !== auth()->id(), 403);
+
+        $pivot = SupplierRawMaterial::where('supplier_id', $supplier->id)
+            ->where('user_id', auth()->id())
+            ->findOrFail($pivotId);
+
+        $validated = $request->validate([
+            'unit_id' => ['nullable', 'exists:units,id'],
+            'supplier_item_code' => ['nullable', 'string', 'max:255'],
+            'order_quantity' => ['required', 'numeric', 'min:0.001'],
+            'conversion_factor' => ['required', 'numeric', 'min:0.001'],
+            'purchase_cost' => ['required', 'numeric', 'min:0'],
+            'is_preferred' => ['nullable', 'boolean'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $pivot->update([
+            'unit_id' => $validated['unit_id'] ?? null,
+            'supplier_item_code' => $validated['supplier_item_code'] ?? null,
+            'order_quantity' => $validated['order_quantity'],
+            'conversion_factor' => $validated['conversion_factor'],
+            'purchase_cost' => $validated['purchase_cost'],
+            'is_preferred' => $request->boolean('is_preferred'),
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return back()->with('success', 'تم تحديث بيانات وحدة المخزون للمورد');
     }
 }

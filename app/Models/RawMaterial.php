@@ -65,4 +65,20 @@ class RawMaterial extends Model
     {
         return $this->hasOne(Recipe::class, 'output_raw_material_id');
     }
+
+    public function suppliers()
+    {
+        return $this->belongsToMany(Supplier::class, 'supplier_raw_materials')
+            ->withPivot([
+                'id',
+                'unit_id',
+                'supplier_item_code',
+                'order_quantity',
+                'conversion_factor',
+                'purchase_cost',
+                'is_preferred',
+                'notes',
+            ])
+            ->withTimestamps();
+    }
 }

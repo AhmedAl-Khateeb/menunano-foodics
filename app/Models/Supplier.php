@@ -10,17 +10,9 @@ class Supplier extends Model
         'user_id',
         'code',
         'name',
+        'contact_name',
         'phone',
         'email',
-        'address',
-        'tax_number',
-        'commercial_register',
-        'balance',
-        'opening_balance',
-        'current_balance',
-        'credit_limit',
-        'payment_terms',
-        'notes',
         'is_active',
     ];
 
@@ -47,8 +39,24 @@ class Supplier extends Model
         return $this->hasMany(GoodsReceipt::class);
     }
 
+    // public function rawMaterials()
+    // {
+    //     return $this->hasMany(RawMaterial::class, 'default_supplier_id');
+    // }
+
     public function rawMaterials()
     {
-        return $this->hasMany(RawMaterial::class, 'default_supplier_id');
+        return $this->belongsToMany(RawMaterial::class, 'supplier_raw_materials')
+            ->withPivot([
+                'id',
+                'unit_id',
+                'supplier_item_code',
+                'order_quantity',
+                'conversion_factor',
+                'purchase_cost',
+                'is_preferred',
+                'notes',
+            ])
+            ->withTimestamps();
     }
 }

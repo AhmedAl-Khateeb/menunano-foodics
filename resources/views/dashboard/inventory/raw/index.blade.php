@@ -10,7 +10,7 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('dashboard') }}">الرئيسية</a>
+                            {{-- <a href="{{ route('dashboard') }}">الرئيسية</a> --}}
                         </li>
                     </ol>
                 </div>
@@ -94,9 +94,13 @@
                                         <td>{{ $material->category->name ?? '-' }}</td>
                                         <td>{{ $material->defaultSupplier->name ?? '-' }}</td>
                                         <td>{{ $material->unit->name ?? '-' }}</td>
-                                        <td>{{ number_format($material->inventory->current_quantity ?? 0, 3) }}</td>
-                                        <td>{{ number_format($material->purchase_price ?? 0, 3) }}</td>
-                                        <td>{{ number_format($material->reorder_level ?? 0, 3) }}</td>
+                                        <td>{{ rtrim(rtrim(number_format($material->inventory->current_quantity ?? 0, 3, '.', ''), '0'), '.') }}
+                                        </td>
+                                        <td>{{ rtrim(rtrim(number_format($material->purchase_price ?? 0, 3, '.', ''), '0'), '.') }}
+                                        </td>
+                                        <td>{{ rtrim(rtrim(number_format($material->reorder_level ?? 0, 3, '.', ''), '0'), '.') }}
+                                        </td>
+
                                         <td>
                                             <span class="badge badge-{{ $material->is_active ? 'success' : 'secondary' }}">
                                                 {{ $material->is_active ? 'نشط' : 'موقوف' }}
@@ -184,6 +188,18 @@
                 <div class="card-footer clearfix">
                     {{ $materials->links() }}
                 </div>
+            </div>
+            <div class="col-sm-6">
+                <ol class="float-sm-right mb-0 p-0" style="list-style: none;">
+                    <li>
+                        <a href="{{ route('dashboard') }}" class="btn btn-success"
+                            style="color: #fff; transition: all 0.2s ease-in-out;"
+                            onmouseover="this.style.backgroundColor='#007bff'; this.style.borderColor='#007bff'; this.style.color='#fff';"
+                            onmouseout="this.style.backgroundColor=''; this.style.borderColor=''; this.style.color='#fff';">
+                            الرئيسية
+                        </a>
+                    </li>
+                </ol>
             </div>
         </div>
     </section>

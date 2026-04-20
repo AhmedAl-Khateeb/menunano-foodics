@@ -12,21 +12,18 @@ return new class extends Migration {
     {
         Schema::create('suppliers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+
             $table->string('name');
+            $table->string('contact_name')->nullable();
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
-            $table->text('address')->nullable();
-            $table->decimal('balance', 10, 2)->default(0);
-            $table->boolean('is_active')->default(true);
+
             $table->string('code')->nullable();
-            $table->string('tax_number')->nullable();
-            $table->string('commercial_register')->nullable();
-            $table->decimal('opening_balance', 12, 3)->default(0);
-            $table->decimal('current_balance', 12, 3)->default(0);
-            $table->decimal('credit_limit', 12, 3)->default(0);
-            $table->string('payment_terms')->nullable();
-            $table->text('notes')->nullable();
+
+            $table->boolean('is_active')->default(true);
+
             $table->timestamps();
         });
     }
