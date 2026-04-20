@@ -2,20 +2,24 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Helpers\ImageManager;
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Models\InventoryCategory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class InventoryCategoryController extends Controller
 {
+    public function __construct(private ImageManager $imageManager)
+    {
+    }
+
     public function index()
     {
-        $categories = Category::where('user_id', auth()->id())
-            ->where('type', 'internal')
+        $categories = InventoryCategory::where('user_id', auth()->id())
+            ->withCount('rawMaterials')
             ->latest()
-            ->paginate(10);
-            
+            ->paginate(12);
+
         return view('dashboard.inventory.categories.index', compact('categories'));
     }
 
@@ -23,49 +27,62 @@ class InventoryCategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'code' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+            'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $data = [
-            'name' => $request->name,
             'user_id' => auth()->id(),
-            'type' => 'internal', // Force internal type
-            'is_active' => true,
+            'name' => $request->name,
+            'code' => $request->code,
+            'description' => $request->description,
+            'is_active' => $request->boolean('is_active'),
         ];
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('categories', 'public');
-            $data['cover'] = basename($path);
+        if ($request->hasFile('cover')) {
+            $data['cover'] = $this->imageManager->uploadImage(
+                'inventory_categories',
+                $request->file('cover'),
+                'public'
+            );
         }
 
-        Category::create($data);
+        InventoryCategory::create($data);
 
         return back()->with('success', 'تم إضافة فئة المخزون بنجاح');
     }
 
     public function update(Request $request, $id)
     {
-        $category = Category::where('user_id', auth()->id())
-            ->where('type', 'internal')
-            ->findOrFail($id);
+        $category = InventoryCategory::where('user_id', auth()->id())->findOrFail($id);
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'code' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+            'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $data = [
             'name' => $request->name,
+            'code' => $request->code,
+            'description' => $request->description,
+            'is_active' => $request->boolean('is_active'),
         ];
 
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($category->cover && Storage::disk('public')->exists('categories/' . $category->cover)) {
-                Storage::disk('public')->delete('categories/' . $category->cover);
+        if ($request->hasFile('cover')) {
+            if ($category->cover) {
+                $this->imageManager->deleteImage($category->cover, 'public');
             }
-            
-            $path = $request->file('image')->store('categories', 'public');
-            $data['cover'] = basename($path);
+
+            $data['cover'] = $this->imageManager->uploadImage(
+                'inventory_categories',
+                $request->file('cover'),
+                'public'
+            );
         }
 
         $category->update($data);
@@ -75,17 +92,14 @@ class InventoryCategoryController extends Controller
 
     public function destroy($id)
     {
-        $category = Category::where('user_id', auth()->id())
-            ->where('type', 'internal')
-            ->findOrFail($id);
+        $category = InventoryCategory::where('user_id', auth()->id())->findOrFail($id);
 
-        // Check availability logic if needed (e.g. if has products)
-        if ($category->products()->count() > 0) {
-            return back()->with('error', 'لا يمكن حذف الفئة لأنها تحتوي على منتجات');
+        if ($category->rawMaterials()->count() > 0) {
+            return back()->with('error', 'لا يمكن حذف الفئة لأنها مرتبطة بمواد مخزن');
         }
 
-        if ($category->cover && Storage::disk('public')->exists('categories/' . $category->cover)) {
-            Storage::disk('public')->delete('categories/' . $category->cover);
+        if ($category->cover) {
+            $this->imageManager->deleteImage($category->cover, 'public');
         }
 
         $category->delete();

@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -18,6 +17,12 @@ return new class extends Migration
             $table->decimal('purchase_price', 15, 2)->default(0);
             $table->foreignId('purchase_unit_id')->nullable()->constrained('units')->onDelete('set null');
             $table->decimal('current_quantity', 15, 3)->default(0);
+            $table->decimal('avg_cost', 14, 3)->default(0);
+            $table->decimal('last_cost', 14, 3)->default(0);
+            $table->decimal('reorder_level', 14, 3)->nullable();
+            $table->decimal('min_quantity', 14, 3)->nullable();
+            $table->decimal('max_quantity', 14, 3)->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

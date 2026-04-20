@@ -114,6 +114,38 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::get('/users/staff', function () { return redirect()->route('under.development'); })->name('users.staff');
     Route::get('/users/customers', [App\Http\Controllers\Dashboard\CustomerController::class, 'index'])->name('users.customers');
 
+
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+         // Dashboard
+    Route::get('/', [App\Http\Controllers\Dashboard\InventoryDashboardController::class, 'index'])
+        ->name('dashboard');
+    Route::resource('suppliers', App\Http\Controllers\SupplierController::class);
+    Route::resource('materials', App\Http\Controllers\Dashboard\RawMaterialController::class);
+
+    Route::resource('purchase-requests', App\Http\Controllers\Dashboard\PurchaseRequestController::class);
+    Route::post('purchase-requests/{purchase_request}/approve', [App\Http\Controllers\Dashboard\PurchaseRequestController::class, 'approve'])->name('purchase-requests.approve');
+
+    Route::resource('purchase-orders', App\Http\Controllers\Dashboard\PurchaseOrderController::class);
+    Route::post('purchase-orders/{purchase_order}/approve', [App\Http\Controllers\Dashboard\PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve');
+
+    Route::resource('receipts', App\Http\Controllers\Dashboard\GoodsReceiptController::class);
+    Route::post('receipts/{receipt}/post', [App\Http\Controllers\Dashboard\GoodsReceiptController::class, 'post'])->name('receipts.post');
+
+    Route::resource('transfer-requests', App\Http\Controllers\Dashboard\TransferRequestController::class);
+    Route::post('transfer-requests/{transfer_request}/approve', [App\Http\Controllers\Dashboard\TransferRequestController::class, 'approve'])->name('transfer-requests.approve');
+    Route::post('transfer-requests/{transfer_request}/receive', [App\Http\Controllers\Dashboard\TransferRequestController::class, 'receive'])->name('transfer-requests.receive');
+
+    Route::resource('stock-counts', App\Http\Controllers\Dashboard\StockCountController::class);
+    Route::post('stock-counts/{stock_count}/approve', [App\Http\Controllers\Dashboard\StockCountController::class, 'approve'])->name('stock-counts.approve');
+
+    Route::resource('production-orders', App\Http\Controllers\Dashboard\ProductionOrderController::class);
+    Route::post('production-orders/{production_order}/produce', [App\Http\Controllers\Dashboard\ProductionOrderController::class, 'produce'])->name('production-orders.produce');
+
+    Route::get('movements', [App\Http\Controllers\Dashboard\InventoryMovementController::class, 'index'])->name('movements.index');
+
+    });
+
+
     // User Management
     Route::resource('business-types', BusinessTypeController::class)->except(['show']);
     Route::resource('users', UserController::class)->except(['show']);
@@ -121,7 +153,7 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::resource('branches', App\Http\Controllers\Dashboard\BranchController::class);
     Route::resource('payment-methods', PaymentMethodController::class);
     Route::resource('delivery_men', App\Http\Controllers\DeliveryManController::class)->except(['show']);
-    Route::resource('suppliers', App\Http\Controllers\SupplierController::class)->except(['show']);
+    // Route::resource('suppliers', App\Http\Controllers\SupplierController::class)->except(['show']);
     Route::resource('purchases', App\Http\Controllers\PurchaseInvoiceController::class)->except(['edit', 'update']);
 
     // Impersonation

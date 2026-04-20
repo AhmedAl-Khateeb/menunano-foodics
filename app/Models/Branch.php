@@ -16,6 +16,7 @@ class Branch extends Model
         'address',
         'is_active',
         'created_by',
+        // 'user_id',
     ];
 
     public function users()

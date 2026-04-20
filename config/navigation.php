@@ -178,67 +178,106 @@ return [
         ],
         // Inventory & Items Module
         [
-            'title' => 'الأصناف والمخزون',
-            'icon' => 'fas fa-boxes',
+            'title' => 'المخزن',
+            'icon' => 'fas fa-warehouse',
             'type' => 'dropdown',
             'id' => 'inventory-menu',
             'active_routes' => ['inventory.*'],
             'children' => [
                 [
-                    'title' => 'المنتجات الجاهزة',
-                    'icon' => 'far fa-circle',
-                    'route' => 'inventory.ready.index',
-                    'active_routes' => ['inventory.ready.*'],
-                ],
-                [
-                    'title' => 'المنتجات المركبة',
-                    'icon' => 'far fa-circle',
-                    'route' => 'inventory.composite.index',
-                    'active_routes' => ['inventory.composite.*'],
-                ],
-                [
-                    'title' => 'المواد الخام',
-                    'icon' => 'far fa-circle',
-                    'route' => 'inventory.raw.index',
-                    'active_routes' => ['inventory.raw.*'],
+                    'title' => 'الموردون',
+                    'icon' => 'fas fa-truck',
+                    'route' => 'inventory.suppliers.index',
+                    'active_routes' => ['inventory.suppliers.*'],
                 ],
                 [
                     'title' => 'فئات المخزون',
-                    'icon' => 'far fa-circle',
+                    'icon' => 'fas fa-tags',
                     'route' => 'inventory.categories.index',
                     'active_routes' => ['inventory.categories.*'],
                 ],
                 [
+                    'title' => 'وحدات القياس',
+                    'icon' => 'fas fa-balance-scale',
+                    'route' => 'units.index',
+                    'active_routes' => ['units.*'],
+                ],
+                [
+                    'title' => 'مواد المخزن',
+                    'icon' => 'fas fa-boxes',
+                    'route' => 'inventory.materials.index',
+                    'active_routes' => ['inventory.materials.*'],
+                ],
+
+                [
+                    'title' => 'طلبات الشراء',
+                    'icon' => 'fas fa-file-alt',
+                    'route' => 'inventory.purchase-requests.index',
+                    'active_routes' => ['inventory.purchase-requests.*'],
+                ],
+                [
+                    'title' => 'أوامر الشراء',
+                    'icon' => 'fas fa-shopping-cart',
+                    'route' => 'inventory.purchase-orders.index',
+                    'active_routes' => ['inventory.purchase-orders.*'],
+                ],
+                [
+                    'title' => 'الشراء / الاستلام',
+                    'icon' => 'fas fa-dolly',
+                    'route' => 'inventory.receipts.index',
+                    'active_routes' => ['inventory.receipts.*'],
+                ],
+
+                [
+                    'title' => 'الإنتاج',
+                    'icon' => 'fas fa-industry',
+                    'route' => 'inventory.production-orders.index',
+                    'active_routes' => ['inventory.production-orders.*'],
+                ],
+                [
+                    'title' => 'طلبات التحويل',
+                    'icon' => 'fas fa-exchange-alt',
+                    'route' => 'inventory.transfer-requests.index',
+                    'active_routes' => ['inventory.transfer-requests.*'],
+                ],
+
+                [
+                    'title' => 'جرد المخزن',
+                    'icon' => 'fas fa-clipboard-check text-warning',
+                    'route' => 'inventory.stock-counts.index',
+                    'active_routes' => ['inventory.stock-counts.*'],
+                ],
+                [
                     'title' => 'حركات المخزون',
-                    'icon' => 'far fa-circle',
+                    'icon' => 'fas fa-random',
                     'route' => 'inventory.movements.index',
                     'active_routes' => ['inventory.movements.*'],
                 ],
                 [
-                    'title' => 'تسوية وجرد المخزون',
-                    'icon' => 'far fa-circle text-warning',
-                    'route' => 'inventory.reconcile',
-                    'active_routes' => ['inventory.reconcile'],
+                    'title' => 'لوحة المخزن',
+                    'icon' => 'fas fa-chart-line',
+                    'route' => 'inventory.dashboard',
+                    'active_routes' => ['inventory.dashboard'],
                 ],
             ],
         ],
 
         // Purchases Module
-        [
-            'title' => 'المشتريات',
-            'icon' => 'fas fa-shopping-cart',
-            'type' => 'dropdown',
-            'id' => 'purchases-menu',
-            'active_routes' => ['suppliers.*', 'purchases.*'],
-            'children' => [
-                [
-                    'title' => 'الموردين',
-                    'icon' => 'far fa-circle',
-                    'route' => 'suppliers.index',
-                    'active_routes' => ['suppliers.*'],
-                ],
-            ],
-        ],
+        // [
+        //     'title' => 'المشتريات',
+        //     'icon' => 'fas fa-shopping-cart',
+        //     'type' => 'dropdown',
+        //     'id' => 'purchases-menu',
+        //     'active_routes' => ['suppliers.*', 'purchases.*'],
+        //     'children' => [
+        //         [
+        //             'title' => 'الموردين',
+        //             'icon' => 'far fa-circle',
+        //             'route' => 'inventory.suppliers.index',
+        //             'active_routes' => ['suppliers.*'],
+        //         ],
+        //     ],
+        // ],
 
         // Reports Group
 
@@ -294,12 +333,6 @@ return [
                     'icon' => 'far fa-circle',
                     'route' => 'tables.index',
                     'active_routes' => ['tables.*', 'areas.*'],
-                ],
-                [
-                    'title' => 'وحدات القياس',
-                    'icon' => 'far fa-circle',
-                    'route' => 'units.index',
-                    'active_routes' => ['units.*'],
                 ],
                 [
                     'title' => 'الضرائب والرسوم',

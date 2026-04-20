@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -21,6 +20,11 @@ return new class extends Migration
             $table->decimal('balance_before', 15, 3);
             $table->decimal('balance_after', 15, 3);
             $table->text('description')->nullable();
+            $table->decimal('total_cost', 14, 3)->default(0);
+            $table->string('reference_type')->nullable();
+            $table->unsignedBigInteger('reference_id')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamp('movement_date')->nullable();
             $table->timestamps();
         });
     }
