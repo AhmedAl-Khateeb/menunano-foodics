@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Dashboard\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Subscription;
-use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,61 +11,100 @@ class SubscriptionController extends Controller
 {
     public function index()
     {
-        $subscriptions = Subscription::with(['package', 'paymentMethod' , 'user'])
-            ->latest()
-            ->get();
+        $subscriptions = Subscription::with([
+            'package.businessType',
+            'paymentMethod',
+            'user',
+        ])->latest()->get();
 
         return view('super_admin.subscriptions.index', compact('subscriptions'));
     }
 
-   public function updateStatus(Request $request, $id)
-{
-    $request->validate([
-        'status' => 'required|in:pending,approved,rejected',
-    ]);
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,active,rejected,cancelled,expired',
+        ]);
 
-    $subscription = Subscription::findOrFail($id);
+        $subscription = Subscription::with(['package', 'user'])->findOrFail($id);
 
-    // تحديث حالة الاشتراك
-    $subscription->status = $request->status;
-    $subscription->save();
+        if (!$subscription->package) {
+            return redirect()
+                ->route('subscriptions.index')
+                ->with('error', 'لا توجد باقة مرتبطة بهذا الاشتراك');
+        }
 
-    // في حالة الموافقة
-    if ($request->status === 'approved') {
-        $user = $subscription->user; // العلاقة بين Subscription و User
-
-        if ($user) {
-            // نحضر الباقة المرتبطة
-            $package = Package::find($subscription->package_id);
-
-            // نحدد بداية ونهاية الاشتراك
+        if ($request->status === 'active') {
             $start = now();
-            $end = $package ? $start->copy()->addDays($package->duration) : null;
+            $end = $start->copy()->addDays((int) $subscription->package->duration);
 
-            $user->update([
-                'status'             => 1,
-                'subscription_start' => $start,
-                'subscription_end'   => $end,
-                'package_id'         => $subscription->package_id,
+            $subscription->update([
+                'status' => 'active',
+                'is_active' => true,
+                'price_paid' => $subscription->price_paid ?: $subscription->package->price,
+                'starts_at' => $start,
+                'ends_at' => $end,
+            ]);
+
+            if ($subscription->user && (int) $subscription->user->status !== 1) {
+                $subscription->user->update([
+                    'status' => 1,
+                ]);
+            }
+        }
+
+        if ($request->status === 'rejected') {
+            $subscription->update([
+                'status' => 'rejected',
+                'is_active' => false,
+                'starts_at' => null,
+                'ends_at' => null,
             ]);
         }
+
+        if ($request->status === 'pending') {
+            $subscription->update([
+                'status' => 'pending',
+                'is_active' => false,
+                'starts_at' => null,
+                'ends_at' => null,
+            ]);
+        }
+
+        if ($request->status === 'cancelled') {
+            $subscription->update([
+                'status' => 'cancelled',
+                'is_active' => false,
+                'starts_at' => null,
+                'ends_at' => null,
+            ]);
+        }
+
+        if ($request->status === 'expired') {
+            $subscription->update([
+                'status' => 'expired',
+                'is_active' => false,
+                'ends_at' => now(),
+            ]);
+        }
+
+        return redirect()
+            ->route('subscriptions.index')
+    ->with('success', 'تم تحديث حالة الاشتراك بنجاح ✅');
     }
 
-    return redirect()->route('subscriptions.index')
-        ->with('success', 'تم تحديث حالة الاشتراك بنجاح ✅');
-}
+    public function destroy($id)
+    {
+        $subscription = Subscription::findOrFail($id);
 
-     public function destroy($id)
-{
-    $subscription = Subscription::findOrFail($id);
+        if ($subscription->receipt_image && Storage::disk('public')->exists($subscription->receipt_image)) {
+            Storage::disk('public')->delete($subscription->receipt_image);
+        }
 
-    // لو عندك صورة محفوظة ممكن تمسحها
-    if ($subscription->receipt_image && Storage::exists('public/' . $subscription->receipt_image)) {
-        Storage::delete('public/' . $subscription->receipt_image);
+        $subscription->delete();
+
+        return redirect()
+            ->route('subscriptions.index')
+            ->with('success', 'تم حذف الطلب بنجاح');
     }
-
-    $subscription->delete();
-
-    return redirect()->route('subscriptions.index')->with('success', 'تم حذف الطلب بنجاح');
-}
 }

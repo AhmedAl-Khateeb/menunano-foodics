@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\InventoryTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class Inventory extends Model
 {
+    use InventoryTrait;
+
     protected $fillable = [
         'inventoriable_id',
         'inventoriable_type',
@@ -31,24 +34,4 @@ class Inventory extends Model
         'max_quantity' => 'decimal:3',
         'is_active' => 'boolean',
     ];
-
-    public function inventoriable()
-    {
-        return $this->morphTo();
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class, 'purchase_unit_id');
-    }
-
-    public function movements()
-    {
-        return $this->hasMany(InventoryMovement::class);
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 }

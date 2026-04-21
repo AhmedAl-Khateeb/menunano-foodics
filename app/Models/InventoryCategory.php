@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\InventoryCategoryTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class InventoryCategory extends Model
 {
+    use InventoryCategoryTrait;
+
     protected $fillable = [
         'user_id',
         'name',
@@ -19,15 +22,6 @@ class InventoryCategory extends Model
         'is_active' => 'boolean',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function rawMaterials()
-    {
-        return $this->hasMany(RawMaterial::class);
-    }
 
     public function getCoverUrlAttribute()
     {

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\InventoryMovementTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class InventoryMovement extends Model
 {
+    use InventoryMovementTrait;
+
     const TYPE_PURCHASE = 'purchase';
     const TYPE_SALE = 'sale';
     const TYPE_WASTE = 'waste';
@@ -40,13 +43,4 @@ class InventoryMovement extends Model
         'movement_date' => 'datetime',
     ];
 
-    public function inventory()
-    {
-        return $this->belongsTo(Inventory::class);
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 }

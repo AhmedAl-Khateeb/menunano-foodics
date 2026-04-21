@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\PurchaseInvoiceTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class PurchaseInvoice extends Model
 {
+    use PurchaseInvoiceTrait;
+
     protected $fillable = [
         'user_id',
         'supplier_id',
@@ -17,19 +20,6 @@ class PurchaseInvoice extends Model
         'status',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function supplier()
-    {
-        return $this->belongsTo(Supplier::class);
-    }
-
-    public function items()
-    {
-        return $this->hasMany(PurchaseInvoiceItem::class);
-    }
+ 
 }
 

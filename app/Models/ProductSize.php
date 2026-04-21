@@ -2,25 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\ProductSizeTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductSize extends Model
 {
+    use ProductSizeTrait;
+
     protected $fillable = [
         'size',
         'price',
         'product_id'
     ];
-
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
-
-    public function recipes()
-    {
-        return $this->hasMany(ProductRecipe::class, 'product_size_id');
-    }
 
     public function getMaxProductionQuantityAttribute()
     {
@@ -56,8 +49,5 @@ class ProductSize extends Model
         return $min_production ?? 0;
     }
 
-    public function inventory()
-    {
-        return $this->morphOne(Inventory::class, 'inventoriable');
-    }
+  
 }

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\RecipeItemTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class RecipeItem extends Model
 {
+    use RecipeItemTrait;
+
     protected $fillable = [
         'recipe_id',
         'raw_material_id',
@@ -20,18 +23,4 @@ class RecipeItem extends Model
         'waste_percent' => 'decimal:2',
     ];
 
-    public function recipe()
-    {
-        return $this->belongsTo(Recipe::class);
-    }
-
-    public function rawMaterial()
-    {
-        return $this->belongsTo(RawMaterial::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
 }

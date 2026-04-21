@@ -27,12 +27,12 @@ class PackageRequest extends FormRequest
             }
 
             $this->merge([
-                'features'  => $normalizedFeatures,
+                'features' => $normalizedFeatures,
                 'is_active' => $this->boolean('is_active'),
             ]);
         } else {
             $this->merge([
-                'features'  => [],
+                'features' => [],
                 'is_active' => $this->boolean('is_active'),
             ]);
         }
@@ -41,14 +41,17 @@ class PackageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'             => 'required|string|max:255',
-            'description'      => 'nullable|string',
-            'price'            => 'required|numeric|min:0',
-            'duration'         => 'required|integer|min:1',
-            'is_active'        => 'nullable|boolean',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'duration' => 'required|integer|min:1',
+            'is_active' => 'nullable|boolean',
             'business_type_id' => 'required|exists:business_types,id',
-            'features'         => 'nullable|array',
-            'features.*'       => 'nullable|string|max:255',
+            'features' => ['nullable', 'array'],
+            'features.*' => ['nullable', 'string', 'max:255'],
+
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['nullable', 'string', 'max:100'],
         ];
     }
 }

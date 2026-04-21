@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\RecipeTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class Recipe extends Model
 {
+    use RecipeTrait;
+
     protected $fillable = [
         'user_id',
         'output_raw_material_id',
@@ -21,34 +24,4 @@ class Recipe extends Model
         'is_active' => 'boolean',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function recipeable()
-    {
-        return $this->morphTo();
-    }
-
-    public function yieldUnit()
-    {
-        return $this->belongsTo(Unit::class, 'yield_unit_id');
-    }
-
-    public function outputMaterial()
-    {
-        return $this->belongsTo(RawMaterial::class, 'output_raw_material_id');
-    }
-
-
-    public function items()
-    {
-        return $this->hasMany(RecipeItem::class);
-    }
-
-    public function productionOrders()
-    {
-        return $this->hasMany(ProductionOrder::class);
-    }
 }

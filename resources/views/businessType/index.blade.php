@@ -8,11 +8,6 @@
                     <h1 class="m-0">أنواع النشاط</h1>
                 </div>
                 <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item">
-                            <a href="{{ route('dashboard') }}">الرئيسية</a>
-                        </li>
-                    </ol>
                 </div>
             </div>
         </div>
@@ -29,20 +24,15 @@
 
                             <div class="d-flex flex-wrap align-items-center gap-2">
                                 <form action="{{ route('business-types.index') }}" method="GET" class="d-flex gap-2">
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        class="form-control form-control-sm"
-                                        placeholder="ابحث باسم نوع النشاط"
-                                        value="{{ request('name') }}"
-                                        style="width: 220px;"
-                                    >
+                                    <input type="text" name="name" class="form-control form-control-sm"
+                                        placeholder="ابحث باسم نوع النشاط" value="{{ request('name') }}"
+                                        style="width: 220px;">
 
                                     <button type="submit" class="btn btn-info btn-sm">
                                         <i class="fas fa-search"></i> بحث
                                     </button>
 
-                                    @if(request()->filled('name'))
+                                    @if (request()->filled('name'))
                                         <a href="{{ route('business-types.index') }}" class="btn btn-secondary btn-sm">
                                             <i class="fas fa-times"></i>
                                         </a>
@@ -76,7 +66,8 @@
                                                 <td>{{ $businessType->name }}</td>
                                                 <td>{{ $businessType->slug ?? '-' }}</td>
                                                 <td>
-                                                    <span class="badge badge-{{ $businessType->is_active ? 'success' : 'secondary' }}">
+                                                    <span
+                                                        class="badge badge-{{ $businessType->is_active ? 'success' : 'secondary' }}">
                                                         {{ $businessType->is_active ? 'نشط' : 'متوقف' }}
                                                     </span>
                                                 </td>
@@ -88,14 +79,13 @@
                                                             <i class="fas fa-edit"></i>
                                                         </a>
 
-                                                        <form action="{{ route('business-types.destroy', $businessType->id) }}"
-                                                            method="POST"
-                                                            class="d-inline delete-form">
+                                                        <form
+                                                            action="{{ route('business-types.destroy', $businessType->id) }}"
+                                                            method="POST" class="d-inline delete-form">
                                                             @csrf
                                                             @method('DELETE')
 
-                                                            <button type="button"
-                                                                class="btn btn-danger btn-sm delete-btn"
+                                                            <button type="button" class="btn btn-danger btn-sm delete-btn"
                                                                 data-name="{{ $businessType->name }}">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
@@ -121,7 +111,8 @@
                                             <div class="d-flex justify-content-between mb-2">
                                                 <h5 class="text-primary">{{ $businessType->name }}</h5>
 
-                                                <span class="badge badge-{{ $businessType->is_active ? 'success' : 'secondary' }}">
+                                                <span
+                                                    class="badge badge-{{ $businessType->is_active ? 'success' : 'secondary' }}">
                                                     {{ $businessType->is_active ? 'نشط' : 'متوقف' }}
                                                 </span>
                                             </div>
@@ -137,13 +128,11 @@
                                                 </a>
 
                                                 <form action="{{ route('business-types.destroy', $businessType->id) }}"
-                                                    method="POST"
-                                                    class="flex-grow-1 delete-form">
+                                                    method="POST" class="flex-grow-1 delete-form">
                                                     @csrf
                                                     @method('DELETE')
 
-                                                    <button type="button"
-                                                        class="btn btn-danger btn-sm w-100 delete-btn"
+                                                    <button type="button" class="btn btn-danger btn-sm w-100 delete-btn"
                                                         data-name="{{ $businessType->name }}">
                                                         حذف
                                                     </button>
@@ -165,6 +154,18 @@
                             {{ $businessTypes->appends(request()->query())->links() }}
                         </div>
 
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="float-sm-right mb-0 p-0" style="list-style: none;">
+                            <li>
+                                <a href="{{ route('dashboard') }}" class="btn btn-success"
+                                    style="color: #fff; transition: all 0.2s ease-in-out;"
+                                    onmouseover="this.style.backgroundColor='#007bff'; this.style.borderColor='#007bff'; this.style.color='#fff';"
+                                    onmouseout="this.style.backgroundColor=''; this.style.borderColor=''; this.style.color='#fff';">
+                                    الرئيسية
+                                </a>
+                            </li>
+                        </ol>
                     </div>
 
                 </div>
@@ -199,9 +200,9 @@
     @endif
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.delete-btn').forEach(function (button) {
-                button.addEventListener('click', function () {
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.delete-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
                     const form = this.closest('.delete-form');
                     const name = this.dataset.name || 'هذا العنصر';
 

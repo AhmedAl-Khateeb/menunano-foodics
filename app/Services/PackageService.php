@@ -9,7 +9,7 @@ class PackageService
 {
     public function index()
     {
-        return Package::with(['features', 'businessType'])->latest()->get();
+        return Package::with(['features', 'permissions', 'businessType'])->latest()->get();
     }
 
     public function store(array $data): Package
@@ -25,6 +25,7 @@ class PackageService
             ]);
 
             $this->syncFeatures($package, $data['features'] ?? []);
+            $this->syncPermissions($package, $data['permissions'] ?? []);
 
             return $package;
         });
@@ -43,7 +44,10 @@ class PackageService
             ]);
 
             $package->features()->delete();
+            $package->permissions()->delete();
+
             $this->syncFeatures($package, $data['features'] ?? []);
+            $this->syncPermissions($package, $data['permissions'] ?? []);
 
             return $package;
         });
@@ -53,6 +57,7 @@ class PackageService
     {
         return DB::transaction(function () use ($package) {
             $package->features()->delete();
+            $package->permissions()->delete();
 
             return $package->delete();
         });
@@ -64,6 +69,17 @@ class PackageService
             if (!empty($feature)) {
                 $package->features()->create([
                     'text' => $feature,
+                ]);
+            }
+        }
+    }
+
+    private function syncPermissions(Package $package, array $permissions = []): void
+    {
+        foreach ($permissions as $permission) {
+            if (!empty($permission)) {
+                $package->permissions()->create([
+                    'permission_key' => $permission,
                 ]);
             }
         }

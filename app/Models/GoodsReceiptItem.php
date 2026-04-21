@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\GoodsReceiptItemTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class GoodsReceiptItem extends Model
 {
+    use GoodsReceiptItemTrait;
+
     protected $fillable = [
         'goods_receipt_id',
         'raw_material_id',
@@ -22,23 +25,4 @@ class GoodsReceiptItem extends Model
         'total_cost' => 'decimal:3',
     ];
 
-    public function receipt()
-    {
-        return $this->belongsTo(GoodsReceipt::class, 'goods_receipt_id');
-    }
-
-    public function rawMaterial()
-    {
-        return $this->belongsTo(RawMaterial::class);
-    }
-
-    public function purchaseOrderItem()
-    {
-        return $this->belongsTo(PurchaseOrderItem::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
 }

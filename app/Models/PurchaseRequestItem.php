@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\PurchaseRequestItemTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class PurchaseRequestItem extends Model
 {
+    use PurchaseRequestItemTrait;
+
     protected $fillable = [
         'purchase_request_id',
         'raw_material_id',
@@ -20,18 +23,4 @@ class PurchaseRequestItem extends Model
         'approved_quantity' => 'decimal:3',
     ];
 
-    public function request()
-    {
-        return $this->belongsTo(PurchaseRequest::class, 'purchase_request_id');
-    }
-
-    public function rawMaterial()
-    {
-        return $this->belongsTo(RawMaterial::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
 }

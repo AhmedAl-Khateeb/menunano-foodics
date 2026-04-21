@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\ProductRecipeTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductRecipe extends Model
 {
+    use ProductRecipeTrait;
+
     protected $fillable = [
         'product_id',
         'ingredient_id',
@@ -14,23 +17,4 @@ class ProductRecipe extends Model
         'product_size_id'
     ];
 
-    public function size()
-    {
-        return $this->belongsTo(ProductSize::class, 'product_size_id');
-    }
-
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
-
-    public function ingredient()
-    {
-        return $this->belongsTo(Product::class, 'ingredient_id');
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
 }

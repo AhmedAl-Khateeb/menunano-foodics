@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\TransferRequestTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class TransferRequest extends Model
 {
+    use TransferRequestTrait;
+
     protected $fillable = [
         'user_id',
         'transfer_number',
@@ -20,13 +23,5 @@ class TransferRequest extends Model
         'transfer_date' => 'date',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function items()
-    {
-        return $this->hasMany(TransferRequestItem::class);
-    }
+ 
 }

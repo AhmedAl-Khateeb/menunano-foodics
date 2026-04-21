@@ -3,7 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Carbon\Carbon;
+
+use App\Traits\UserTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,17 +13,12 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
     use Notifiable;
     use HasApiTokens;
     use \Spatie\Permission\Traits\HasRoles;
+    use UserTrait;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'created_by',
@@ -31,38 +27,22 @@ class User extends Authenticatable
         'store_name',
         'image',
         'status',
-        'subscription_start',
-        'subscription_end',
-        'package_id',
         'password',
         'role',
         'branch_id',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
-            'subscription_start' => 'date',
-            'subscription_end' => 'date',
         ];
     }
-    protected $dates = ['subscription_start', 'subscription_end'];
 
     protected static function booted()
     {
@@ -126,56 +106,6 @@ class User extends Authenticatable
         });
     }
 
-    public function categories()
-    {
-        return $this->hasMany(Category::class, 'user_id');
-    }
-
-    public function products()
-    {
-        return $this->hasMany(Product::class, 'user_id');
-    }
-
-    public function sliders()
-    {
-        return $this->hasMany(Slider::class);
-    }
-
-    public function settings()
-    {
-        return $this->hasMany(Setting::class, 'user_id');
-    }
-
-    public function orders()
-    {
-        return $this->hasMany(Order::class, 'user_id');
-    }
-
-    public function package()
-    {
-        return $this->belongsTo(Package::class);
-    }
-
-    public function subscriptions()
-    {
-        return $this->hasMany(Subscription::class);
-    }
-
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function customers()
-    {
-        return $this->hasMany(Customer::class);
-    }
-
-    public function branch()
-    {
-        return $this->belongsTo(Branch::class);
-    }
-
     public function setPhoneAttribute($value)
     {
         $this->attributes['phone'] = str_starts_with($value, '+2')
@@ -183,48 +113,56 @@ class User extends Authenticatable
             : '+20'.ltrim($value, '0+');
     }
 
-    public function setSubscriptionStart($startDate): bool
-    {
-        // إذا لا يوجد باقة، لا نفعل شيئاً
-        if (!$this->package) {
-            return false;
-        }
-
-        $start = Carbon::parse($startDate)->startOfDay();
-        $end = (clone $start)->addDays((int) $this->package->duration);
-
-        $this->subscription_start = $start->toDateString();
-        $this->subscription_end = $end->toDateString();
-        $this->status = 1; // فعّل المستخدم عند إضافة بداية
-        $this->save();
-
-        return true;
-    }
-
-    public function checkSubscription()
-    {
-        // لو ما فيه تاريخ نهاية ما نعمل شيئًا
-        if (!$this->subscription_end) {
-            return;
-        }
-
-        // لو انتهى التاريخ (اليوم أكبر من تاريخ النهاية) نجعل الحالة 0
-        if (now()->startOfDay()->gt(Carbon::parse($this->subscription_end))) {
-            if ($this->status != 0) {
-                $this->status = 0;
-                $this->save();
-            }
-        }
-    }
-
-    /**
-     * Get logo url.
-     */
     public function getLogoUrlAttribute()
     {
         // get logo from settings
         $logoPathFromSetting = $this->settings()->firstWhere('key', 'logo')?->value;
 
         return $logoPathFromSetting ? asset('storage/'.$logoPathFromSetting) : null;
+    }
+
+
+    // Relations subscriptions
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscriptions()
+    {
+        return $this->hasMany(Subscription::class)
+            ->where('status', 'active')
+            ->where('is_active', true)
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now());
+    }
+
+    public function activePackages()
+    {
+        return Package::whereHas('subscriptions', function ($q) {
+            $q->where('user_id', $this->id)
+                ->where('status', 'active')
+                ->where('is_active', true)
+                ->where('starts_at', '<=', now())
+                ->where('ends_at', '>=', now());
+        })->with('permissions', 'businessType')->get();
+    }
+
+    public function hasPackagePermission(string $permissionKey): bool
+    {
+        return $this->activeSubscriptions()
+            ->whereHas('package.permissions', function ($q) use ($permissionKey) {
+                $q->where('permission_key', $permissionKey);
+            })
+            ->exists();
+    }
+
+    public function hasBusinessType(string $slug): bool
+    {
+        return $this->activeSubscriptions()
+            ->whereHas('package.businessType', function ($q) use ($slug) {
+                $q->where('slug', $slug);
+            })
+            ->exists();
     }
 }

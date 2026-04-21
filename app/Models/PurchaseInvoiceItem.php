@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\PurchaseInvoiceItemTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class PurchaseInvoiceItem extends Model
 {
+    use PurchaseInvoiceItemTrait;
+
     protected $fillable = [
         'purchase_invoice_id',
         'inventory_id',
@@ -14,14 +17,6 @@ class PurchaseInvoiceItem extends Model
         'total',
     ];
 
-    public function invoice()
-    {
-        return $this->belongsTo(PurchaseInvoice::class, 'purchase_invoice_id');
-    }
-
-    public function inventory()
-    {
-        return $this->belongsTo(Inventory::class);
-    }
+ 
 }
 

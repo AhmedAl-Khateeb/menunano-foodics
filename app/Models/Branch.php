@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BranchTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Branch extends Model
 {
-    use HasFactory;
+    use HasFactory,BranchTrait;
 
     protected $fillable = [
         'name',
@@ -19,13 +20,5 @@ class Branch extends Model
         // 'user_id',
     ];
 
-    public function users()
-    {
-        return $this->hasMany(User::class);
-    }
-
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
+ 
 }

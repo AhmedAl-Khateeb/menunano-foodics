@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\ProductionOrderTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductionOrder extends Model
 {
+    use ProductionOrderTrait;
+
     protected $fillable = [
         'user_id',
         'recipe_id',
@@ -25,18 +28,5 @@ class ProductionOrder extends Model
         'total_cost' => 'decimal:3',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function recipe()
-    {
-        return $this->belongsTo(Recipe::class);
-    }
-
-    public function items()
-    {
-        return $this->hasMany(ProductionOrderItem::class);
-    }
+ 
 }

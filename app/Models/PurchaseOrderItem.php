@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\PurchaseOrderItemTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class PurchaseOrderItem extends Model
 {
+    use PurchaseOrderItemTrait;
+
     protected $fillable = [
         'purchase_order_id',
         'raw_material_id',
@@ -24,18 +27,4 @@ class PurchaseOrderItem extends Model
         'total' => 'decimal:3',
     ];
 
-    public function order()
-    {
-        return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id');
-    }
-
-    public function rawMaterial()
-    {
-        return $this->belongsTo(RawMaterial::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
 }

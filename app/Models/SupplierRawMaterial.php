@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\SupplierRawMaterialTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class SupplierRawMaterial extends Model
 {
+    use SupplierRawMaterialTrait;
+
     protected $fillable = [
         'user_id',
         'supplier_id',
@@ -26,18 +29,5 @@ class SupplierRawMaterial extends Model
         'is_preferred' => 'boolean',
     ];
 
-    public function supplier()
-    {
-        return $this->belongsTo(Supplier::class);
-    }
 
-    public function rawMaterial()
-    {
-        return $this->belongsTo(RawMaterial::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
 }

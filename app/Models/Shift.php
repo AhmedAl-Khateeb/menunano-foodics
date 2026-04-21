@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\ShiftTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class Shift extends Model
 {
+    use ShiftTrait;
+
     protected $fillable = [
         'user_id',
         'branch_id',
@@ -29,25 +32,7 @@ class Shift extends Model
         'cash_difference' => 'decimal:2',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class);
-    }
-
-    public function branch()
-    {
-        return $this->belongsTo(Branch::class);
-    }
-
-    public function closer()
-    {
-        return $this->belongsTo(User::class, 'closed_by');
-    }
+  
 
     public function isActive(): bool
     {

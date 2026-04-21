@@ -16,6 +16,10 @@ class Subscription extends Model
         'phone',
         'receipt_image',
         'status',
+        'starts_at',
+        'ends_at',
+        'is_active',
+        'price_paid',
     ];
 
     public function user()
@@ -31,5 +35,15 @@ class Subscription extends Model
     public function paymentMethod()
     {
         return $this->belongsTo(PaymentMethod::class);
+    }
+
+
+      public function isCurrentlyActive(): bool
+    {
+        return $this->is_active
+            && $this->status === 'active'
+            && $this->starts_at
+            && $this->ends_at
+            && now()->between($this->starts_at, $this->ends_at);
     }
 }

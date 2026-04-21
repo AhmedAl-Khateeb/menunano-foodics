@@ -18,9 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'super_admin' => \App\Http\Middleware\SuperAdminMiddleware::class,
-            'active' => \App\Http\Middleware\ActiveUserMiddleware::class,
-            'CheckSubscription' => \App\Http\Middleware\CheckSubscription::class,
+            'super_admin' => App\Http\Middleware\SuperAdminMiddleware::class,
+            'active' => App\Http\Middleware\ActiveUserMiddleware::class,
+            'CheckSubscription' => App\Http\Middleware\CheckSubscription::class,
+            'package.permission' => App\Http\Middleware\CheckPackagePermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
@@ -51,11 +52,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 foreach ($errors as $field => $message) {
                     $formattedErrors[$field] = $message[0];
                 }
+
                 return ApiResponse::validationError($formattedErrors);
             }
         });
 
-        $exceptions->renderable(function (\Exception $e, $request) {
+        $exceptions->renderable(function (Exception $e, $request) {
             if ($request->expectsJson()) {
                 return ApiResponse::serverError($e->getMessage());
             }

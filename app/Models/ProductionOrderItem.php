@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\ProductionOrderItemTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductionOrderItem extends Model
 {
+    use ProductionOrderItemTrait;
+
     protected $fillable = [
         'production_order_id',
         'raw_material_id',
@@ -23,18 +26,5 @@ class ProductionOrderItem extends Model
         'total_cost' => 'decimal:3',
     ];
 
-    public function productionOrder()
-    {
-        return $this->belongsTo(ProductionOrder::class);
-    }
 
-    public function rawMaterial()
-    {
-        return $this->belongsTo(RawMaterial::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
 }

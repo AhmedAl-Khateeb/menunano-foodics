@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\StockCountTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class StockCount extends Model
 {
+    use StockCountTrait;
+
     protected $fillable = [
         'user_id',
         'count_number',
@@ -22,18 +25,5 @@ class StockCount extends Model
         'approved_at' => 'datetime',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 
-    public function items()
-    {
-        return $this->hasMany(StockCountItem::class);
-    }
-
-    public function approver()
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
 }

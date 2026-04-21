@@ -14,6 +14,11 @@ class PackageController extends Controller
     {
     }
 
+    private function availablePermissions(): array
+    {
+        return config('package_permissions');
+    }
+
     public function index()
     {
         $packages = $this->packageService->index();
@@ -24,8 +29,9 @@ class PackageController extends Controller
     public function create()
     {
         $businessTypes = BusinessType::where('is_active', true)->get();
+        $availablePermissions = $this->availablePermissions();
 
-        return view('super_admin.packages.create', compact('businessTypes'));
+        return view('super_admin.packages.create', compact('businessTypes', 'availablePermissions'));
     }
 
     public function store(PackageRequest $request)
@@ -39,10 +45,11 @@ class PackageController extends Controller
 
     public function edit(Package $package)
     {
-        $package->load('features');
+        $package->load('features', 'permissions');
         $businessTypes = BusinessType::where('is_active', true)->get();
+        $availablePermissions = $this->availablePermissions();
 
-        return view('super_admin.packages.edit', compact('package', 'businessTypes'));
+        return view('super_admin.packages.edit', compact('package', 'businessTypes', 'availablePermissions'));
     }
 
     public function update(PackageRequest $request, Package $package)

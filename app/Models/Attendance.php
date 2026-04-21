@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\AttendanceTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class Attendance extends Model
 {
+    use AttendanceTrait;
+
     protected $fillable = [
         'user_id',
         'shift_id',
@@ -21,14 +24,4 @@ class Attendance extends Model
         'check_in' => 'datetime',
         'check_out' => 'datetime',
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function shift()
-    {
-        return $this->belongsTo(Shift::class);
-    }
 }

@@ -10,10 +10,10 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('dashboard') }}">الرئيسية</a>
+                            {{-- <a href="{{ route('dashboard') }}">الرئيسية</a> --}}
                         </li>
                         <li class="breadcrumb-item">
-                            <a href="{{ route('business-types.index') }}">أنواع النشاط</a>
+                            {{-- <a href="{{ route('business-types.index') }}">أنواع النشاط</a> --}}
                         </li>
                     </ol>
                 </div>

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\PurchaseOrderTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class PurchaseOrder extends Model
 {
+    use PurchaseOrderTrait;
+
     protected $fillable = [
         'user_id',
         'supplier_id',
@@ -29,29 +32,4 @@ class PurchaseOrder extends Model
         'tax' => 'decimal:3',
         'total' => 'decimal:3',
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function supplier()
-    {
-        return $this->belongsTo(Supplier::class);
-    }
-
-    public function request()
-    {
-        return $this->belongsTo(PurchaseRequest::class, 'purchase_request_id');
-    }
-
-    public function items()
-    {
-        return $this->hasMany(PurchaseOrderItem::class);
-    }
-
-    public function receipts()
-    {
-        return $this->hasMany(GoodsReceipt::class);
-    }
 }

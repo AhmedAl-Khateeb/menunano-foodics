@@ -62,7 +62,13 @@ Route::get('/clear-cache', function () {
     return 'Cache cleared ✅';
 });
 
+/*
+|--------------------------------------------------------------------------
+| Super Admin Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'super_admin'])->prefix('super')->group(function () {
+    Route::resource('business-types', BusinessTypeController::class)->except(['show']);
     Route::get('business-settings', [BusinessSettingController::class, 'index'])->name('business_settings.index');
     Route::post('business-settings', [BusinessSettingController::class, 'update'])->name('business_settings.update');
 
@@ -77,6 +83,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('super')->group(function () {
     Route::resource('payment-methods', PaymentMethodController::class)
         ->names('super.payment-methods')
         ->except(['show']);
+
     Route::patch('payment-methods/{id}/toggle', [PaymentMethodController::class, 'toggle'])
         ->name('super.payment-methods.toggle');
 
@@ -87,119 +94,136 @@ Route::middleware(['auth', 'super_admin'])->prefix('super')->group(function () {
     Route::resource('sections', SectionController::class)->except(['show']);
 });
 
+/*
+|--------------------------------------------------------------------------
+| Admin / Owner Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
-    Route::get('/dashboard', [ShowController::class, 'index'])->name('dashboard');
-
-    Route::resource('categories', CategoryController::class)->except(['create', 'edit']);
-    Route::resource('products', ProductController::class)->except(['create', 'edit']);
-    Route::resource('sliders', SliderController::class)->except(['create', 'edit']);
-
-    Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
-    Route::put('settings/{setting}', [SettingController::class, 'update'])->name('settings.update');
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/dashboard', [ShowController::class, 'index'])
+        ->middleware('package.permission:dashboard.access')
+        ->name('dashboard');
 
     Route::get('/orders-count', function () {
         return response()->json([
             'count' => Order::count(),
         ]);
-    })->name('orders.count');
+    })->middleware('package.permission:dashboard.access')->name('orders.count');
 
-    Route::resource('attendances', AttendanceController::class)->except(['show']);
-    Route::resource('shifts', ShiftController::class)->except(['show']);
-    Route::post('shifts/{shift}/close', [ShiftController::class, 'close'])->name('shifts.close');
+    /*
+    |--------------------------------------------------------------------------
+    | E-Menu
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('categories', CategoryController::class)
+        ->except(['create', 'edit'])
+        ->middleware('package.permission:categories.access');
+
+    Route::resource('products', ProductController::class)
+        ->except(['create', 'edit'])
+        ->middleware('package.permission:products.access');
+
+    Route::resource('sliders', SliderController::class)
+        ->except(['create', 'edit'])
+        ->middleware('package.permission:sliders.access');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orders
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])
+            ->middleware('package.permission:orders.all')
+            ->name('index');
+
+        Route::get('/delivery', [OrderController::class, 'delivery'])
+            ->middleware('package.permission:orders.delivery')
+            ->name('delivery');
+
+        Route::get('/local', [OrderController::class, 'local'])
+            ->middleware('package.permission:orders.local')
+            ->name('local');
+
+        Route::get('/pickup', [OrderController::class, 'pickup'])
+            ->middleware('package.permission:orders.pickup')
+            ->name('pickup');
+
+        Route::get('/{order}', [OrderController::class, 'show'])
+            ->middleware('package.permission:orders.all')
+            ->whereNumber('order')
+            ->name('show');
+
+        Route::patch('/{order}/serve', [OrderController::class, 'serve'])
+            ->middleware('package.permission:orders.all')
+            ->whereNumber('order')
+            ->name('serve');
+    });
+
+    Route::get('/orders/new', function () {
+        return redirect()->route('under.development');
+    })->middleware('package.permission:orders.access')->name('orders.new');
+
+    Route::get('/orders/ongoing', function () {
+        return redirect()->route('under.development');
+    })->middleware('package.permission:orders.access')->name('orders.ongoing');
+
+    Route::get('/orders/completed', function () {
+        return redirect()->route('under.development');
+    })->middleware('package.permission:orders.access')->name('orders.completed');
+
+    Route::get('/orders/filter', function () {
+        return redirect()->route('under.development');
+    })->middleware('package.permission:orders.access')->name('orders.filter');
+
+    /*
+    |--------------------------------------------------------------------------
+    | POS
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/pos', PosPage::class)
+        ->middleware('package.permission:pos.access')
+        ->name('pos.index');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Management
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('users', UserController::class)
+        ->except(['show'])
+        ->middleware('package.permission:users.access');
 
     Route::get('/users/staff', function () {
         return redirect()->route('under.development');
-    })->name('users.staff');
+    })->middleware('package.permission:users.access')->name('users.staff');
 
     Route::get('/users/customers', [CustomerController::class, 'index'])
+        ->middleware('package.permission:users.access')
         ->name('users.customers');
 
-    Route::prefix('inventory')->name('inventory.')->group(function () {
-        Route::get('/', [InventoryDashboardController::class, 'index'])
-            ->name('dashboard');
+    Route::resource('roles', RoleController::class)
+        ->middleware('package.permission:roles.access');
 
-        Route::get('/reconcile', StockReconciliation::class)->name('reconcile');
+    Route::resource('branches', BranchController::class)
+        ->middleware('package.permission:branches.access');
 
-        Route::resource('suppliers', SupplierController::class);
-        Route::post('suppliers/{supplier}/materials', [SupplierController::class, 'attachMaterial'])
-            ->name('suppliers.materials.attach');
-        Route::put('suppliers/{supplier}/materials/{pivotId}', [SupplierController::class, 'updateAttachedMaterial'])
-            ->name('suppliers.materials.update');
-        Route::delete('suppliers/{supplier}/materials/{pivotId}', [SupplierController::class, 'detachMaterial'])
-            ->name('suppliers.materials.detach');
+    Route::resource('attendances', AttendanceController::class)
+        ->except(['show'])
+        ->middleware('package.permission:attendances.access');
 
-        Route::resource('materials', RawMaterialController::class)
-            ->except(['show']);
+    Route::resource('shifts', ShiftController::class)
+        ->except(['show'])
+        ->middleware('package.permission:shifts.access');
 
-        Route::resource('categories', InventoryCategoryController::class)
-            ->except(['create', 'edit', 'show']);
-
-        Route::resource('purchase-requests', PurchaseRequestController::class);
-        Route::post('purchase-requests/{purchase_request}/approve', [PurchaseRequestController::class, 'approve'])
-            ->name('purchase-requests.approve');
-
-        Route::resource('purchase-orders', PurchaseOrderController::class);
-        Route::post('purchase-orders/{purchase_order}/approve', [PurchaseOrderController::class, 'approve'])
-            ->name('purchase-orders.approve');
-
-        Route::resource('receipts', GoodsReceiptController::class);
-        Route::post('receipts/{receipt}/post', [GoodsReceiptController::class, 'post'])
-            ->name('receipts.post');
-
-        Route::resource('transfer-requests', TransferRequestController::class);
-        Route::post('transfer-requests/{transfer_request}/approve', [TransferRequestController::class, 'approve'])
-            ->name('transfer-requests.approve');
-        Route::post('transfer-requests/{transfer_request}/receive', [TransferRequestController::class, 'receive'])
-            ->name('transfer-requests.receive');
-
-        Route::resource('stock-counts', StockCountController::class);
-        Route::post('stock-counts/{stock_count}/approve', [StockCountController::class, 'approve'])
-            ->name('stock-counts.approve');
-
-        Route::resource('production-orders', ProductionOrderController::class);
-        Route::post('production-orders/{production_order}/produce', [ProductionOrderController::class, 'produce'])
-            ->name('production-orders.produce');
-
-        Route::get('movements', [InventoryMovementController::class, 'index'])
-            ->name('movements.index');
-
-        Route::get('/ready', [ReadyItemController::class, 'index'])->name('ready.index');
-        Route::get('/ready/create', [ReadyItemController::class, 'create'])->name('ready.create');
-        Route::post('/ready', [ReadyItemController::class, 'store'])->name('ready.store');
-        Route::get('/ready/{id}/edit', [ReadyItemController::class, 'edit'])->name('ready.edit');
-        Route::put('/ready/{id}', [ReadyItemController::class, 'update'])->name('ready.update');
-        Route::put('/ready/{id}/convert', [ReadyItemController::class, 'convertToComposite'])->name('ready.convert');
-        Route::post('/ready/{id}/adjust', [ReadyItemController::class, 'adjustStock'])->name('ready.adjust');
-        Route::get('/ready/{id}/history', [ReadyItemController::class, 'history'])->name('ready.history');
-
-        Route::get('/composite', [CompositeItemController::class, 'index'])->name('composite.index');
-        Route::get('/composite/create', [CompositeItemController::class, 'create'])->name('composite.create');
-        Route::post('/composite', [CompositeItemController::class, 'store'])->name('composite.store');
-        Route::get('/composite/{id}/edit', [CompositeItemController::class, 'edit'])->name('composite.edit');
-        Route::put('/composite/{id}', [CompositeItemController::class, 'update'])->name('composite.update');
-        Route::get('/composite/{id}/recipe', [CompositeItemController::class, 'editRecipe'])->name('composite.recipe.edit');
-        Route::post('/composite/{id}/recipe', [CompositeItemController::class, 'addIngredient'])->name('composite.recipe.add');
-        Route::delete('/composite/recipe/{recipe_id}', [CompositeItemController::class, 'removeIngredient'])->name('composite.recipe.remove');
-    });
-
-    Route::resource('business-types', BusinessTypeController::class)->except(['show']);
-    Route::resource('users', UserController::class)->except(['show']);
-    Route::resource('roles', RoleController::class);
-    Route::resource('branches', BranchController::class);
-
-    Route::resource('payment-methods', PaymentMethodController::class);
-
-    Route::resource('delivery_men', DeliveryManController::class)->except(['show']);
-    Route::resource('purchases', PurchaseInvoiceController::class)->except(['edit', 'update']);
-
-    Route::get('/impersonate/leave', [ImpersonationController::class, 'leave'])->name('impersonate.leave');
-    Route::get('/impersonate/{id}', [ImpersonationController::class, 'impersonate'])->name('impersonate');
-
-    Route::get('/pos', PosPage::class)->name('pos.index');
-
-    Route::get('/under-development', function () {
-        return view('under-development');
-    })->name('under.development');
+    Route::post('shifts/{shift}/close', [ShiftController::class, 'close'])
+        ->middleware('package.permission:shifts.access')
+        ->name('shifts.close');
 
     Route::post('/shifts/pause', function () {
         $activeShift = Shift::where('user_id', auth()->id())
@@ -211,77 +235,254 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         }
 
         return response()->json(['success' => true]);
-    })->name('shifts.pause');
+    })->middleware('package.permission:shifts.access')->name('shifts.pause');
 
-    Route::prefix('orders')->name('orders.')->group(function () {
-        Route::get('/', [OrderController::class, 'index'])->name('index');
-        Route::get('/delivery', [OrderController::class, 'delivery'])->name('delivery');
-        Route::get('/local', [OrderController::class, 'local'])->name('local');
-        Route::get('/pickup', [OrderController::class, 'pickup'])->name('pickup');
-        Route::get('/{order}', [OrderController::class, 'show'])->whereNumber('order')->name('show');
-        Route::patch('/{order}/serve', [OrderController::class, 'serve'])->whereNumber('order')->name('serve');
+    /*
+    |--------------------------------------------------------------------------
+    | Inventory
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/', [InventoryDashboardController::class, 'index'])
+            ->middleware('package.permission:inventory.dashboard')
+            ->name('dashboard');
+
+        Route::get('/reconcile', StockReconciliation::class)
+            ->middleware('package.permission:inventory.stock_counts')
+            ->name('reconcile');
+
+        Route::resource('suppliers', SupplierController::class)
+            ->middleware('package.permission:inventory.suppliers');
+
+        Route::post('suppliers/{supplier}/materials', [SupplierController::class, 'attachMaterial'])
+            ->middleware('package.permission:inventory.suppliers')
+            ->name('suppliers.materials.attach');
+
+        Route::put('suppliers/{supplier}/materials/{pivotId}', [SupplierController::class, 'updateAttachedMaterial'])
+            ->middleware('package.permission:inventory.suppliers')
+            ->name('suppliers.materials.update');
+
+        Route::delete('suppliers/{supplier}/materials/{pivotId}', [SupplierController::class, 'detachMaterial'])
+            ->middleware('package.permission:inventory.suppliers')
+            ->name('suppliers.materials.detach');
+
+        Route::resource('materials', RawMaterialController::class)
+            ->except(['show'])
+            ->middleware('package.permission:inventory.materials');
+
+        Route::resource('categories', InventoryCategoryController::class)
+            ->except(['create', 'edit', 'show'])
+            ->middleware('package.permission:inventory.categories');
+
+        Route::resource('purchase-requests', PurchaseRequestController::class)
+            ->middleware('package.permission:inventory.purchase_requests');
+
+        Route::post('purchase-requests/{purchase_request}/approve', [PurchaseRequestController::class, 'approve'])
+            ->middleware('package.permission:inventory.purchase_requests')
+            ->name('purchase-requests.approve');
+
+        Route::resource('purchase-orders', PurchaseOrderController::class)
+            ->middleware('package.permission:inventory.purchase_orders');
+
+        Route::post('purchase-orders/{purchase_order}/approve', [PurchaseOrderController::class, 'approve'])
+            ->middleware('package.permission:inventory.purchase_orders')
+            ->name('purchase-orders.approve');
+
+        Route::resource('receipts', GoodsReceiptController::class)
+            ->middleware('package.permission:inventory.receipts');
+
+        Route::post('receipts/{receipt}/post', [GoodsReceiptController::class, 'post'])
+            ->middleware('package.permission:inventory.receipts')
+            ->name('receipts.post');
+
+        Route::resource('transfer-requests', TransferRequestController::class)
+            ->middleware('package.permission:inventory.transfer_requests');
+
+        Route::post('transfer-requests/{transfer_request}/approve', [TransferRequestController::class, 'approve'])
+            ->middleware('package.permission:inventory.transfer_requests')
+            ->name('transfer-requests.approve');
+
+        Route::post('transfer-requests/{transfer_request}/receive', [TransferRequestController::class, 'receive'])
+            ->middleware('package.permission:inventory.transfer_requests')
+            ->name('transfer-requests.receive');
+
+        Route::resource('stock-counts', StockCountController::class)
+            ->middleware('package.permission:inventory.stock_counts');
+
+        Route::post('stock-counts/{stock_count}/approve', [StockCountController::class, 'approve'])
+            ->middleware('package.permission:inventory.stock_counts')
+            ->name('stock-counts.approve');
+
+        Route::resource('production-orders', ProductionOrderController::class)
+            ->middleware('package.permission:inventory.production_orders');
+
+        Route::post('production-orders/{production_order}/produce', [ProductionOrderController::class, 'produce'])
+            ->middleware('package.permission:inventory.production_orders')
+            ->name('production-orders.produce');
+
+        Route::get('movements', [InventoryMovementController::class, 'index'])
+            ->middleware('package.permission:inventory.movements')
+            ->name('movements.index');
+
+        Route::get('/ready', [ReadyItemController::class, 'index'])
+            ->middleware('package.permission:inventory.materials')
+            ->name('ready.index');
+
+        Route::get('/ready/create', [ReadyItemController::class, 'create'])
+            ->middleware('package.permission:inventory.materials')
+            ->name('ready.create');
+
+        Route::post('/ready', [ReadyItemController::class, 'store'])
+            ->middleware('package.permission:inventory.materials')
+            ->name('ready.store');
+
+        Route::get('/ready/{id}/edit', [ReadyItemController::class, 'edit'])
+            ->middleware('package.permission:inventory.materials')
+            ->name('ready.edit');
+
+        Route::put('/ready/{id}', [ReadyItemController::class, 'update'])
+            ->middleware('package.permission:inventory.materials')
+            ->name('ready.update');
+
+        Route::put('/ready/{id}/convert', [ReadyItemController::class, 'convertToComposite'])
+            ->middleware('package.permission:inventory.materials')
+            ->name('ready.convert');
+
+        Route::post('/ready/{id}/adjust', [ReadyItemController::class, 'adjustStock'])
+            ->middleware('package.permission:inventory.materials')
+            ->name('ready.adjust');
+
+        Route::get('/ready/{id}/history', [ReadyItemController::class, 'history'])
+            ->middleware('package.permission:inventory.materials')
+            ->name('ready.history');
+
+        Route::get('/composite', [CompositeItemController::class, 'index'])
+            ->middleware('package.permission:inventory.production_orders')
+            ->name('composite.index');
+
+        Route::get('/composite/create', [CompositeItemController::class, 'create'])
+            ->middleware('package.permission:inventory.production_orders')
+            ->name('composite.create');
+
+        Route::post('/composite', [CompositeItemController::class, 'store'])
+            ->middleware('package.permission:inventory.production_orders')
+            ->name('composite.store');
+
+        Route::get('/composite/{id}/edit', [CompositeItemController::class, 'edit'])
+            ->middleware('package.permission:inventory.production_orders')
+            ->name('composite.edit');
+
+        Route::put('/composite/{id}', [CompositeItemController::class, 'update'])
+            ->middleware('package.permission:inventory.production_orders')
+            ->name('composite.update');
+
+        Route::get('/composite/{id}/recipe', [CompositeItemController::class, 'editRecipe'])
+            ->middleware('package.permission:inventory.production_orders')
+            ->name('composite.recipe.edit');
+
+        Route::post('/composite/{id}/recipe', [CompositeItemController::class, 'addIngredient'])
+            ->middleware('package.permission:inventory.production_orders')
+            ->name('composite.recipe.add');
+
+        Route::delete('/composite/recipe/{recipe_id}', [CompositeItemController::class, 'removeIngredient'])
+            ->middleware('package.permission:inventory.production_orders')
+            ->name('composite.recipe.remove');
     });
 
-    Route::get('/orders/new', function () {
-        return redirect()->route('under.development');
-    })->name('orders.new');
+    /*
+    |--------------------------------------------------------------------------
+    | Settings
+    |--------------------------------------------------------------------------
+    */
+    Route::get('settings', [SettingController::class, 'index'])
+        ->middleware('package.permission:settings.general')
+        ->name('settings.index');
 
-    Route::get('/orders/ongoing', function () {
-        return redirect()->route('under.development');
-    })->name('orders.ongoing');
+    Route::put('settings/{setting}', [SettingController::class, 'update'])
+        ->middleware('package.permission:settings.general')
+        ->name('settings.update');
 
-    Route::get('/orders/completed', function () {
-        return redirect()->route('under.development');
-    })->name('orders.completed');
-
-    Route::get('/orders/filter', function () {
-        return redirect()->route('under.development');
-    })->name('orders.filter');
-
-    Route::get('/products/addons', function () {
-        return redirect()->route('under.development');
-    })->name('products.addons');
-
-    Route::get('/products/active', function () {
-        return redirect()->route('under.development');
-    })->name('products.active');
-
-    Route::resource('dining-areas', DiningAreaController::class)
-        ->only(['store', 'update', 'destroy']);
+    Route::resource('payment-methods', PaymentMethodController::class)
+        ->middleware('package.permission:payment_methods.access');
 
     Route::resource('tables', TableController::class)
-        ->except(['create', 'edit', 'show']);
+        ->except(['create', 'edit', 'show'])
+        ->middleware('package.permission:tables_areas.access');
+
+    Route::resource('dining-areas', DiningAreaController::class)
+        ->only(['store', 'update', 'destroy'])
+        ->middleware('package.permission:tables_areas.access');
 
     Route::resource('units', UnitController::class)
-        ->except(['create', 'edit', 'show']);
+        ->except(['create', 'edit', 'show'])
+        ->middleware('package.permission:units.access');
 
     Route::resource('settings/charges', ChargeController::class)
         ->names('charges')
-        ->except(['create', 'edit', 'show']);
+        ->except(['create', 'edit', 'show'])
+        ->middleware('package.permission:charges.access');
 
     Route::redirect('settings/taxes', 'settings/charges');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Reports
+    |--------------------------------------------------------------------------
+    */
     Route::get('/reports/sales', function () {
         return redirect()->route('under.development');
-    })->name('reports.sales');
+    })->middleware('package.permission:reports.sales')->name('reports.sales');
 
     Route::get('/reports/top-products', function () {
         return redirect()->route('under.development');
-    })->name('reports.top-products');
+    })->middleware('package.permission:reports.top_products')->name('reports.top-products');
 
     Route::get('/reports/staff-performance', function () {
         return redirect()->route('under.development');
-    })->name('reports.staff-performance');
+    })->middleware('package.permission:reports.staff_performance')->name('reports.staff-performance');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Extras / Legacy
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('delivery_men', DeliveryManController::class)
+        ->except(['show'])
+        ->middleware('package.permission:orders.delivery');
+
+    Route::resource('purchases', PurchaseInvoiceController::class)
+        ->except(['edit', 'update'])
+        ->middleware('package.permission:inventory.purchase_orders');
+
+    Route::get('/impersonate/leave', [ImpersonationController::class, 'leave'])
+        ->middleware('package.permission:users.access')
+        ->name('impersonate.leave');
+
+    Route::get('/impersonate/{id}', [ImpersonationController::class, 'impersonate'])
+        ->middleware('package.permission:users.access')
+        ->name('impersonate');
+
+    Route::get('/under-development', function () {
+        return view('under-development');
+    })->name('under.development');
+
+    Route::get('/products/addons', function () {
+        return redirect()->route('under.development');
+    })->middleware('package.permission:products.access')->name('products.addons');
+
+    Route::get('/products/active', function () {
+        return redirect()->route('under.development');
+    })->middleware('package.permission:products.access')->name('products.active');
 
     Route::get('/settings/pos', function () {
         return redirect()->route('under.development');
-    })->name('settings.pos');
+    })->middleware('package.permission:pos.access')->name('settings.pos');
 
     Route::get('/settings/printing', function () {
         return redirect()->route('under.development');
-    })->name('settings.printing');
+    })->middleware('package.permission:settings.general')->name('settings.printing');
 
     Route::get('/settings/notifications', function () {
         return redirect()->route('under.development');
-    })->name('settings.notifications');
+    })->middleware('package.permission:settings.general')->name('settings.notifications');
 });
