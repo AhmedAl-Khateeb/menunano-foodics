@@ -19,6 +19,7 @@ class PaymentMethodController extends Controller
         }
 
         $methods = $query->orderByDesc('id')->paginate(15);
+
         return view('super_admin.payment_methods.index', compact('methods'));
     }
 
@@ -44,7 +45,9 @@ class PaymentMethodController extends Controller
             'created_by'  => auth()->user()->role === 'super_admin' ? null : auth()->id(),
         ]);
 
-        return redirect()->route('payment-methods.index')->with('success', 'تمت إضافة وسيلة الدفع بنجاح');
+        return redirect()
+            ->route('super.payment-methods.index')
+            ->with('success', 'تمت إضافة وسيلة الدفع بنجاح');
     }
 
     public function edit(PaymentMethod $payment_method)
@@ -68,13 +71,18 @@ class PaymentMethodController extends Controller
             'is_active'   => $request->has('is_active') ? 1 : 0,
         ]);
 
-        return redirect()->route('payment-methods.index')->with('success', 'تم تعديل وسيلة الدفع بنجاح');
+        return redirect()
+            ->route('super.payment-methods.index')
+            ->with('success', 'تم تعديل وسيلة الدفع بنجاح');
     }
 
     public function destroy(PaymentMethod $payment_method)
     {
         $payment_method->delete();
-        return redirect()->route('payment-methods.index')->with('success', 'تم حذف وسيلة الدفع بنجاح');
+
+        return redirect()
+            ->route('super.payment-methods.index')
+            ->with('success', 'تم حذف وسيلة الدفع بنجاح');
     }
 
     public function toggle($id)
@@ -83,6 +91,8 @@ class PaymentMethodController extends Controller
         $method->is_active = !$method->is_active;
         $method->save();
 
-        return redirect()->back()->with('success', 'تم تحديث الحالة');
+        return redirect()
+            ->route('super.payment-methods.index')
+            ->with('success', 'تم تحديث الحالة');
     }
 }

@@ -26,7 +26,7 @@
                         <form action="{{ route('inventory.production-orders.index') }}" method="GET"
                             class="d-flex flex-wrap gap-2">
                             <input type="text" name="search" class="form-control form-control-sm" style="width:180px;"
-                                value="{{ request('search') }}" placeholder="بحث برقم الأمر">
+                                value="{{ request('search') }}" placeholder="بحث برقم الأمر \ التاريخ">
 
                             <select name="status" class="form-control form-control-sm" style="width:150px;">
                                 <option value="">كل الحالات</option>

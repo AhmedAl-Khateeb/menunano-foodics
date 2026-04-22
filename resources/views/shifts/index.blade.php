@@ -59,6 +59,9 @@
                                         </option>
                                     </select>
 
+                                    <input type="date" name="created_at" class="form-control form-control-sm"
+                                        style="width: 170px;" value="{{ request('created_at') }}">
+
                                     <button type="submit" class="btn btn-info btn-sm">
                                         <i class="fas fa-search"></i> بحث
                                     </button>
@@ -86,6 +89,7 @@
                                             <th>نهاية الشيفت</th>
                                             <th>رصيد البداية</th>
                                             <th>رصيد النهاية</th>
+                                            <th>التاريخ</th>
                                             <th>الحالة</th>
                                             <th>الإجراءات</th>
                                         </tr>
@@ -103,6 +107,7 @@
                                                 <td>{{ number_format((float) $shift->starting_cash, 2) }}</td>
                                                 <td>{{ $shift->ending_cash !== null ? number_format((float) $shift->ending_cash, 2) : '-' }}
                                                 </td>
+                                                <td>{{ $shift->created_at->format('Y-m-d') }}</td>
                                                 <td>
                                                     @php
                                                         $labels = [
@@ -274,33 +279,33 @@
     </script>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
 
-        document.querySelectorAll('.close-btn').forEach(function (button) {
-            button.addEventListener('click', function () {
+            document.querySelectorAll('.close-btn').forEach(function(button) {
+                button.addEventListener('click', function() {
 
-                const form = this.closest('.close-form');
-                const name = this.dataset.name || 'هذا الشيفت';
+                    const form = this.closest('.close-form');
+                    const name = this.dataset.name || 'هذا الشيفت';
 
-                Swal.fire({
-                    title: 'هل أنت متأكد؟',
-                    text: `سيتم إغلاق "${name}"`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'نعم، اغلاق',
-                    cancelButtonText: 'إلغاء',
-                    reverseButtons: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#6c757d'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
+                    Swal.fire({
+                        title: 'هل أنت متأكد؟',
+                        text: `سيتم إغلاق "${name}"`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'نعم، اغلاق',
+                        cancelButtonText: 'إلغاء',
+                        reverseButtons: true,
+                        confirmButtonColor: '#28a745',
+                        cancelButtonColor: '#6c757d'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+
                 });
-
             });
-        });
 
-    });
-</script>
+        });
+    </script>
 @endsection

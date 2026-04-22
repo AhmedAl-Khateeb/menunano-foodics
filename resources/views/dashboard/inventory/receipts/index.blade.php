@@ -9,7 +9,7 @@
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">الرئيسية</a></li>
+                        {{-- <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">الرئيسية</a></li> --}}
                     </ol>
                 </div>
             </div>
@@ -21,7 +21,21 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">سندات الاستلام</h3>
-                    <a href="{{ route('inventory.receipts.create') }}" class="btn btn-primary btn-sm">
+                   
+                    <form action="{{ route('inventory.receipts.index') }}" method="GET"
+                        class="d-flex flex-wrap gap-2">
+                        <input type="text" name="search" class="form-control form-control-sm" style="width:180px;"
+                            value="{{ request('search') }}" placeholder="بحث برقم السند \اسم المورد\ التاريخ">
+
+                        <button type="submit" class="btn btn-info btn-sm">
+                            <i class="fas fa-search"></i> بحث
+                        </button>
+
+                        <a href="{{ route('inventory.receipts.index') }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </form>
+                     <a href="{{ route('inventory.receipts.create') }}" class="btn btn-primary btn-sm">
                         <i class="fas fa-plus"></i> إضافة استلام
                     </a>
                 </div>

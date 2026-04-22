@@ -35,7 +35,7 @@ return [
         [
             'title' => 'وسائل الدفع',
             'icon' => 'fas fa-credit-card',
-            'route' => 'payment-methods.index',
+            'route' => 'super.payment-methods.index',
             'active_routes' => ['payment-methods.*'],
         ],
         [

@@ -23,11 +23,25 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">قائمة المستخدمين</h3>
-                            <div class="card-tools">
-                                <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus"></i> إضافة مستخدم
-                                </a>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <h3 class="card-title mb-0">قائمة المستخدمين</h3>
+
+                                <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
+                                    <form method="GET" class="d-flex align-items-center flex-wrap gap-2 mb-0">
+                                        <div style="width: 260px;">
+                                            <input type="text" name="search" class="form-control form-control-sm"
+                                                placeholder="بحث (بالتاريخ / اسم / الأميل)" value="{{ request('search') }}">
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            بحث
+                                        </button>
+                                    </form>
+
+                                    <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> إضافة مستخدم
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         <!-- /.card-header -->
@@ -43,7 +57,8 @@
                                             <th>الدور</th>
                                             <th>الفروع</th>
                                             <th>أنشئ بواسطة</th>
-                                            <th>الصورة</th>
+                                            <th>التاريخ</th>
+                                            {{-- <th>الصورة</th> --}}
 
                                             <th>الإجراءات</th>
                                         </tr>
@@ -68,11 +83,12 @@
                                                         <span class="text-muted">نظام</span>
                                                     @endif
                                                 </td>
-                                                <td>
+                                                <td>{{ $user->created_at->format('d-m-Y') }}</td>
+                                                {{-- <td>
                                                 <img src="{{ url('/storage/' . ltrim($user->image, '/')) }}"
                                                     alt="{{ $user->name }}" class="img-thumbnail rounded-circle"
                                                     width="45" height="45" style="object-fit: cover;">
-                                            </td>
+                                            </td> --}}
 
                                                 <td>
                                                     <div class="d-flex gap-1 justify-content-center">

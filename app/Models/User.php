@@ -121,12 +121,16 @@ class User extends Authenticatable
         return $logoPathFromSetting ? asset('storage/'.$logoPathFromSetting) : null;
     }
 
-
     // Relations subscriptions
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
     }
+
+    public function latestSubscription()
+{
+    return $this->hasOne(Subscription::class)->latestOfMany();
+}
 
     public function activeSubscriptions()
     {
@@ -135,6 +139,15 @@ class User extends Authenticatable
             ->where('is_active', true)
             ->where('starts_at', '<=', now())
             ->where('ends_at', '>=', now());
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        return $this->activeSubscriptions()->exists();
     }
 
     public function activePackages()

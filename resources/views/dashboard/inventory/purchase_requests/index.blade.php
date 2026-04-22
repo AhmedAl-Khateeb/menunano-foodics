@@ -45,10 +45,14 @@
                                 </option>
                             </select>
 
+                            
+                            <input type="date" name="request_date" class="form-control form-control-sm" style="width: 180px;"
+                            value="{{ request('search') }}" placeholder="بحث بالتاريخ">
+                            
                             <button type="submit" class="btn btn-info btn-sm">
                                 <i class="fas fa-search"></i> فلترة
                             </button>
-
+                           
                             <a href="{{ route('inventory.purchase-requests.index') }}" class="btn btn-secondary btn-sm">
                                 <i class="fas fa-times"></i>
                             </a>

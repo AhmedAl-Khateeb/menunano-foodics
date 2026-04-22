@@ -3,12 +3,23 @@
 namespace App\Services;
 
 use App\Models\Branch;
+use Illuminate\Http\Request;
 
 class BranchService
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->search;
+
         return Branch::withCount('users')
+        ->when($search, function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('id', $search)
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('created_at', 'like', "%{$search}%");
+            });
+        })
         ->where('created_by', auth('web')->id())
             ->latest()
             ->paginate(10);

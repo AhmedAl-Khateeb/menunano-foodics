@@ -5,6 +5,14 @@
     <h1>مرحبا بك في لوحة التحكم الخاصة بك</h1>
 @stop
 
+
+@php
+    $subscriptionExpired =
+        auth()->check() &&
+        auth()->user()->role !== 'super_admin' &&
+        method_exists(auth()->user(), 'hasActiveSubscription') &&
+        !auth()->user()->hasActiveSubscription();
+@endphp
 @section('main-content')
     <div class="container-fluid dashboard-page">
 
@@ -18,11 +26,11 @@
                         <div class="dashboard-top-right">
                             <h2 class="dashboard-welcome">مرحبًا، {{ auth()->user()->name }}</h2>
 
-                            <div class="dashboard-tabs">
-                                <a href="#" class="active">عام</a>
-                                <a href="#">الفروع</a>
-                                <a href="#">المخزون</a>
-                                <a href="#">مركز الاتصال</a>
+                            <div class="dashboard-tabs {{ $subscriptionExpired ? 'disabled-dashboard-links' : '' }}">
+                                <a href="javascript:void(0)" class="active">عام</a>
+                                <a href="javascript:void(0)">الفروع</a>
+                                <a href="javascript:void(0)">المخزون</a>
+                                <a href="javascript:void(0)">مركز الاتصال</a>
                             </div>
                         </div>
 
@@ -52,12 +60,19 @@
                 </div>
             </div>
         </div>
-
+{{-- 
+        @if (session('subscription_expired') || $subscriptionExpired)
+            <div class="expired-message-bar">
+                <i class="fas fa-exclamation-triangle ml-2"></i>
+                انتهت الباقة أو هذه الميزة غير متاحة حاليًا، يمكنك استعراض الواجهة فقط حتى يتم التجديد.
+            </div>
+        @endif --}}
         {{-- الكروت --}}
         <div class="row">
             @foreach ($orderCards as $card)
                 <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-                    <div class="card dashboard-stat-card shadow-sm border-0">
+                    <div
+                        class="card dashboard-stat-card shadow-sm border-0 {{ $subscriptionExpired ? 'expired-overlay-card' : '' }}">
                         <div class="card-body">
                             <div class="stat-header">
                                 <h6>{{ $card['title'] }}</h6>
@@ -74,6 +89,43 @@
     </div>
 
     <style>
+        .disabled-dashboard-links {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .expired-overlay-card {
+            position: relative;
+            opacity: 0.7;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .expired-overlay-card::after {
+            content: 'الباقة منتهية';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.55);
+            color: #b45309;
+            font-size: 20px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        .expired-message-bar {
+            background: linear-gradient(90deg, #fff3cd, #ffe08a);
+            color: #7a5200;
+            border: 1px solid #f4d06f;
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+            text-align: right;
+        }
+
         .dashboard-page {
             direction: rtl;
         }
@@ -329,4 +381,55 @@
             });
         });
     </script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+@if (session('subscription_expired'))
+    <script>
+        Swal.fire({
+            icon: 'warning',
+            title: 'تنبيه',
+            text: @json(session('subscription_expired')),
+            confirmButtonText: 'حسنًا',
+            confirmButtonColor: '#f59e0b'
+        });
+    </script>
+@endif
+
+@if (session('permission_denied'))
+    <script>
+        Swal.fire({
+            icon: 'warning',
+            title: 'غير متاح',
+            text: @json(session('permission_denied')),
+            confirmButtonText: 'حسنًا',
+            confirmButtonColor: '#f59e0b'
+        });
+    </script>
+@endif
+
+@if (session('success'))
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'تم بنجاح',
+            text: @json(session('success')),
+            timer: 3000,
+            showConfirmButton: false
+        });
+    </script>
+@endif
+
+@if (session('error'))
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ',
+            text: @json(session('error')),
+            timer: 3000,
+            showConfirmButton: false
+        });
+    </script>
+@endif
 @stop

@@ -26,7 +26,7 @@
                         <form action="{{ route('inventory.purchase-orders.index') }}" method="GET"
                             class="d-flex flex-wrap gap-2">
                             <input type="text" name="search" class="form-control form-control-sm" style="width:180px;"
-                                value="{{ request('search') }}" placeholder="بحث بالرقم أو المورد">
+                                value="{{ request('search') }}" placeholder="بحث بالرقم \ المورد\ التاريخ">
 
                             <select name="supplier_id" class="form-control form-control-sm" style="width:180px;">
                                 <option value="">كل الموردين</option>
@@ -53,7 +53,7 @@
                                 <i class="fas fa-search"></i> بحث
                             </button>
 
-                            <a href="{{ route('inventory.purchase-requests.index') }}" class="btn btn-secondary btn-sm">
+                            <a href="{{ route('inventory.purchase-orders.index') }}" class="btn btn-secondary btn-sm">
                                 <i class="fas fa-times"></i>
                             </a>
                         </form>

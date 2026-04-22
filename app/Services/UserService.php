@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\ImageManager;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class UserService
@@ -13,9 +14,19 @@ class UserService
     ) {
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->search;
+
         return User::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('id', $search)
+                      ->orWhere('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('created_at', 'like', "%{$search}%");
+                });
+            })
             ->with(['creator', 'branch'])
             ->latest()
             ->paginate(10);

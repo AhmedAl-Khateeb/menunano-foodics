@@ -28,6 +28,10 @@ class ShiftService
             $query->where('status', $filters['status']);
         }
 
+        if (!empty($filters['created_at'])) {
+            $query->whereDate('created_at', $filters['created_at']);
+        }
+
         return $query->paginate(10)->appends($filters);
     }
 

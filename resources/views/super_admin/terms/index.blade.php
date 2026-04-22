@@ -29,4 +29,16 @@
         <div class="alert alert-info">لا توجد شروط وأحكام بعد</div>
     @endforelse
 </div>
+ <div class="col-sm-6">
+        <ol class="float-sm-right mb-0 p-0" style="list-style: none;">
+            <li>
+                <a href="{{ route('dashboard') }}" class="btn btn-success"
+                    style="color: #fff; transition: all 0.2s ease-in-out;"
+                    onmouseover="this.style.backgroundColor='#007bff'; this.style.borderColor='#007bff'; this.style.color='#fff';"
+                    onmouseout="this.style.backgroundColor=''; this.style.borderColor=''; this.style.color='#fff';">
+                    الرئيسية
+                </a>
+            </li>
+        </ol>
+    </div>
 @endsection

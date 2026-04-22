@@ -26,7 +26,7 @@
                         <form action="{{ route('inventory.stock-counts.index') }}" method="GET"
                             class="d-flex flex-wrap gap-2">
                             <input type="text" name="search" class="form-control form-control-sm" style="width:180px;"
-                                value="{{ request('search') }}" placeholder="بحث برقم الجلسة">
+                                value="{{ request('search') }}" placeholder="بحث برقم الجلسة \ التاريخ">
 
                             <select name="type" class="form-control form-control-sm" style="width:150px;">
                                 <option value="">كل الأنواع</option>
@@ -63,11 +63,11 @@
                                 <tr>
                                     <th>#</th>
                                     <th>رقم الجلسة</th>
-                                    <th>التاريخ</th>
                                     <th>النوع</th>
                                     <th>عدد الأصناف</th>
                                     <th>الحالة</th>
                                     <th>المعتمد بواسطة</th>
+                                    <th>التاريخ</th>
                                     <th>الإجراءات</th>
                                 </tr>
                             </thead>
@@ -76,16 +76,16 @@
                                     <tr>
                                         <td>{{ $stockCounts->firstItem() + $loop->index }}</td>
                                         <td>{{ $count->count_number }}</td>
-                                        <td>{{ $count->count_date?->format('Y-m-d') }}</td>
                                         <td>{{ $count->type === 'full' ? 'جرد كامل' : 'جرد جزئي' }}</td>
                                         <td>{{ $count->items->count() }}</td>
                                         <td>
                                             <span
-                                                class="badge badge-{{ $count->status === 'approved' ? 'success' : 'secondary' }}">
-                                                {{ $count->status === 'approved' ? 'معتمد' : 'مسودة' }}
-                                            </span>
-                                        </td>
-                                        <td>{{ $count->approver->name ?? '-' }}</td>
+                                            class="badge badge-{{ $count->status === 'approved' ? 'success' : 'secondary' }}">
+                                            {{ $count->status === 'approved' ? 'معتمد' : 'مسودة' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $count->approver->name ?? '-' }}</td>
+                                    <td>{{ $count->created_at?->format('Y-m-d') }}</td>
                                         <td>
                                             <div class="d-flex gap-1 justify-content-center flex-wrap">
                                                 @if ($count->status !== 'approved')

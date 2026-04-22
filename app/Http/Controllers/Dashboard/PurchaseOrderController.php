@@ -33,6 +33,7 @@ class PurchaseOrderController extends Controller
 
             $query->where(function ($q) use ($search) {
                 $q->where('po_number', 'like', "%{$search}%")
+                ->orWhere('created_at', 'like', "%{$search}%")
                     ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
                         $supplierQuery->where('name', 'like', "%{$search}%");
                     });

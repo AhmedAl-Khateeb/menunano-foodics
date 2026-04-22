@@ -112,24 +112,8 @@
                         {{-- Date Range --}}
                         <div class="col-md-3">
                             <label class="form-label text-xs font-weight-bold">التاريخ</label>
-                            <select name="date_range" class="form-select form-select-sm border-2 shadow-none"
-                                id="dateRangeSelect" onchange="toggleCustomDate(this.value); this.form.submit()">
-                                <option value="">كل الوقت</option>
-                                <option value="today" {{ request('date_range') == 'today' ? 'selected' : '' }}>اليوم
-                                </option>
-                                <option value="yesterday" {{ request('date_range') == 'yesterday' ? 'selected' : '' }}>أمس
-                                </option>
-                                <option value="week" {{ request('date_range') == 'week' ? 'selected' : '' }}>آخر 7 أيام
-                                </option>
-                                <option value="14days" {{ request('date_range') == '14days' ? 'selected' : '' }}>آخر 14 يوم
-                                </option>
-                                <option value="28days" {{ request('date_range') == '28days' ? 'selected' : '' }}>آخر 28 يوم
-                                </option>
-                                <option value="60days" {{ request('date_range') == '60days' ? 'selected' : '' }}>آخر 60 يوم
-                                </option>
-                                <option value="custom" {{ request('date_range') == 'custom' ? 'selected' : '' }}>مخصص...
-                                </option>
-                            </select>
+                            <input type="date" name="date" class="form-control form-control-sm border-2 shadow-none"
+                                value="{{ request('date') }}" onchange="this.form.submit()">
                         </div>
 
                         {{-- Reset Button --}}
@@ -283,4 +267,32 @@
             font-size: 1.25rem;
         }
     </style>
+
+
+    <script>
+        function handleDateRangeChange(select) {
+            const customRow = document.getElementById('customDateRow');
+
+            if (select.value === 'custom') {
+                customRow.classList.remove('d-none');
+                return;
+            }
+
+            customRow.classList.add('d-none');
+            select.form.submit();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateSelect = document.getElementById('dateRangeSelect');
+            const customRow = document.getElementById('customDateRow');
+
+            if (dateSelect && customRow) {
+                if (dateSelect.value === 'custom') {
+                    customRow.classList.remove('d-none');
+                } else {
+                    customRow.classList.add('d-none');
+                }
+            }
+        });
+    </script>
 @endsection

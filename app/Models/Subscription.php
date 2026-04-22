@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\SubscriptionTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Subscription extends Model
 {
     use HasFactory;
+    use SubscriptionTrait;
 
     protected $fillable = [
         'user_id',
@@ -22,23 +24,7 @@ class Subscription extends Model
         'price_paid',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function package()
-    {
-        return $this->belongsTo(Package::class);
-    }
-
-    public function paymentMethod()
-    {
-        return $this->belongsTo(PaymentMethod::class);
-    }
-
-
-      public function isCurrentlyActive(): bool
+    public function isCurrentlyActive(): bool
     {
         return $this->is_active
             && $this->status === 'active'

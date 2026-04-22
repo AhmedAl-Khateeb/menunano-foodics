@@ -31,7 +31,15 @@ class StockCountController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('count_number', 'like', '%' . trim($request->search) . '%');
+            $search = trim($request->search);
+
+            $query->where(function ($q) use ($search) {
+                $q->where('count_number', 'like', '%'.$search.'%');
+
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $search)) {
+                    $q->orWhereDate('created_at', $search);
+                }
+            });
         }
 
         $stockCounts = $query->paginate(15)->withQueryString();

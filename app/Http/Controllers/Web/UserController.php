@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\Branch;
 use App\Models\User;
 use App\Services\UserService;
+use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -16,9 +17,9 @@ class UserController extends Controller
     {
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $users = $this->userService->index();
+        $users = $this->userService->index($request);
 
         return view('users.index', compact('users'));
     }

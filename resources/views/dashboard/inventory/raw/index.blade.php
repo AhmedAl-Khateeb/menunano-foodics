@@ -28,7 +28,7 @@
                         <form action="{{ route('inventory.materials.index') }}" method="GET"
                             class="d-flex flex-wrap gap-2">
                             <input type="text" name="search" class="form-control form-control-sm" style="width: 180px;"
-                                value="{{ request('search') }}" placeholder="بحث بالاسم أو الكود">
+                                value="{{ request('search') }}" placeholder="بحث بالاسم \ الكود \ التاريخ">
 
                             <select name="inventory_category_id" class="form-control form-control-sm" style="width: 180px;">
                                 <option value="">كل الفئات</option>
@@ -77,6 +77,7 @@
                                     <th>سعر الشراء</th>
                                     <th>حد الطلب</th>
                                     <th>الحالة</th>
+                                    <th>التاريخ</th>
                                     <th>الإجراءات</th>
                                 </tr>
                             </thead>
@@ -106,6 +107,8 @@
                                                 {{ $material->is_active ? 'نشط' : 'موقوف' }}
                                             </span>
                                         </td>
+
+                                        <td>{{ $material->created_at->format('Y-m-d') }}</td>
 
                                         <td>
                                             <div class="d-flex gap-1 justify-content-center">

@@ -28,7 +28,7 @@
                         <form action="{{ route('inventory.suppliers.index') }}" method="GET"
                             class="d-flex flex-wrap gap-2">
                             <input type="text" name="search" class="form-control form-control-sm" style="width: 240px;"
-                                value="{{ request('search') }}" placeholder="بحث بالاسم أو اسم الاتصال أو الهاتف أو الكود">
+                                value="{{ request('search') }}" placeholder="بحث بالاسم \ الهاتف \ التاريخ">
 
                             <select name="status" class="form-control form-control-sm" style="width: 160px;">
                                 <option value="">كل الحالات</option>
@@ -61,6 +61,7 @@
                                     <th>اسم المورد</th>
                                     <th>الكود</th>
                                     <th>الهاتف</th>
+                                    <th>التاريخ</th>
                                     <th>الإجراءات</th>
                                 </tr>
                             </thead>
@@ -71,6 +72,7 @@
                                         <td>{{ $supplier->name }}</td>
                                         <td>{{ $supplier->code ?: '-' }}</td>
                                         <td>{{ $supplier->phone ?: '-' }}</td>
+                                        <td>{{ $supplier->created_at->format('Y-m-d') }}</td>
                                         <td>
                                             <div class="d-flex gap-1 justify-content-center">
                                                 <a href="{{ route('inventory.suppliers.show', $supplier->id) }}"

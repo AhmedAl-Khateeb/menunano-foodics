@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => App\Http\Middleware\ActiveUserMiddleware::class,
             'CheckSubscription' => App\Http\Middleware\CheckSubscription::class,
             'package.permission' => App\Http\Middleware\CheckPackagePermission::class,
+            'active' => App\Http\Middleware\Active::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

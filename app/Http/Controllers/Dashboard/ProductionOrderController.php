@@ -27,6 +27,10 @@ class ProductionOrderController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
+        
+        if ($request->filled('created_at')) {
+            $query->where('created_at', $request->created_at);
+        }
 
         if ($request->filled('search')) {
             $query->where('production_number', 'like', '%' . trim($request->search) . '%');

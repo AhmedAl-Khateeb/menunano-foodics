@@ -7,6 +7,7 @@ use App\Http\Requests\BranchRequest;
 use App\Http\Requests\BranchUpdateRequest;
 use App\Models\Branch;
 use App\Services\BranchService;
+use Illuminate\Http\Request;
 
 class BranchController extends Controller
 {
@@ -14,9 +15,9 @@ class BranchController extends Controller
     {
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $branches = $this->branchService->index();
+        $branches = $this->branchService->index($request);
 
         return view('branches.index', compact('branches'));
     }

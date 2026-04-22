@@ -239,18 +239,18 @@
                                             @endif
                                         </td> --}}
                                         <td class="text-center">
-                                            @if ($admin->package)
-                                                {{ $admin->package->name }}
+                                            @if ($admin->activeSubscription && $admin->activeSubscription->package)
+                                                {{ $admin->activeSubscription->package->name }}
                                             @else
                                                 <span class="text-muted">لا توجد باقة</span>
                                             @endif
                                         </td>
 
                                         <td class="text-center">
-                                            @if ($admin->subscription_end)
+                                            @if ($admin->activeSubscription && $admin->activeSubscription->ends_at)
                                                 @php
                                                     $endDate = \Carbon\Carbon::parse(
-                                                        $admin->subscription_end,
+                                                        $admin->activeSubscription->ends_at,
                                                     )->endOfDay();
                                                     $isExpired = now()->gt($endDate);
                                                     $remainingDays = now()->diffInDays($endDate, false);

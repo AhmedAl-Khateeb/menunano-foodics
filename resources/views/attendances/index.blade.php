@@ -40,8 +40,8 @@
                                         @endforeach
                                     </select>
 
-                                    <input type="date" name="attendance_date" class="form-control form-control-sm"
-                                        value="{{ request('attendance_date') }}" style="width: 180px;">
+                                    <input type="date" name="created_at" class="form-control form-control-sm"
+                                        value="{{ request('created_at') }}" style="width: 180px;">
 
                                     <select name="status" class="form-control form-control-sm" style="width: 160px;">
                                         <option value="">كل الحالات</option>
@@ -90,7 +90,7 @@
                                             <tr>
                                                 <td>{{ $attendances->firstItem() + $loop->index }}</td>
                                                 <td>{{ $attendance->user->name ?? '-' }}</td>
-                                                <td>{{ $attendance->attendance_date?->format('Y-m-d') }}</td>
+                                                <td>{{ $attendance->created_at?->format('Y-m-d') }}</td>
                                                 <td>{{ $attendance->check_in ? $attendance->check_in->format('Y-m-d h:i A') : '-' }}
                                                 </td>
                                                 <td>{{ $attendance->check_out ? $attendance->check_out->format('Y-m-d h:i A') : '-' }}

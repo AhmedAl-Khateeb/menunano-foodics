@@ -26,12 +26,25 @@
 
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">قائمة الفروع</h3>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <h3 class="card-title mb-0">قائمة الفروع</h3>
 
-                            <div class="card-tools">
-                                <a href="{{ route('branches.create') }}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus"></i> إضافة فرع
-                                </a>
+                                <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
+                                    <form method="GET" class="d-flex align-items-center flex-wrap gap-2 mb-0">
+                                        <div style="width: 260px;">
+                                            <input type="text" name="search" class="form-control form-control-sm"
+                                                placeholder="بحث (بالتاريخ / اسم / الهاتف)" value="{{ request('search') }}">
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            بحث
+                                        </button>
+                                    </form>
+
+                                    <a href="{{ route('branches.create') }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> إضافة فرع
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
@@ -48,6 +61,7 @@
                                             <th>الهاتف</th>
                                             <th>المستخدمين</th>
                                             <th>الحالة</th>
+                                            <th>التاريخ</th>
                                             <th>الإجراءات</th>
                                         </tr>
                                     </thead>
@@ -70,6 +84,8 @@
                                                         {{ $branch->is_active ? 'نشط' : 'متوقف' }}
                                                     </span>
                                                 </td>
+
+                                                <td>{{ $branch->created_at->format('Y-m-d') }}</td>
 
                                                 <td>
                                                     <div class="d-flex gap-1 justify-content-center">

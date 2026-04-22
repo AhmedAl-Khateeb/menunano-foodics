@@ -37,6 +37,7 @@ class GoodsReceiptController extends Controller
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('receipt_number', 'like', "%{$search}%")
+                ->orWhere('created_at', 'like', "%{$search}%")
                   ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
                       $supplierQuery->where('name', 'like', "%{$search}%");
                   });
@@ -68,17 +69,17 @@ class GoodsReceiptController extends Controller
     {
         DB::transaction(function () use ($request) {
             $receipt = GoodsReceipt::create([
-                'user_id'           => auth()->id(),
+                'user_id' => auth()->id(),
                 'purchase_order_id' => $request->purchase_order_id,
-                'supplier_id'       => $request->supplier_id,
-                'receipt_number'    => 'GR-' . now()->format('YmdHis'),
-                'receipt_date'      => $request->receipt_date,
-                'status'            => 'draft',
-                'subtotal'          => $request->subtotal ?? 0,
-                'discount'          => $request->discount ?? 0,
-                'tax'               => $request->tax ?? 0,
-                'total'             => $request->total ?? 0,
-                'notes'             => $request->notes,
+                'supplier_id' => $request->supplier_id,
+                'receipt_number' => 'GR-'.now()->format('YmdHis'),
+                'receipt_date' => $request->receipt_date,
+                'status' => 'draft',
+                'subtotal' => $request->subtotal ?? 0,
+                'discount' => $request->discount ?? 0,
+                'tax' => $request->tax ?? 0,
+                'total' => $request->total ?? 0,
+                'notes' => $request->notes,
             ]);
 
             foreach ($request->items as $item) {
@@ -86,12 +87,12 @@ class GoodsReceiptController extends Controller
                 $unitCost = (float) $item['unit_cost'];
 
                 $receipt->items()->create([
-                    'raw_material_id'        => $item['raw_material_id'],
+                    'raw_material_id' => $item['raw_material_id'],
                     'purchase_order_item_id' => $item['purchase_order_item_id'] ?? null,
-                    'unit_id'                => $item['unit_id'] ?? null,
-                    'quantity'               => $qty,
-                    'unit_cost'              => $unitCost,
-                    'total_cost'             => $qty * $unitCost,
+                    'unit_id' => $item['unit_id'] ?? null,
+                    'quantity' => $qty,
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $qty * $unitCost,
                 ]);
             }
         });
@@ -137,13 +138,13 @@ class GoodsReceiptController extends Controller
         DB::transaction(function () use ($request, $receipt) {
             $receipt->update([
                 'purchase_order_id' => $request->purchase_order_id,
-                'supplier_id'       => $request->supplier_id,
-                'receipt_date'      => $request->receipt_date,
-                'subtotal'          => $request->subtotal ?? 0,
-                'discount'          => $request->discount ?? 0,
-                'tax'               => $request->tax ?? 0,
-                'total'             => $request->total ?? 0,
-                'notes'             => $request->notes,
+                'supplier_id' => $request->supplier_id,
+                'receipt_date' => $request->receipt_date,
+                'subtotal' => $request->subtotal ?? 0,
+                'discount' => $request->discount ?? 0,
+                'tax' => $request->tax ?? 0,
+                'total' => $request->total ?? 0,
+                'notes' => $request->notes,
             ]);
 
             $receipt->items()->delete();
@@ -153,12 +154,12 @@ class GoodsReceiptController extends Controller
                 $unitCost = (float) $item['unit_cost'];
 
                 $receipt->items()->create([
-                    'raw_material_id'        => $item['raw_material_id'],
+                    'raw_material_id' => $item['raw_material_id'],
                     'purchase_order_item_id' => $item['purchase_order_item_id'] ?? null,
-                    'unit_id'                => $item['unit_id'] ?? null,
-                    'quantity'               => $qty,
-                    'unit_cost'              => $unitCost,
-                    'total_cost'             => $qty * $unitCost,
+                    'unit_id' => $item['unit_id'] ?? null,
+                    'quantity' => $qty,
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $qty * $unitCost,
                 ]);
             }
         });

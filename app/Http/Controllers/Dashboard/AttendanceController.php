@@ -19,7 +19,7 @@ class AttendanceController extends Controller
     {
         $filters = $request->only([
             'user_id',
-            'attendance_date',
+            'created_at',
             'status',
         ]);
 

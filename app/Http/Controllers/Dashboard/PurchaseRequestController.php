@@ -22,6 +22,10 @@ class PurchaseRequestController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('request_date')) {
+            $query->where('request_date', $request->request_date);
+        }
+
         $purchaseRequests = $query->paginate(15)->withQueryString();
 
         return view('dashboard.inventory.purchase_requests.index', compact('purchaseRequests'));

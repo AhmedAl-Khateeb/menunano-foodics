@@ -1,9 +1,10 @@
 @extends('layouts.app')
+
 @section('main-content')
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>وسائل الدفع</h3>
-        <a href="{{ route('payment-methods.create') }}" class="btn btn-success">+ إضافة وسيلة</a>
+        <a href="{{ route('super.payment-methods.create') }}" class="btn btn-success">+ إضافة وسيلة</a>
     </div>
 
     @if(session('success'))
@@ -31,8 +32,9 @@
                             <td>{{ $m->description }}</td>
                             <td>{{ $m->phone }}</td>
                             <td>
-                                <form action="{{ route('payment-methods.toggle', $m->id) }}" method="POST" class="d-inline">
-                                    @csrf @method('PATCH')
+                                <form action="{{ route('super.payment-methods.toggle', $m->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('PATCH')
 
                                     @if($m->is_active)
                                         <span class="badge bg-success">مفعّل</span>
@@ -50,12 +52,16 @@
                             <td>
                                 <div class="btn-group">
                                     <a class="btn btn-outline-primary btn-sm"
-                                       href="{{ route('payment-methods.edit', $m->id) }}">
+                                       href="{{ route('super.payment-methods.edit', $m->id) }}">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('payment-methods.destroy', $m->id) }}" method="POST"
-                                          class="d-inline" onsubmit="return confirm('حذف؟');">
-                                        @csrf @method('DELETE')
+
+                                    <form action="{{ route('super.payment-methods.destroy', $m->id) }}"
+                                          method="POST"
+                                          class="d-inline"
+                                          onsubmit="return confirm('حذف؟');">
+                                        @csrf
+                                        @method('DELETE')
                                         <button class="btn btn-outline-danger btn-sm">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
@@ -64,7 +70,9 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center p-4">لا توجد وسائل دفع</td></tr>
+                        <tr>
+                            <td colspan="6" class="text-center p-4">لا توجد وسائل دفع</td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>
@@ -75,4 +83,16 @@
         {{ $methods->links() }}
     </div>
 </div>
+ <div class="col-sm-6">
+        <ol class="float-sm-right mb-0 p-0" style="list-style: none;">
+            <li>
+                <a href="{{ route('dashboard') }}" class="btn btn-success"
+                    style="color: #fff; transition: all 0.2s ease-in-out;"
+                    onmouseover="this.style.backgroundColor='#007bff'; this.style.borderColor='#007bff'; this.style.color='#fff';"
+                    onmouseout="this.style.backgroundColor=''; this.style.borderColor=''; this.style.color='#fff';">
+                    الرئيسية
+                </a>
+            </li>
+        </ol>
+    </div>
 @endsection

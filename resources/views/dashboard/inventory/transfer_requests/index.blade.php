@@ -25,8 +25,9 @@
                     <div class="d-flex flex-wrap align-items-center gap-2">
                         <form action="{{ route('inventory.transfer-requests.index') }}" method="GET"
                             class="d-flex flex-wrap gap-2">
-                            <input type="text" name="search" class="form-control form-control-sm" style="width:180px;"
-                                value="{{ request('search') }}" placeholder="بحث برقم التحويل">
+                            <input type="text" name="search" class="form-control form-control-sm" style="width:220px;"
+                                value="{{ request('search') }}" placeholder="بحث برقم التحويل أو التاريخ 2026-04-22">
+
 
                             <select name="status" class="form-control form-control-sm" style="width:150px;">
                                 <option value="">كل الحالات</option>
@@ -70,7 +71,7 @@
                                     <tr>
                                         <td>{{ $transfers->firstItem() + $loop->index }}</td>
                                         <td>{{ $transfer->transfer_number }}</td>
-                                        <td>{{ $transfer->transfer_date?->format('Y-m-d') }}</td>
+                                        <td>{{ $transfer->created_at?->format('Y-m-d') }}</td>
                                         <td>{{ $transfer->items->count() }}</td>
                                         <td>
                                             @php

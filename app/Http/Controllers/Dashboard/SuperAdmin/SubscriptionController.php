@@ -9,13 +9,22 @@ use Illuminate\Support\Facades\Storage;
 
 class SubscriptionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->search;
+
         $subscriptions = Subscription::with([
             'package.businessType',
             'paymentMethod',
             'user',
-        ])->latest()->get();
+        ])
+        ->when($search, function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('id', $search)
+                  ->orWhere('created_at', 'like', "%{$search}%");
+            });
+        })
+        ->latest()->get();
 
         return view('super_admin.subscriptions.index', compact('subscriptions'));
     }

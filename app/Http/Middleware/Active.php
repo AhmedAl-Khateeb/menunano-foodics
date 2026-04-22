@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 
-class CheckSubscription
+class Active
 {
     public function handle(Request $request, \Closure $next)
     {
@@ -14,19 +14,12 @@ class CheckSubscription
             return redirect()->route('login');
         }
 
-        // السوبر أدمن لا يخضع للاشتراك
+        // السوبر أدمن لا يخضع لفحص التفعيل/الاشتراك
         if ($user->role === 'super_admin') {
             return $next($request);
         }
 
-        $hasActiveSubscription = $user->subscriptions()
-            ->where('status', 'active')
-            ->where('is_active', true)
-            ->where('starts_at', '<=', now())
-            ->where('ends_at', '>=', now())
-            ->exists();
-
-        if (!$hasActiveSubscription) {
+        if ((int) $user->status !== 1) {
             return redirect()->route('inactive');
         }
 

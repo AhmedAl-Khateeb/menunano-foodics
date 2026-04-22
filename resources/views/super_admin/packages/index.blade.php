@@ -22,18 +22,7 @@
             </div>
         </div>
 
-        <!-- Success Alert -->
-        @if (session('success'))
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                </div>
-            </div>
-        @endif
+
 
         <!-- Packages Cards Grid -->
         <div class="row gx-4 gy-5">
@@ -215,6 +204,19 @@
             </div>
         @endif
 
+        <div class="col-sm-6">
+            <ol class="float-sm-right mb-0 p-0" style="list-style: none;">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="btn btn-success"
+                        style="color: #fff; transition: all 0.2s ease-in-out;"
+                        onmouseover="this.style.backgroundColor='#007bff'; this.style.borderColor='#007bff'; this.style.color='#fff';"
+                        onmouseout="this.style.backgroundColor=''; this.style.borderColor=''; this.style.color='#fff';">
+                        الرئيسية
+                    </a>
+                </li>
+            </ol>
+        </div>
+
     </div>
 
     <!-- Custom Styles -->
@@ -349,14 +351,26 @@
     </style>
 
     <!-- JavaScript for Delete Confirmation -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         function confirmDelete(packageId, packageName) {
-            if (confirm(`هل أنت متأكد من حذف الباقة "${packageName}"؟`)) {
-                document.getElementById('delete-form-' + packageId).submit();
-            }
+            Swal.fire({
+                title: 'تأكيد الحذف',
+                text: `هل أنت متأكد من حذف الباقة "${packageName}"؟`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، احذف',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('delete-form-' + packageId).submit();
+                }
+            });
         }
 
-        // Add loading states
         document.querySelectorAll('.btn').forEach(button => {
             button.addEventListener('click', function() {
                 if (!this.classList.contains('btn-outline-danger')) {
@@ -372,7 +386,6 @@
             });
         });
 
-        // Animate cards on page load
         document.addEventListener('DOMContentLoaded', function() {
             const cards = document.querySelectorAll('.package-card');
             cards.forEach((card, index) => {
@@ -387,4 +400,31 @@
             });
         });
     </script>
+
+    @if (session('success'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'تم بنجاح',
+                text: @json(session('success')),
+                timer: 2500,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: @json(session('error')),
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        </script>
+    @endif
+
 @endsection

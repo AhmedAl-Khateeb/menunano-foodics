@@ -353,6 +353,20 @@
                         <i class="fas fa-list-ul ml-1"></i>
                         قائمة الطلبات
                     </h3>
+                    <form method="GET" class="d-flex align-items-center flex-wrap gap-2 mb-0">
+                        <div style="width: 260px;">
+                            <input type="text" name="search" class="form-control form-control-sm"
+                                placeholder="بحث (بالتاريخ )" value="{{ request('search') }}">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            بحث
+                        </button>
+
+                        <a href="{{ route('subscriptions.index') }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </form>
                 </div>
 
                 <div class="card-body p-0">
@@ -367,6 +381,7 @@
                                         <th>الباقة</th>
                                         <th>وسيلة الدفع</th>
                                         <th>صورة الإيصال</th>
+                                        <th>التاريخ</th>
                                         <th>الحالة</th>
                                         <th>الإجراء</th>
                                     </tr>
@@ -411,6 +426,10 @@
                                                 @else
                                                     <span class="text-muted">لا يوجد</span>
                                                 @endif
+                                            </td>
+
+                                            <td>
+                                                {{ $sub->created_at ? \Carbon\Carbon::parse($sub->created_at)->format('Y-m-d') : '-' }}
                                             </td>
 
                                             <td>

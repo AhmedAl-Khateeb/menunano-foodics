@@ -80,12 +80,9 @@ Route::middleware(['auth', 'super_admin'])->prefix('super')->group(function () {
     Route::resource('terms', TermsAndConditionsController::class)->except(['show']);
     Route::resource('packages', PackageController::class)->except(['show']);
 
-    Route::resource('payment-methods', PaymentMethodController::class)
-        ->names('super.payment-methods')
-        ->except(['show']);
+    Route::resource('payment-methods', PaymentMethodController::class)->names('super.payment-methods')->except(['show']);
 
-    Route::patch('payment-methods/{id}/toggle', [PaymentMethodController::class, 'toggle'])
-        ->name('super.payment-methods.toggle');
+    Route::patch('payment-methods/{id}/toggle', [PaymentMethodController::class, 'toggle'])->name('super.payment-methods.toggle');
 
     Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::post('subscriptions/{id}/update-status', [SubscriptionController::class, 'updateStatus'])->name('subscriptions.updateStatus');
@@ -99,16 +96,11 @@ Route::middleware(['auth', 'super_admin'])->prefix('super')->group(function () {
 | Admin / Owner Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
-    /*
-    |--------------------------------------------------------------------------
-    | Dashboard
-    |--------------------------------------------------------------------------
-    */
-    Route::get('/dashboard', [ShowController::class, 'index'])
-        ->middleware('package.permission:dashboard.access')
-        ->name('dashboard');
+Route::middleware(['auth', 'active'])->group(function () {
+    Route::get('/dashboard', [ShowController::class, 'index'])->name('dashboard');
+});
 
+Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::get('/orders-count', function () {
         return response()->json([
             'count' => Order::count(),

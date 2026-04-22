@@ -17,7 +17,7 @@
 
                 <div class="col-md-3 mb-2">
                     <input type="text" name="search" class="form-control"
-                           placeholder="بحث (رقم / اسم / هاتف)"
+                           placeholder="بحث (بالتاريخ / اسم / هاتف)"
                            value="{{ request('search') }}">
                 </div>
 
