@@ -16,10 +16,16 @@ class BranchService
             $query->where(function ($q) use ($search) {
                 $q->where('id', $search)
                   ->orWhere('name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('created_at', 'like', "%{$search}%");
+                  ->orWhere('phone', 'like', "%{$search}%");
             });
         })
+         ->when($request->filled('date_from'), function ($query) use ($request) {
+             $query->whereDate('created_at', '>=', $request->date_from);
+         })
+
+            ->when($request->filled('date_to'), function ($query) use ($request) {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            })
         ->where('created_by', auth('web')->id())
             ->latest()
             ->paginate(10);

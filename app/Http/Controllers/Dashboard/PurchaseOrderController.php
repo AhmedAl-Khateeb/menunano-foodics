@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
-use App\Models\Supplier;
 use App\Models\RawMaterial;
+use App\Models\Supplier;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,12 +28,19 @@ class PurchaseOrderController extends Controller
             $query->where('supplier_id', $request->supplier_id);
         }
 
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', $request->date_to);
+        }
+
         if ($request->filled('search')) {
             $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('po_number', 'like', "%{$search}%")
-                ->orWhere('created_at', 'like', "%{$search}%")
                     ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
                         $supplierQuery->where('name', 'like', "%{$search}%");
                     });
@@ -70,18 +77,18 @@ class PurchaseOrderController extends Controller
     {
         DB::transaction(function () use ($request) {
             $purchaseOrder = PurchaseOrder::create([
-                'user_id'             => auth()->id(),
-                'supplier_id'         => $request->supplier_id,
+                'user_id' => auth()->id(),
+                'supplier_id' => $request->supplier_id,
                 'purchase_request_id' => $request->purchase_request_id,
-                'po_number'           => 'PO-' . now()->format('YmdHis'),
-                'po_date'             => $request->po_date,
-                'expected_date'       => $request->expected_date,
-                'status'              => 'draft',
-                'subtotal'            => $request->subtotal ?? 0,
-                'discount'            => $request->discount ?? 0,
-                'tax'                 => $request->tax ?? 0,
-                'total'               => $request->total ?? 0,
-                'notes'               => $request->notes,
+                'po_number' => 'PO-'.now()->format('YmdHis'),
+                'po_date' => $request->po_date,
+                'expected_date' => $request->expected_date,
+                'status' => 'draft',
+                'subtotal' => $request->subtotal ?? 0,
+                'discount' => $request->discount ?? 0,
+                'tax' => $request->tax ?? 0,
+                'total' => $request->total ?? 0,
+                'notes' => $request->notes,
             ]);
 
             foreach ($request->items as $item) {
@@ -89,13 +96,13 @@ class PurchaseOrderController extends Controller
                 $price = (float) $item['unit_price'];
 
                 $purchaseOrder->items()->create([
-                    'raw_material_id'  => $item['raw_material_id'],
-                    'unit_id'          => $item['unit_id'] ?? null,
-                    'quantity'         => $qty,
-                    'received_quantity'=> 0,
-                    'unit_price'       => $price,
-                    'total'            => $qty * $price,
-                    'notes'            => $item['notes'] ?? null,
+                    'raw_material_id' => $item['raw_material_id'],
+                    'unit_id' => $item['unit_id'] ?? null,
+                    'quantity' => $qty,
+                    'received_quantity' => 0,
+                    'unit_price' => $price,
+                    'total' => $qty * $price,
+                    'notes' => $item['notes'] ?? null,
                 ]);
             }
         });
@@ -139,15 +146,15 @@ class PurchaseOrderController extends Controller
 
         DB::transaction(function () use ($request, $purchase_order) {
             $purchase_order->update([
-                'supplier_id'         => $request->supplier_id,
+                'supplier_id' => $request->supplier_id,
                 'purchase_request_id' => $request->purchase_request_id,
-                'po_date'             => $request->po_date,
-                'expected_date'       => $request->expected_date,
-                'subtotal'            => $request->subtotal ?? 0,
-                'discount'            => $request->discount ?? 0,
-                'tax'                 => $request->tax ?? 0,
-                'total'               => $request->total ?? 0,
-                'notes'               => $request->notes,
+                'po_date' => $request->po_date,
+                'expected_date' => $request->expected_date,
+                'subtotal' => $request->subtotal ?? 0,
+                'discount' => $request->discount ?? 0,
+                'tax' => $request->tax ?? 0,
+                'total' => $request->total ?? 0,
+                'notes' => $request->notes,
             ]);
 
             $purchase_order->items()->delete();
@@ -157,13 +164,13 @@ class PurchaseOrderController extends Controller
                 $price = (float) $item['unit_price'];
 
                 $purchase_order->items()->create([
-                    'raw_material_id'   => $item['raw_material_id'],
-                    'unit_id'           => $item['unit_id'] ?? null,
-                    'quantity'          => $qty,
+                    'raw_material_id' => $item['raw_material_id'],
+                    'unit_id' => $item['unit_id'] ?? null,
+                    'quantity' => $qty,
                     'received_quantity' => 0,
-                    'unit_price'        => $price,
-                    'total'             => $qty * $price,
-                    'notes'             => $item['notes'] ?? null,
+                    'unit_price' => $price,
+                    'total' => $qty * $price,
+                    'notes' => $item['notes'] ?? null,
                 ]);
             }
         });

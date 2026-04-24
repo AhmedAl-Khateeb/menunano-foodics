@@ -33,11 +33,18 @@ class GoodsReceiptController extends Controller
             $query->where('supplier_id', $request->supplier_id);
         }
 
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', $request->date_to);
+        }
+
         if ($request->filled('search')) {
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('receipt_number', 'like', "%{$search}%")
-                ->orWhere('created_at', 'like', "%{$search}%")
                   ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
                       $supplierQuery->where('name', 'like', "%{$search}%");
                   });

@@ -41,8 +41,12 @@ class InventoryMovementController extends Controller
         }
 
         // Filter by Date Range
-        if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->date);
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         // Clone query for statistics BEFORE pagination

@@ -26,7 +26,22 @@
                         <form action="{{ route('inventory.purchase-orders.index') }}" method="GET"
                             class="d-flex flex-wrap gap-2">
                             <input type="text" name="search" class="form-control form-control-sm" style="width:180px;"
-                                value="{{ request('search') }}" placeholder="بحث بالرقم \ المورد\ التاريخ">
+                                value="{{ request('search') }}" placeholder="بحث بالرقم \ المورد">
+
+                            <div class="input-group input-group-sm" style="width: 190px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">من</span>
+                                </div>
+                                <input type="date" name="date_from" class="form-control"
+                                    value="{{ request('date_from') }}">
+                            </div>
+
+                            <div class="input-group input-group-sm" style="width: 190px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">إلى</span>
+                                </div>
+                                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                            </div>
 
                             <select name="supplier_id" class="form-control form-control-sm" style="width:180px;">
                                 <option value="">كل الموردين</option>

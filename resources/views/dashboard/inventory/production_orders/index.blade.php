@@ -26,7 +26,22 @@
                         <form action="{{ route('inventory.production-orders.index') }}" method="GET"
                             class="d-flex flex-wrap gap-2">
                             <input type="text" name="search" class="form-control form-control-sm" style="width:180px;"
-                                value="{{ request('search') }}" placeholder="بحث برقم الأمر \ التاريخ">
+                                value="{{ request('search') }}" placeholder="بحث برقم الأمر">
+
+                            <div class="input-group input-group-sm" style="width: 190px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">من</span>
+                                </div>
+                                <input type="date" name="date_from" class="form-control"
+                                    value="{{ request('date_from') }}">
+                            </div>
+
+                            <div class="input-group input-group-sm" style="width: 190px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">إلى</span>
+                                </div>
+                                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                            </div>
 
                             <select name="status" class="form-control form-control-sm" style="width:150px;">
                                 <option value="">كل الحالات</option>
@@ -73,7 +88,7 @@
                                         <td>{{ $order->production_number }}</td>
                                         <td>{{ $order->recipe->outputMaterial->name ?? $order->recipe->name }}</td>
                                         <td>
-                                            {{ $order->production_date?->format('Y-m-d') }}</td>
+                                            {{ $order->created_at?->format('Y-m-d') }}</td>
                                         </td>
                                         <td>{{ rtrim(rtrim(number_format($order->planned_quantity ?? 0, 3, '.', ''), '0'), '.') }}
                                         </td>

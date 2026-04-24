@@ -30,15 +30,19 @@ class StockCountController extends Controller
             $query->where('type', $request->type);
         }
 
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
         if ($request->filled('search')) {
             $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('count_number', 'like', '%'.$search.'%');
-
-                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $search)) {
-                    $q->orWhereDate('created_at', $search);
-                }
             });
         }
 
@@ -61,12 +65,12 @@ class StockCountController extends Controller
     {
         DB::transaction(function () use ($request) {
             $stockCount = StockCount::create([
-                'user_id'      => auth()->id(),
-                'count_number' => 'SC-' . now()->format('YmdHis'),
-                'count_date'   => $request->count_date,
-                'type'         => $request->type,
-                'status'       => 'draft',
-                'notes'        => $request->notes,
+                'user_id' => auth()->id(),
+                'count_number' => 'SC-'.now()->format('YmdHis'),
+                'count_date' => $request->count_date,
+                'type' => $request->type,
+                'status' => 'draft',
+                'notes' => $request->notes,
             ]);
 
             foreach ($request->items as $item) {
@@ -75,11 +79,11 @@ class StockCountController extends Controller
                 $physicalQty = (float) $item['physical_quantity'];
 
                 $stockCount->items()->create([
-                    'inventory_id'        => $inventory->id,
-                    'system_quantity'     => $systemQty,
-                    'physical_quantity'   => $physicalQty,
+                    'inventory_id' => $inventory->id,
+                    'system_quantity' => $systemQty,
+                    'physical_quantity' => $physicalQty,
                     'difference_quantity' => $physicalQty - $systemQty,
-                    'notes'               => $item['notes'] ?? null,
+                    'notes' => $item['notes'] ?? null,
                 ]);
             }
         });
@@ -119,8 +123,8 @@ class StockCountController extends Controller
         DB::transaction(function () use ($request, $stock_count) {
             $stock_count->update([
                 'count_date' => $request->count_date,
-                'type'       => $request->type,
-                'notes'      => $request->notes,
+                'type' => $request->type,
+                'notes' => $request->notes,
             ]);
 
             $stock_count->items()->delete();
@@ -131,11 +135,11 @@ class StockCountController extends Controller
                 $physicalQty = (float) $item['physical_quantity'];
 
                 $stock_count->items()->create([
-                    'inventory_id'        => $inventory->id,
-                    'system_quantity'     => $systemQty,
-                    'physical_quantity'   => $physicalQty,
+                    'inventory_id' => $inventory->id,
+                    'system_quantity' => $systemQty,
+                    'physical_quantity' => $physicalQty,
                     'difference_quantity' => $physicalQty - $systemQty,
-                    'notes'               => $item['notes'] ?? null,
+                    'notes' => $item['notes'] ?? null,
                 ]);
             }
         });

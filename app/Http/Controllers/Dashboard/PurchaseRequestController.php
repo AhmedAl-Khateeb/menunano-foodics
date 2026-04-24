@@ -22,8 +22,12 @@ class PurchaseRequestController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('request_date')) {
-            $query->where('request_date', $request->request_date);
+        if ($request->filled('date_from')) {
+            $query->whereDate('request_date', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('request_date', $request->date_to);
         }
 
         $purchaseRequests = $query->paginate(15)->withQueryString();

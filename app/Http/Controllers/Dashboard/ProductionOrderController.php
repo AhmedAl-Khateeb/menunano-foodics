@@ -27,13 +27,21 @@ class ProductionOrderController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        
-        if ($request->filled('created_at')) {
-            $query->where('created_at', $request->created_at);
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         if ($request->filled('search')) {
-            $query->where('production_number', 'like', '%' . trim($request->search) . '%');
+            $search = trim($request->search);
+
+            $query->where(function ($q) use ($search) {
+                $q->where('production_number', 'like', '%'.$search.'%');
+            });
         }
 
         $productionOrders = $query->paginate(15)->withQueryString();
@@ -61,25 +69,25 @@ class ProductionOrderController extends Controller
     {
         DB::transaction(function () use ($request) {
             $productionOrder = ProductionOrder::create([
-                'user_id'           => auth()->id(),
-                'recipe_id'         => $request->recipe_id,
-                'production_number' => 'PD-' . now()->format('YmdHis'),
-                'production_date'   => $request->production_date,
-                'planned_quantity'  => $request->planned_quantity,
+                'user_id' => auth()->id(),
+                'recipe_id' => $request->recipe_id,
+                'production_number' => 'PD-'.now()->format('YmdHis'),
+                'production_date' => $request->production_date,
+                'planned_quantity' => $request->planned_quantity,
                 'produced_quantity' => $request->produced_quantity,
-                'status'            => 'draft',
-                'total_cost'        => 0,
-                'notes'             => $request->notes,
+                'status' => 'draft',
+                'total_cost' => 0,
+                'notes' => $request->notes,
             ]);
 
             foreach ($request->items as $item) {
                 $productionOrder->items()->create([
-                    'raw_material_id'   => $item['raw_material_id'],
-                    'unit_id'           => $item['unit_id'] ?? null,
-                    'planned_quantity'  => $item['planned_quantity'],
+                    'raw_material_id' => $item['raw_material_id'],
+                    'unit_id' => $item['unit_id'] ?? null,
+                    'planned_quantity' => $item['planned_quantity'],
                     'consumed_quantity' => $item['consumed_quantity'],
-                    'unit_cost'         => 0,
-                    'total_cost'        => 0,
+                    'unit_cost' => 0,
+                    'total_cost' => 0,
                 ]);
             }
         });
@@ -129,23 +137,23 @@ class ProductionOrderController extends Controller
 
         DB::transaction(function () use ($request, $production_order) {
             $production_order->update([
-                'recipe_id'         => $request->recipe_id,
-                'production_date'   => $request->production_date,
-                'planned_quantity'  => $request->planned_quantity,
+                'recipe_id' => $request->recipe_id,
+                'production_date' => $request->production_date,
+                'planned_quantity' => $request->planned_quantity,
                 'produced_quantity' => $request->produced_quantity,
-                'notes'             => $request->notes,
+                'notes' => $request->notes,
             ]);
 
             $production_order->items()->delete();
 
             foreach ($request->items as $item) {
                 $production_order->items()->create([
-                    'raw_material_id'   => $item['raw_material_id'],
-                    'unit_id'           => $item['unit_id'] ?? null,
-                    'planned_quantity'  => $item['planned_quantity'],
+                    'raw_material_id' => $item['raw_material_id'],
+                    'unit_id' => $item['unit_id'] ?? null,
+                    'planned_quantity' => $item['planned_quantity'],
                     'consumed_quantity' => $item['consumed_quantity'],
-                    'unit_cost'         => 0,
-                    'total_cost'        => 0,
+                    'unit_cost' => 0,
+                    'total_cost' => 0,
                 ]);
             }
         });

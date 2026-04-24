@@ -27,15 +27,37 @@
                                 <h3 class="card-title mb-0">قائمة المستخدمين</h3>
 
                                 <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
-                                    <form method="GET" class="d-flex align-items-center flex-wrap gap-2 mb-0">
-                                        <div style="width: 260px;">
+                                    <form method="GET" class="d-flex align-items-center flex-wrap mb-0" style="gap: 8px;">
+
+                                        <div style="width: 240px;">
                                             <input type="text" name="search" class="form-control form-control-sm"
-                                                placeholder="بحث (بالتاريخ / اسم / الأميل)" value="{{ request('search') }}">
+                                                placeholder="بحث بالاسم / الإيميل" value="{{ request('search') }}">
+                                        </div>
+
+                                        <div class="input-group input-group-sm" style="width: 190px;">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">من</span>
+                                            </div>
+                                            <input type="date" name="date_from" class="form-control"
+                                                value="{{ request('date_from') }}">
+                                        </div>
+
+                                        <div class="input-group input-group-sm" style="width: 190px;">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">إلى</span>
+                                            </div>
+                                            <input type="date" name="date_to" class="form-control"
+                                                value="{{ request('date_to') }}">
                                         </div>
 
                                         <button type="submit" class="btn btn-primary btn-sm">
                                             بحث
                                         </button>
+
+                                        <a href="{{ route('users.index') }}" class="btn btn-secondary btn-sm">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+
                                     </form>
 
                                     <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">
@@ -179,6 +201,18 @@
                         <div class="card-footer clearfix">
                             {{ $users->links() }}
                         </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="float-sm-right mb-0 p-0" style="list-style: none;">
+                            <li>
+                                <a href="{{ route('dashboard') }}" class="btn btn-success"
+                                    style="color: #fff; transition: all 0.2s ease-in-out;"
+                                    onmouseover="this.style.backgroundColor='#007bff'; this.style.borderColor='#007bff'; this.style.color='#fff';"
+                                    onmouseout="this.style.backgroundColor=''; this.style.borderColor=''; this.style.color='#fff';">
+                                    الرئيسية
+                                </a>
+                            </li>
+                        </ol>
                     </div>
                     <!-- /.card -->
                 </div>

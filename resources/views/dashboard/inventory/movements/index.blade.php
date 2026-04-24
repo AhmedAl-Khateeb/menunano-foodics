@@ -75,76 +75,87 @@
         </div>
 
         {{-- Filter Card --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body p-3">
-                <form action="{{ route('inventory.movements.index') }}" method="GET" id="filterForm">
-                    <div class="row g-3 align-items-end">
-                        {{-- Movement Type --}}
-                        <div class="col-md-3">
-                            <label class="form-label text-xs font-weight-bold">نوع الحركة</label>
-                            <select name="type" class="form-select form-select-sm border-2 shadow-none"
-                                onchange="this.form.submit()">
-                                <option value="">الكل</option>
-                                <option value="purchase" {{ request('type') == 'purchase' ? 'selected' : '' }}>شراء / توريد
-                                </option>
-                                <option value="sale" {{ request('type') == 'sale' ? 'selected' : '' }}>بيع</option>
-                                <option value="waste" {{ request('type') == 'waste' ? 'selected' : '' }}>هالك / تالف
-                                </option>
-                                <option value="adjustment" {{ request('type') == 'adjustment' ? 'selected' : '' }}>تسوية
-                                    جرد</option>
-                            </select>
-                        </div>
+     <div class="card border-0 shadow-sm mb-4 filter-card">
+    <div class="card-body p-3">
 
-                        {{-- Category --}}
-                        <div class="col-md-3">
-                            <label class="form-label text-xs font-weight-bold">الفئة</label>
-                            <select name="category_id" class="form-select form-select-sm border-2 shadow-none"
-                                onchange="this.form.submit()">
-                                <option value="">كل الفئات</option>
-                                @foreach ($categories as $category)
-                                    <option value="{{ $category->id }}"
-                                        {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                        {{ $category->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+        <form action="{{ route('inventory.movements.index') }}" method="GET">
 
-                        {{-- Date Range --}}
-                        <div class="col-md-3">
-                            <label class="form-label text-xs font-weight-bold">التاريخ</label>
-                            <input type="date" name="date" class="form-control form-control-sm border-2 shadow-none"
-                                value="{{ request('date') }}" onchange="this.form.submit()">
-                        </div>
+            <div class="row g-2 align-items-end justify-content-end">
 
-                        {{-- Reset Button --}}
-                        <div class="col-md-3 text-end">
-                            <a href="{{ route('inventory.movements.index') }}"
-                                class="btn btn-sm btn-outline-secondary w-100">
-                                <i class="fas fa-undo ms-1"></i> إعادة تعيين
-                            </a>
-                        </div>
+                {{-- Movement Type --}}
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <label class="form-label small fw-bold mb-1">نوع الحركة</label>
+                    <select name="type" class="form-select form-select-sm">
+                        <option value="">الكل</option>
+                        <option value="purchase" {{ request('type') == 'purchase' ? 'selected' : '' }}>شراء / توريد</option>
+                        <option value="sale" {{ request('type') == 'sale' ? 'selected' : '' }}>بيع</option>
+                        <option value="waste" {{ request('type') == 'waste' ? 'selected' : '' }}>هالك / تالف</option>
+                        <option value="adjustment" {{ request('type') == 'adjustment' ? 'selected' : '' }}>تسوية جرد</option>
+                    </select>
+                </div>
+
+                {{-- Category --}}
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <label class="form-label small fw-bold mb-1">الفئة</label>
+                    <select name="category_id" class="form-select form-select-sm">
+                        <option value="">كل الفئات</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}"
+                                {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Date From --}}
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <label class="form-label small fw-bold mb-1">من تاريخ</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">من</span>
+                        <input type="date"
+                               name="date_from"
+                               class="form-control"
+                               value="{{ request('date_from') }}">
                     </div>
+                </div>
 
-                    {{-- Custom Date Inputs (Hidden by default) --}}
-                    <div class="row g-3 mt-2 {{ request('date_range') == 'custom' ? '' : 'd-none' }}" id="customDateRow">
-                        <div class="col-md-6">
-                            <label class="form-label text-xs">من تاريخ</label>
-                            <input type="date" name="start_date"
-                                class="form-control form-control-sm border-2 shadow-none"
-                                value="{{ request('start_date') }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-xs">إلى تاريخ</label>
-                            <input type="date" name="end_date" class="form-control form-control-sm border-2 shadow-none"
-                                value="{{ request('end_date') }}">
-                        </div>
-                        <div class="col-12 text-end">
-                            <button type="submit" class="btn btn-primary btn-sm px-4">تطبيق الفلتر</button>
-                        </div>
+                {{-- Date To --}}
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <label class="form-label small fw-bold mb-1">إلى تاريخ</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">إلى</span>
+                        <input type="date"
+                               name="date_to"
+                               class="form-control"
+                               value="{{ request('date_to') }}">
                     </div>
-                </form>
+                </div>
+
+                {{-- Buttons --}}
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <label class="form-label small fw-bold mb-1 d-block">&nbsp;</label>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                            <i class="fas fa-search ms-1"></i>
+                            بحث
+                        </button>
+
+                        <a href="{{ route('inventory.movements.index') }}"
+                           class="btn btn-outline-secondary btn-sm reset-btn"
+                           title="إعادة تعيين">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </div>
+
             </div>
-        </div>
+
+        </form>
+
+    </div>
+</div>
 
         {{-- Results Table --}}
         <div class="card border-0 shadow-sm">

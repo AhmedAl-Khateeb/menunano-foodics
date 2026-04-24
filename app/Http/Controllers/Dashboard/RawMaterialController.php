@@ -24,9 +24,16 @@ class RawMaterialController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%'.$request->search.'%')
-                  ->orWhere('sku', 'like', '%'.$request->search.'%')
-                  ->orWhere('created_at', 'like', '%'.$request->search.'%');
+                  ->orWhere('sku', 'like', '%'.$request->search.'%');
             });
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         if ($request->filled('inventory_category_id')) {

@@ -18,8 +18,12 @@ class AttendanceService
             $query->where('user_id', $filters['user_id']);
         }
 
-        if (!empty($filters['created_at'])) {
-            $query->whereDate('created_at', $filters['created_at']);
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
         if (!empty($filters['status'])) {

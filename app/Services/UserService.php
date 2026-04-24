@@ -22,11 +22,19 @@ class UserService
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('id', $search)
-                      ->orWhere('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('created_at', 'like', "%{$search}%");
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
             })
+
+            ->when($request->filled('date_from'), function ($query) use ($request) {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            })
+
+            ->when($request->filled('date_to'), function ($query) use ($request) {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            })
+
             ->with(['creator', 'branch'])
             ->latest()
             ->paginate(10);

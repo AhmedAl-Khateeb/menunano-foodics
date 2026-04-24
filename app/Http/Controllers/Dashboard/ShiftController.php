@@ -20,7 +20,8 @@ class ShiftController extends Controller
             'user_id',
             'branch_id',
             'status',
-            'created_at',
+            'date_from',
+            'date_to',
         ]);
 
         $shifts = $this->shiftService->getPaginated($filters);

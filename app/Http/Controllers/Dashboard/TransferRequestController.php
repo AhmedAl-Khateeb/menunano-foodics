@@ -28,15 +28,19 @@ class TransferRequestController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
         if ($request->filled('search')) {
             $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('transfer_number', 'like', '%'.$search.'%');
-
-                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $search)) {
-                    $q->orWhereDate('created_at', $search);
-                }
             });
         }
 

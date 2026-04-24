@@ -10,7 +10,7 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('dashboard') }}">الرئيسية</a>
+                            {{-- <a href="{{ route('dashboard') }}">الرئيسية</a> --}}
                         </li>
                         {{-- <li class="breadcrumb-item active">الفروع</li> --}}
                     </ol>
@@ -33,12 +33,32 @@
                                     <form method="GET" class="d-flex align-items-center flex-wrap gap-2 mb-0">
                                         <div style="width: 260px;">
                                             <input type="text" name="search" class="form-control form-control-sm"
-                                                placeholder="بحث (بالتاريخ / اسم / الهاتف)" value="{{ request('search') }}">
+                                                placeholder="بحث ( اسم / الهاتف)" value="{{ request('search') }}">
+                                        </div>
+
+                                        <div class="input-group input-group-sm" style="width: 190px;">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">من</span>
+                                            </div>
+                                            <input type="date" name="date_from" class="form-control"
+                                                value="{{ request('date_from') }}">
+                                        </div>
+
+                                        <div class="input-group input-group-sm" style="width: 190px;">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">إلى</span>
+                                            </div>
+                                            <input type="date" name="date_to" class="form-control"
+                                                value="{{ request('date_to') }}">
                                         </div>
 
                                         <button type="submit" class="btn btn-primary btn-sm">
                                             بحث
                                         </button>
+
+                                        <a href="{{ route('branches.index') }}" class="btn btn-secondary btn-sm">
+                                            <i class="fas fa-times"></i>
+                                        </a>
                                     </form>
 
                                     <a href="{{ route('branches.create') }}" class="btn btn-primary btn-sm">
@@ -161,6 +181,19 @@
 
                     </div>
 
+                    <div class="col-sm-6">
+                        <ol class="float-sm-right mb-0 p-0" style="list-style: none;">
+                            <li>
+                                <a href="{{ route('dashboard') }}" class="btn btn-success"
+                                    style="color: #fff; transition: all 0.2s ease-in-out;"
+                                    onmouseover="this.style.backgroundColor='#007bff'; this.style.borderColor='#007bff'; this.style.color='#fff';"
+                                    onmouseout="this.style.backgroundColor=''; this.style.borderColor=''; this.style.color='#fff';">
+                                    الرئيسية
+                                </a>
+                            </li>
+                        </ol>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -191,6 +224,4 @@
             });
         </script>
     @endif
-
-
 @endsection

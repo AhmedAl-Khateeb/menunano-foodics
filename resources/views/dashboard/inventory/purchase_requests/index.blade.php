@@ -46,8 +46,20 @@
                             </select>
 
                             
-                            <input type="date" name="request_date" class="form-control form-control-sm" style="width: 180px;"
-                            value="{{ request('search') }}" placeholder="بحث بالتاريخ">
+                            <div class="input-group input-group-sm" style="width: 190px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">من</span>
+                                </div>
+                                <input type="date" name="date_from" class="form-control"
+                                    value="{{ request('date_from') }}">
+                            </div>
+
+                            <div class="input-group input-group-sm" style="width: 190px;">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">إلى</span>
+                                </div>
+                                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                            </div>
                             
                             <button type="submit" class="btn btn-info btn-sm">
                                 <i class="fas fa-search"></i> فلترة
