@@ -11,6 +11,7 @@ use App\Http\Controllers\Dashboard\GoodsReceiptController;
 use App\Http\Controllers\Dashboard\InventoryCategoryController;
 use App\Http\Controllers\Dashboard\InventoryDashboardController;
 use App\Http\Controllers\Dashboard\InventoryMovementController;
+use App\Http\Controllers\Dashboard\InvoiceController;
 use App\Http\Controllers\Dashboard\OrderController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\ProductionOrderController;
@@ -106,6 +107,12 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
             'count' => Order::count(),
         ]);
     })->middleware('package.permission:dashboard.access')->name('orders.count');
+
+
+
+    // Invoices
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoices/{order}/print', [InvoiceController::class, 'print'])->name('invoices.print');
 
     /*
     |--------------------------------------------------------------------------
@@ -212,6 +219,10 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::resource('shifts', ShiftController::class)
         ->except(['show'])
         ->middleware('package.permission:shifts.access');
+        
+    Route::get('shifts/{shift}', [ShiftController::class, 'show'])
+    ->middleware('package.permission:shifts.access')
+    ->name('shifts.show');
 
     Route::post('shifts/{shift}/close', [ShiftController::class, 'close'])
         ->middleware('package.permission:shifts.access')

@@ -148,6 +148,12 @@
                                                                 </button>
                                                             </form>
                                                         @endif
+
+                                                        <a href="{{ route('shifts.show', $shift->id) }}"
+                                                            class="btn btn-dark btn-sm" title="عرض تفاصيل الشيفت">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+
                                                         <a href="{{ route('shifts.edit', $shift->id) }}"
                                                             class="btn btn-info btn-sm">
                                                             <i class="fas fa-edit"></i>
@@ -200,6 +206,11 @@
                                                     {{ $shift->ending_cash !== null ? number_format((float) $shift->ending_cash, 2) : '-' }}
                                                 </div>
                                             </div>
+
+                                            <a href="{{ route('shifts.show', $shift->id) }}"
+                                                class="btn btn-dark btn-sm flex-grow-1">
+                                                عرض
+                                            </a>
 
                                             <div class="d-flex gap-2 border-top pt-2">
                                                 <a href="{{ route('shifts.edit', $shift->id) }}"

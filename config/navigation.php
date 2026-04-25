@@ -133,6 +133,33 @@ return [
                     'active_routes' => ['orders.local'],
                     'permission' => 'orders.local',
                 ],
+                [
+                    'title' => 'نقاط البيع',
+                    'icon' => 'fas fa-cash-register',
+                    'route' => 'pos.index',
+                    'active_routes' => ['pos.*'],
+                    'permission' => 'pos.access',
+                ],
+                [
+                    'title' => 'الفواتير',
+                    'icon' => 'fas fa-file-invoice-dollar',
+                    'route' => 'invoices.index',
+                    'active_routes' => ['invoices.*'],
+                ],
+                // [
+                //     'title' => 'طلبات المنيو',
+                //     'icon' => 'far fa-circle',
+                //     'route' => 'orders.index',
+                //     'active_routes' => ['orders.index'],
+                //     'query' => ['source' => 'menu'],
+                // ],
+                // [
+                //     'title' => 'طلبات نقاط البيع',
+                //     'icon' => 'far fa-circle',
+                //     'route' => 'orders.index',
+                //     'active_routes' => ['orders.index'],
+                //     'query' => ['source' => 'pos'],
+                // ],
             ],
         ],
 
@@ -150,6 +177,24 @@ return [
                     'route' => 'users.index',
                     'active_routes' => ['users.index', 'users.create', 'users.edit'],
                     'permission' => 'users.access',
+                ],
+                [
+                    'title' => 'عمال التوصيل',
+                    'icon' => 'fas fa-motorcycle',
+                    'route' => 'delivery_men.index',
+                    'active_routes' => ['delivery_men.*'],
+                ],
+                [
+                    'title' => 'الموظفين (الكاشير)',
+                    'icon' => 'fas fa-cash-register',
+                    'route' => 'users.staff',
+                    'active_routes' => ['users.staff'],
+                ],
+                [
+                    'title' => 'العملاء',
+                    'icon' => 'fas fa-users',
+                    'route' => 'users.customers',
+                    'active_routes' => ['users.customers'],
                 ],
                 [
                     'title' => 'الأدوار والصلاحيات',
@@ -346,16 +391,6 @@ return [
                     'permission' => 'charges.access',
                 ],
             ],
-        ],
-    ],
-
-    'cashier' => [
-        [
-            'title' => 'البيع السريع',
-            'icon' => 'fas fa-cash-register',
-            'route' => 'pos.index',
-            'active_routes' => ['pos.*'],
-            'permission' => 'pos.access',
         ],
     ],
 ];

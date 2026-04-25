@@ -2,12 +2,15 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
+use App\Models\Branch;
+use App\Models\Product;
+use App\Models\Shift;
+use App\Services\StoreService;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Session;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
-use Livewire\Attributes\Session;
-use App\Models\Product;
+use Livewire\Component;
 
 #[Layout('layouts.app')]
 class PosPage extends Component
@@ -16,12 +19,12 @@ class PosPage extends Component
     public $search = '';
 
     #[Url(as: 'cat', history: true)]
-    public $activeCategoryId = null; // Filter by category
-    
+    public $activeCategoryId; // Filter by category
+
     #[Session]
     public $cart = [];
     public $total = 0;
-    
+
     // Checkout Properties
     public $paidAmount = 0;
     public $changeAmount = 0;
@@ -34,36 +37,38 @@ class PosPage extends Component
     public $activeTab = 'products'; // 'products' or 'cart'
     public $showSizeModal = false;
     public $showResetModal = false;
-    public $selectedProductId = null; // Changed from Model to ID
+    public $selectedProductId; // Changed from Model to ID
     public $modalQuantity = 1;
-    public $modalSelectedSizeId = null;
+    public $modalSelectedSizeId;
 
     // Customer Properties
     public $customerPhone = '';
     public $customerName = '';
-    public $selectedCustomerId = null;
+    public $selectedCustomerId;
 
     // Order Type Properties
     #[Session]
     public $orderType = 'takeaway'; // takeaway, table, free_seating, delivery
-    public $selectedTableId = null;
+    public $selectedTableId;
     public $deliveryFee = 0;
-    public $selectedDeliveryManId = null;
+    public $selectedDeliveryManId;
     public $tables = [];
     public $deliveryMen = [];
 
     // Shift Properties
     public $requiresShiftStart = false;
-    public $shiftStartingCash = "";
+    public $shiftStartingCash = '';
     public $showEndShiftModal = false;
-    public $shiftEndingCash = "";
-
+    public $shiftEndingCash = '';
 
     // Computed Property to fetch product safely
     public function getSelectedProductForSizeProperty()
     {
-        if (!$this->selectedProductId) return null;
-        return \App\Models\Product::with('sizes')->find($this->selectedProductId);
+        if (!$this->selectedProductId) {
+            return null;
+        }
+
+        return Product::with('sizes')->find($this->selectedProductId);
     }
 
     public function updatedCustomerPhone()
@@ -71,11 +76,11 @@ class PosPage extends Component
         $this->selectedCustomerId = null;
         // Search by phone
         if (strlen($this->customerPhone) > 3) {
-            $storeOwnerId = \App\Services\StoreService::getStoreOwnerId();
+            $storeOwnerId = StoreService::getStoreOwnerId();
             $customer = \App\Models\Customer::where('user_id', $storeOwnerId)
-                        ->where('phone', 'like', '%' . $this->customerPhone . '%')
+                        ->where('phone', 'like', '%'.$this->customerPhone.'%')
                         ->first();
-            
+
             if ($customer) {
                 $this->selectedCustomerId = $customer->id;
                 $this->customerName = $customer->name;
@@ -110,23 +115,23 @@ class PosPage extends Component
     public function mount()
     {
         // Fetch dynamic payment methods
-        $storeId = \App\Services\StoreService::getStoreOwnerId();
+        $storeId = StoreService::getStoreOwnerId();
         $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', true)
                                 ->where('created_by', $storeId)
                                 ->get();
-                                
+
         // Fetch Tables with active orders
-        $this->tables = \App\Models\Table::with(['diningArea', 'orders' => function($q) {
+        $this->tables = \App\Models\Table::with(['diningArea', 'orders' => function ($q) {
             $q->where('status', 'pending');
         }])->where('user_id', $storeId)->where('is_active', true)->get();
-        
+
         // Fetch Delivery Men
         $this->deliveryMen = \App\Models\DeliveryMan::where('user_id', $storeId)->where('is_active', true)->get();
-        
+
         // Default payment method
         /** @var \App\Models\PaymentMethod $firstPaymentMethod */
         $firstPaymentMethod = $this->paymentMethods->first();
-        if($firstPaymentMethod) {
+        if ($firstPaymentMethod) {
             $this->paymentMethod = $firstPaymentMethod->id;
         }
 
@@ -137,7 +142,7 @@ class PosPage extends Component
         $this->checkActiveShift();
 
         // Fix: Recalculate total if cart has items (persisted in session)
-        if(!empty($this->cart)) {
+        if (!empty($this->cart)) {
             $this->calculateTotal();
         }
     }
@@ -146,10 +151,12 @@ class PosPage extends Component
     {
         /** @var \App\Models\User $user */
         $user = auth()->user();
-        if (!$user) return;
-        
+        if (!$user) {
+            return;
+        }
+
         // If there's an active or paused shift for this user, they can proceed
-        $activeShift = \App\Models\Shift::where('user_id', $user->id)
+        $activeShift = Shift::where('user_id', $user->id)
                         ->whereIn('status', ['active', 'paused'])
                         ->first();
 
@@ -167,28 +174,47 @@ class PosPage extends Component
     public function startShift()
     {
         $this->validate([
-            'shiftStartingCash' => 'required|numeric|min:0'
+            'shiftStartingCash' => 'required|numeric|min:0',
         ], [
             'shiftStartingCash.required' => 'يرجى إدخال مبلغ الدرج الافتتاحي',
             'shiftStartingCash.numeric' => 'يجب أن يكون المبلغ رقماً',
             'shiftStartingCash.min' => 'لا يمكن أن يكون المبلغ بالسالب',
         ]);
 
-        \App\Models\Shift::create([
+        $user = auth()->user();
+
+        $storeOwnerId = StoreService::getStoreOwnerId();
+
+        $branchId = $user->branch_id ?? null;
+
+        if (!$branchId) {
+            $branchId = Branch::where('created_by', $storeOwnerId)
+                ->where('is_active', 1)
+                ->value('id');
+        }
+
+        if (!$branchId) {
+            session()->flash('error', 'لا يوجد فرع مرتبط بهذا المستخدم. يرجى إنشاء فرع أو ربط المستخدم بفرع.');
+
+            return;
+        }
+
+        Shift::create([
             'user_id' => auth()->id(),
-            'store_id' => \App\Services\StoreService::getStoreOwnerId(),
+            'branch_id' => $branchId,
             'starting_cash' => $this->shiftStartingCash,
+            'expected_cash' => $this->shiftStartingCash,
             'start_time' => now(),
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         $this->requiresShiftStart = false;
-        $this->shiftStartingCash = "";
+        $this->shiftStartingCash = '';
     }
 
     public function openEndShiftModal()
     {
-        $this->shiftEndingCash = "";
+        $this->shiftEndingCash = '';
         $this->showEndShiftModal = true;
     }
 
@@ -200,22 +226,27 @@ class PosPage extends Component
     public function endShift()
     {
         $this->validate([
-            'shiftEndingCash' => 'required|numeric|min:0'
+            'shiftEndingCash' => 'required|numeric|min:0',
         ], [
             'shiftEndingCash.required' => 'يرجى إدخال مبلغ الدرج النهائي',
             'shiftEndingCash.numeric' => 'يجب أن يكون المبلغ رقماً',
             'shiftEndingCash.min' => 'لا يمكن أن يكون المبلغ بالسالب',
         ]);
 
-        $activeShift = \App\Models\Shift::where('user_id', auth()->id())
-                        ->where('status', 'active')
-                        ->first();
+        $activeShift = Shift::where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->first();
 
         if ($activeShift) {
+            $endingCash = floatval($this->shiftEndingCash);
+            $expectedCash = floatval($activeShift->expected_cash ?? $activeShift->starting_cash ?? 0);
+
             $activeShift->update([
-                'ending_cash' => $this->shiftEndingCash,
+                'ending_cash' => $endingCash,
+                'cash_difference' => $endingCash - $expectedCash,
                 'end_time' => now(),
-                'status' => 'closed'
+                'status' => 'closed',
+                'closed_by' => auth()->id(),
             ]);
         }
 
@@ -227,36 +258,36 @@ class PosPage extends Component
     #[Title('البيع السريع (POS)')]
     public function render()
     {
-        $storeOwnerId = \App\Services\StoreService::getStoreOwnerId();
-        
+        $storeOwnerId = StoreService::getStoreOwnerId();
+
         // Fetch Categories
         $categories = \App\Models\Category::where('user_id', $storeOwnerId)->get();
 
         // Fetch Products
-        $productsQuery = \App\Models\Product::where('user_id', $storeOwnerId)
+        $productsQuery = Product::where('user_id', $storeOwnerId)
                         ->where('name', 'like', '%'.$this->search.'%');
-        
+
         if ($this->activeCategoryId) {
             $productsQuery->where('category_id', $this->activeCategoryId);
         }
 
-        $products = $productsQuery->with('sizes')->latest()->get(); 
+        $products = $productsQuery->with('sizes')->latest()->get();
 
         return view('livewire.pos-page', [
             'products' => $products,
             'categories' => $categories,
-            'cartProductIds' => collect($this->cart)->pluck('id')->toArray()
+            'cartProductIds' => collect($this->cart)->pluck('id')->toArray(),
         ]);
     }
 
     // Open Orders Interface
     public $showOpenOrdersModal = false;
     public $openOrders = [];
-    public $selectedOpenOrderId = null;
+    public $selectedOpenOrderId;
 
     public function loadOpenOrders()
     {
-        $storeId = \App\Services\StoreService::getStoreOwnerId();
+        $storeId = StoreService::getStoreOwnerId();
         $this->openOrders = \App\Models\Order::with('table', 'customer')
             ->where('user_id', $storeId)
             ->whereIn('status', ['pending', 'dining'])
@@ -284,19 +315,33 @@ class PosPage extends Component
     public function payOpenOrder()
     {
         $order = \App\Models\Order::find($this->selectedOpenOrderId);
+
         if ($order) {
             if ($this->paymentMethod === 'cash' && $this->paidAmount < $order->total_price) {
                 session()->flash('open_order_error', 'المبلغ المدفوع أقل من الإجمالي!');
+
+                return;
+            }
+
+            $activeShift = Shift::where('user_id', auth()->id())
+                ->where('status', 'active')
+                ->latest()
+                ->first();
+
+            if (!$activeShift) {
+                session()->flash('open_order_error', 'لا يوجد شيفت مفتوح لهذا المستخدم.');
+
                 return;
             }
 
             $order->update([
+                'shift_id' => $order->shift_id ?? $activeShift->id,
                 'status' => 'served',
                 'paid_amount' => $this->paidAmount,
                 'change_amount' => max(0, $this->paidAmount - $order->total_price),
                 'payment_method' => $this->paymentMethod,
             ]);
-            
+
             $this->lastOrderId = $order->id;
             $this->closeOpenOrdersModal();
             $this->showSuccessModal = true;
@@ -316,16 +361,16 @@ class PosPage extends Component
     public function openSizeModal($productId)
     {
         $this->selectedProductId = $productId;
-        $product = $this->selectedProductForSize; 
-        
-        if($product) {
-             $this->modalQuantity = 1;
-             if($product->sizes->isNotEmpty()){
-                 $this->modalSelectedSizeId = $product->sizes->first()->id;
-             } else {
-                 $this->modalSelectedSizeId = null;
-             }
-             $this->showSizeModal = true;
+        $product = $this->selectedProductForSize;
+
+        if ($product) {
+            $this->modalQuantity = 1;
+            if ($product->sizes->isNotEmpty()) {
+                $this->modalSelectedSizeId = $product->sizes->first()->id;
+            } else {
+                $this->modalSelectedSizeId = null;
+            }
+            $this->showSizeModal = true;
         }
     }
 
@@ -344,23 +389,25 @@ class PosPage extends Component
 
     public function incrementModalQuantity()
     {
-        $this->modalQuantity++;
+        ++$this->modalQuantity;
     }
 
     public function decrementModalQuantity()
     {
-        if($this->modalQuantity > 1) {
-            $this->modalQuantity--;
+        if ($this->modalQuantity > 1) {
+            --$this->modalQuantity;
         }
     }
 
     public function confirmModalAddToCart()
     {
         $product = $this->selectedProductForSize;
-        if(!$product) return;
+        if (!$product) {
+            return;
+        }
 
-        if($product->sizes->isNotEmpty() && !$this->modalSelectedSizeId) {
-            return; 
+        if ($product->sizes->isNotEmpty() && !$this->modalSelectedSizeId) {
+            return;
         }
 
         $price = $product->price;
@@ -369,29 +416,29 @@ class PosPage extends Component
         $sizeName = null;
 
         if ($this->modalSelectedSizeId) {
-             $size = $product->sizes->find($this->modalSelectedSizeId);
-             if ($size) {
+            $size = $product->sizes->find($this->modalSelectedSizeId);
+            if ($size) {
                 $price = $size->price;
                 $name = $product->name;
                 $sizeName = $size->size;
                 $effectiveSizeId = $size->id;
-             }
+            }
         } elseif ($price <= 0 && $product->sizes->isNotEmpty()) {
-             // validation fallback
+            // validation fallback
         }
 
-        $cartItemId = $product->id . ($effectiveSizeId ? '-' . $effectiveSizeId : '');
+        $cartItemId = $product->id.($effectiveSizeId ? '-'.$effectiveSizeId : '');
 
         $found = false;
-        foreach($this->cart as $index => $item) {
-            if(isset($item['cart_item_id']) && $item['cart_item_id'] === $cartItemId) {
+        foreach ($this->cart as $index => $item) {
+            if (isset($item['cart_item_id']) && $item['cart_item_id'] === $cartItemId) {
                 $this->cart[$index]['quantity'] += $this->modalQuantity;
                 $found = true;
                 break;
             }
         }
 
-        if(!$found) {
+        if (!$found) {
             $this->cart[] = [
                 'cart_item_id' => $cartItemId,
                 'id' => $product->id,
@@ -400,7 +447,7 @@ class PosPage extends Component
                 'size_name' => $sizeName,
                 'price' => floatval($price),
                 'quantity' => $this->modalQuantity,
-                'cover' => $product->cover
+                'cover' => $product->cover,
             ];
         }
 
@@ -410,11 +457,14 @@ class PosPage extends Component
 
     public function addToCart($productId, $sizeId = null)
     {
-        $product = \App\Models\Product::with('sizes')->find($productId);
-        if(!$product) return;
+        $product = Product::with('sizes')->find($productId);
+        if (!$product) {
+            return;
+        }
 
         if (is_null($sizeId) && $product->sizes->isNotEmpty()) {
             $this->openSizeModal($productId);
+
             return;
         }
 
@@ -424,29 +474,29 @@ class PosPage extends Component
         $sizeName = null;
 
         if ($sizeId) {
-             $size = $product->sizes->find($sizeId);
-             if ($size) {
+            $size = $product->sizes->find($sizeId);
+            if ($size) {
                 $price = $size->price;
                 $name = $product->name;
                 $sizeName = $size->size;
                 $effectiveSizeId = $size->id;
-             }
-        } 
-        elseif ($price <= 0 && $product->sizes->isNotEmpty()) {
-             $size = $product->sizes->first();
-             $price = $size->price;
-             $name = $product->name;
-             $sizeName = $size->size;
-             $effectiveSizeId = $size->id;
+            }
+        } elseif ($price <= 0 && $product->sizes->isNotEmpty()) {
+            $size = $product->sizes->first();
+            $price = $size->price;
+            $name = $product->name;
+            $sizeName = $size->size;
+            $effectiveSizeId = $size->id;
         }
 
-        $cartItemId = $product->id . ($effectiveSizeId ? '-' . $effectiveSizeId : '');
+        $cartItemId = $product->id.($effectiveSizeId ? '-'.$effectiveSizeId : '');
 
-        foreach($this->cart as $index => $item) {
-            if(isset($item['cart_item_id']) && $item['cart_item_id'] === $cartItemId) {
-                $this->cart[$index]['quantity']++;
+        foreach ($this->cart as $index => $item) {
+            if (isset($item['cart_item_id']) && $item['cart_item_id'] === $cartItemId) {
+                ++$this->cart[$index]['quantity'];
                 $this->calculateTotal();
                 $this->closeSizeModal();
+
                 return;
             }
         }
@@ -459,7 +509,7 @@ class PosPage extends Component
             'size_name' => $sizeName,
             'price' => floatval($price),
             'quantity' => 1,
-            'cover' => $product->cover
+            'cover' => $product->cover,
         ];
         $this->calculateTotal();
         $this->closeSizeModal();
@@ -467,14 +517,14 @@ class PosPage extends Component
 
     public function increment($index)
     {
-        $this->cart[$index]['quantity']++;
+        ++$this->cart[$index]['quantity'];
         $this->calculateTotal();
     }
 
     public function decrement($index)
     {
-        if($this->cart[$index]['quantity'] > 1) {
-            $this->cart[$index]['quantity']--;
+        if ($this->cart[$index]['quantity'] > 1) {
+            --$this->cart[$index]['quantity'];
         } else {
             $this->removeFromCart($index);
         }
@@ -483,9 +533,9 @@ class PosPage extends Component
 
     public function removeFromCart($index)
     {
-         unset($this->cart[$index]);
-         $this->cart = array_values($this->cart);
-         $this->calculateTotal();
+        unset($this->cart[$index]);
+        $this->cart = array_values($this->cart);
+        $this->calculateTotal();
     }
 
     public function updatedPaidAmount()
@@ -498,12 +548,12 @@ class PosPage extends Component
     public function calculateTotal()
     {
         $this->total = 0;
-        foreach($this->cart as $item) {
+        foreach ($this->cart as $item) {
             $this->total += $item['price'] * $item['quantity'];
         }
-        
+
         if ($this->orderType === 'delivery') {
-            $this->total += (float)$this->deliveryFee;
+            $this->total += (float) $this->deliveryFee;
         }
 
         $this->updatedPaidAmount();
@@ -520,7 +570,7 @@ class PosPage extends Component
     }
 
     public $showSuccessModal = false;
-    public $lastOrderId = null;
+    public $lastOrderId;
 
     // ... (existing methods)
 
@@ -528,16 +578,19 @@ class PosPage extends Component
     {
         if (empty($this->cart)) {
             session()->flash('error', 'السلة فارغة!');
+
             return;
         }
 
         if ($this->orderType === 'table' && empty($this->selectedTableId)) {
             session()->flash('error', 'يرجى تحديد الطاولة!');
+
             return;
         }
 
         if ($this->orderType === 'delivery' && (empty($this->customerPhone) || empty($this->customerName))) {
             session()->flash('error', 'يرجى إدخال بيانات العميل (الهاتف والاسم) للتوصيل!');
+
             return;
         }
 
@@ -545,11 +598,23 @@ class PosPage extends Component
 
         if (!$isDraft && $this->paymentMethod === 'cash' && $this->paidAmount < $this->total) {
             session()->flash('error', 'المبلغ المدفوع أقل من الإجمالي!');
+
+            return;
+        }
+
+        $activeShift = Shift::where('user_id', auth()->id())
+    ->where('status', 'active')
+    ->latest()
+    ->first();
+
+        if (!$activeShift) {
+            session()->flash('error', 'لا يوجد شيفت مفتوح لهذا المستخدم.');
+
             return;
         }
 
         // DB Transaction to ensure data integrity
-        \Illuminate\Support\Facades\DB::transaction(function () use ($isDraft) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($isDraft, $activeShift) {
             // Determine Store Owner ID
             $userId = auth()->id();
             $storeOwnerId = auth()->user()->role === 'super_admin' ? $userId : (auth()->user()->created_by ?? $userId);
@@ -581,6 +646,7 @@ class PosPage extends Component
             if ($order) {
                 // Append to existing Order
                 $order->update([
+                    'shift_id' => $order->shift_id ?? $activeShift->id,
                     'total_price' => $order->total_price + $this->total,
                     // If it's being paid now, update status and payment details
                     'status' => $orderStatus,
@@ -592,13 +658,14 @@ class PosPage extends Component
                 // Create New Order
                 $order = \App\Models\Order::create([
                     'user_id' => $storeOwnerId,
+                    'shift_id' => $activeShift->id,
                     'customer_id' => $finalCustomerId, // Linked Customer
-                    'status' => $orderStatus, 
+                    'status' => $orderStatus,
                     'type' => $this->orderType,
                     'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
                     'total_price' => $this->total,
                     'payment_method' => $isDraft ? null : $this->paymentMethod,
-                    'source' => 'pos', 
+                    'source' => 'pos',
                     'paid_amount' => $isDraft ? 0 : $this->paidAmount,
                     'change_amount' => $isDraft ? 0 : $this->changeAmount,
                     'delivery_fee' => $this->orderType === 'delivery' ? $this->deliveryFee : 0,
@@ -614,13 +681,13 @@ class PosPage extends Component
                 if (!$productSizeId) {
                     // Check if any size exists or create default
                     $productSize = \App\Models\ProductSize::where('product_id', $item['id'])->first();
-                    
+
                     if (!$productSize) {
                         // Auto-create a default size for this product to satisfy DB constraints
                         $productSize = \App\Models\ProductSize::create([
                             'product_id' => $item['id'],
                             'size' => 'Standard',
-                            'price' => $item['price']
+                            'price' => $item['price'],
                         ]);
                     }
                     $productSizeId = $productSize->id;
@@ -635,7 +702,7 @@ class PosPage extends Component
                     'updated_at' => now(),
                 ]);
             }
-            
+
             $this->lastOrderId = $order->id;
         });
 
@@ -644,8 +711,8 @@ class PosPage extends Component
 
     // Merge Tables Functionality
     public $showMergeModal = false;
-    public $mergeSourceOrderId = null;
-    public $mergeTargetTableId = null;
+    public $mergeSourceOrderId;
+    public $mergeTargetTableId;
 
     public function openMergeModal($orderId)
     {
@@ -653,7 +720,7 @@ class PosPage extends Component
         $this->mergeTargetTableId = null;
         $this->showMergeModal = true;
         // Close OpenOrdersModal while merging
-        $this->showOpenOrdersModal = false; 
+        $this->showOpenOrdersModal = false;
     }
 
     public function closeMergeModal()
@@ -669,19 +736,21 @@ class PosPage extends Component
     public function mergeTable()
     {
         $this->validate([
-            'mergeTargetTableId' => 'required|exists:tables,id'
+            'mergeTargetTableId' => 'required|exists:tables,id',
         ], [
-            'mergeTargetTableId.required' => 'يرجى اختيار طاولة للدمج إليها.'
+            'mergeTargetTableId.required' => 'يرجى اختيار طاولة للدمج إليها.',
         ]);
 
         $sourceOrder = \App\Models\Order::find($this->mergeSourceOrderId);
         if (!$sourceOrder || $sourceOrder->type !== 'table') {
             session()->flash('merge_error', 'طلب المصدر غير صالح للدمج.');
+
             return;
         }
 
         if ($sourceOrder->table_id == $this->mergeTargetTableId) {
             session()->flash('merge_error', 'لا يمكن دمج الطاولة مع نفسها.');
+
             return;
         }
 
@@ -709,14 +778,14 @@ class PosPage extends Component
                     ]);
                 }
                 $targetOrder->update([
-                    'total_price' => $targetOrder->total_price + $sourceOrder->total_price
+                    'total_price' => $targetOrder->total_price + $sourceOrder->total_price,
                 ]);
                 $sourceOrder->items()->detach(); // clear items from source
                 $sourceOrder->delete(); // delete the empty source order
             } else {
                 // Target table is empty, simply move the table ID
                 $sourceOrder->update([
-                    'table_id' => $this->mergeTargetTableId
+                    'table_id' => $this->mergeTargetTableId,
                 ]);
             }
         });
@@ -724,7 +793,7 @@ class PosPage extends Component
         $this->showMergeModal = false;
         $this->mergeSourceOrderId = null;
         $this->mergeTargetTableId = null;
-        
+
         $this->loadOpenOrders();
         $this->showOpenOrdersModal = true;
         session()->flash('open_order_success', 'تم دمج الطاولات بنجاح.');
@@ -754,12 +823,13 @@ class PosPage extends Component
             $this->selectedTableId = null; // Toggle Off
             $this->startNewOrder();
             $this->orderType = 'table';
+
             return;
         }
 
         $this->selectedTableId = $tableId;
         $this->orderType = 'table';
-        
+
         // Find if this table has a pending order
         $order = \App\Models\Order::with(['items.product', 'items.inventory', 'customer'])
             ->where('table_id', $tableId)
@@ -770,26 +840,28 @@ class PosPage extends Component
             $this->cart = [];
             foreach ($order->items as $item) {
                 $product = $item->product;
-                if (!$product) continue;
-                
+                if (!$product) {
+                    continue;
+                }
+
                 $this->cart[] = [
-                    'cart_item_id' => $product->id . '-' . $item->pivot->product_size_id,
+                    'cart_item_id' => $product->id.'-'.$item->pivot->product_size_id,
                     'id' => $product->id,
-                    'size_id' => $item->pivot->product_size_id, 
+                    'size_id' => $item->pivot->product_size_id,
                     'name' => $product->name,
                     'size_name' => $item->size ?? 'Standard',
                     'price' => floatval($item->pivot->price),
                     'quantity' => $item->pivot->quantity,
-                    'cover' => $product->cover
+                    'cover' => $product->cover,
                 ];
             }
-            
+
             if ($order->customer) {
                 $this->customerName = $order->customer->name;
                 $this->customerPhone = $order->customer->phone;
                 $this->selectedCustomerId = $order->customer->id;
             }
-            
+
             $this->total = $order->total_price;
             $this->paidAmount = $order->paid_amount;
             $this->changeAmount = $order->change_amount;

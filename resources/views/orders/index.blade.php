@@ -1,7 +1,19 @@
 @extends('layouts.app')
 
 @section('main-content')
-    <div class="container-fluid py-4">
+    <div class="container my-5 px-2 px-md-4">
+        <audio id="pendingSound" src="{{ asset('new-order.mp3') }}" preload="auto" loop></audio>
+
+        <div id="clickReminder" class="audio-reminder">
+            <div class="audio-reminder-icon">
+                <i class="fas fa-bell-slash"></i>
+            </div>
+
+            <div class="audio-reminder-text">
+                <strong>تفعيل صوت الطلبات</strong>
+                <span>اضغط هنا لتشغيل جرس الإشعارات</span>
+            </div>
+        </div>
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -149,9 +161,9 @@
 
                                 <td>
                                     @if ($order->status == 'served')
-                                        <span class="badge badge-success">تم</span>
+                                        <span class="badge badge-success status-check">تم</span>
                                     @else
-                                        <span class="badge badge-danger">انتظار</span>
+                                        <span class="badge badge-danger status-check">انتظار</span>
                                     @endif
                                 </td>
 
@@ -197,95 +209,124 @@
     </div>
 @endsection
 
+
+
 <script>
-    // Store mute state in sessionStorage
-    let isMuted = sessionStorage.getItem('alarmMuted') === 'true';
-    const audio = document.getElementById('pendingSound');
-    const toggleBtn = document.getElementById('toggleAlarm');
-    const alarmIcon = document.getElementById('alarmIcon');
-    const alarmText = document.getElementById('alarmText');
-    const reminder = document.getElementById('clickReminder');
+    document.addEventListener('DOMContentLoaded', function () {
 
-    function updateAlarmUI() {
-        if (isMuted) {
-            alarmIcon.className = 'fa fa-bell-slash text-danger';
-            alarmText.innerText = 'تنبيه صامت';
-            toggleBtn.classList.remove('btn-light');
-            toggleBtn.classList.add('btn-outline-danger');
-            audio.pause();
-        } else {
-            alarmIcon.className = 'fa fa-bell text-success';
-            alarmText.innerText = 'تنبيه مفعل';
-            toggleBtn.classList.add('btn-light');
-            toggleBtn.classList.remove('btn-outline-danger');
-            runCheck();
-        }
-    }
+        const audio = document.getElementById('pendingSound');
+        const reminder = document.getElementById('clickReminder');
 
-    toggleBtn.addEventListener('click', () => {
-        isMuted = !isMuted;
-        sessionStorage.setItem('alarmMuted', isMuted);
-        updateAlarmUI();
-    });
+        let alarmEnabled = sessionStorage.getItem('alarmEnabled') === 'true';
 
-    // Initialize UI
-    updateAlarmUI();
+        function hasPendingOrders() {
+            const statusBadges = document.querySelectorAll('.status-check, .status-check-mobile');
 
-    // Auto reload every 30 seconds
-    setTimeout(function() {
-        location.reload();
-    }, 30000);
+            let hasPending = false;
 
-    function runCheck() {
-        if (isMuted) return;
+            statusBadges.forEach(function (badge) {
+                const text = badge.innerText.trim();
 
-        const statusBadges = document.querySelectorAll('.status-check, .status-check-mobile');
-        let hasPending = false;
-
-        statusBadges.forEach(function(badge) {
-            const text = badge.innerText.trim();
-            if (text === 'قيد الانتظار' || text === 'Pending') {
-                hasPending = true;
-            }
-        });
-
-        if (hasPending) {
-            audio.play().catch(e => {
-                console.log("Waiting for user interaction to play sound...");
-                if (reminder && !sessionStorage.getItem('audioUnlocked')) {
-                    reminder.style.display = 'block';
+                if (
+                    text === 'انتظار' ||
+                    text === 'قيد الانتظار' ||
+                    text === 'Pending'
+                ) {
+                    hasPending = true;
                 }
             });
-        } else {
-            audio.pause();
-            audio.currentTime = 0;
+
+            return hasPending;
         }
-    }
 
-    function enableAudioOnInteraction() {
-        audio.play().then(() => {
-            audio.pause();
-            audio.currentTime = 0;
-            sessionStorage.setItem('audioUnlocked', 'true');
-            if (reminder) reminder.style.display = 'none';
-            runCheck();
-            document.removeEventListener('click', enableAudioOnInteraction);
-            document.removeEventListener('keydown', enableAudioOnInteraction);
-        }).catch(e => console.log("Still blocked..."));
-    }
+        function updateReminderUI() {
+            if (!reminder) return;
 
-    document.addEventListener('click', enableAudioOnInteraction);
-    document.addEventListener('keydown', enableAudioOnInteraction);
+            reminder.style.display = 'flex';
 
-    window.onload = function() {
-        if (sessionStorage.getItem('audioUnlocked') === 'true') {
-            if (reminder) reminder.style.display = 'none';
+            if (alarmEnabled) {
+                reminder.classList.add('active');
+                reminder.querySelector('strong').innerText = 'صوت الطلبات يعمل';
+                reminder.querySelector('span').innerText = 'اضغط هنا لإيقاف جرس الإشعارات';
+                reminder.querySelector('i').className = 'fas fa-bell';
+            } else {
+                reminder.classList.remove('active');
+                reminder.querySelector('strong').innerText = 'تفعيل صوت الطلبات';
+                reminder.querySelector('span').innerText = 'اضغط هنا لتشغيل جرس الإشعارات';
+                reminder.querySelector('i').className = 'fas fa-bell-slash';
+            }
+        }
+
+        function stopAlarm() {
+            alarmEnabled = false;
+            sessionStorage.setItem('alarmEnabled', 'false');
+
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+
+            updateReminderUI();
+        }
+
+        function startAlarm() {
+            alarmEnabled = true;
+            sessionStorage.setItem('alarmEnabled', 'true');
+
+            updateReminderUI();
             runCheck();
         }
-    };
 
-    setInterval(runCheck, 10000);
+        function toggleAlarm() {
+            if (alarmEnabled) {
+                stopAlarm();
+            } else {
+                startAlarm();
+            }
+        }
+
+        function runCheck() {
+            if (!audio) return;
+
+            if (!alarmEnabled) {
+                audio.pause();
+                audio.currentTime = 0;
+                return;
+            }
+
+            if (hasPendingOrders()) {
+                audio.muted = false;
+                audio.volume = 1;
+
+                audio.play().catch(function (error) {
+                    console.log('Audio blocked:', error);
+                });
+            } else {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        }
+
+        if (reminder) {
+            reminder.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleAlarm();
+            });
+        }
+
+        updateReminderUI();
+
+        setInterval(runCheck, 10000);
+
+        setTimeout(function () {
+            location.reload();
+        }, 30000);
+
+    });
 </script>
+
+
 
 <style>
     .rounded-2xl {
@@ -343,6 +384,74 @@
         color: #856404;
         border-radius: 12px;
         font-weight: bold;
+    }
+
+    .audio-reminder {
+        position: fixed;
+        top: 90px;
+        left: 25px;
+        z-index: 9999;
+        background: #ffffff;
+        color: #111827;
+        border-radius: 16px;
+        padding: 14px 18px;
+        min-width: 280px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        border-right: 5px solid #ffc107;
+        animation: slideIn 0.35s ease;
+    }
+
+    .audio-reminder-icon {
+        width: 42px;
+        height: 42px;
+        background: #fff3cd;
+        color: #d39e00;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .audio-reminder-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.5;
+    }
+
+    .audio-reminder.active {
+        border-right-color: #28a745;
+    }
+
+    .audio-reminder.active .audio-reminder-icon {
+        background: #d4edda;
+        color: #28a745;
+    }
+
+    .audio-reminder-text strong {
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .audio-reminder-text span {
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
 
     /* Responsive adjustments */

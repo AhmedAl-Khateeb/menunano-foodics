@@ -27,4 +27,9 @@ trait ShiftTrait
     {
         return $this->belongsTo(User::class, 'closed_by');
     }
+
+    public function closedBy()
+{
+    return $this->belongsTo(User::class, 'closed_by');
+}
 }

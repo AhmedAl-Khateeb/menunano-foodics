@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\OrderTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
+    use OrderTrait;
+
     protected $fillable = [
         'name',
         'phone',
@@ -24,22 +27,8 @@ class Order extends Model
         'table_id',
         'delivery_fee',
         'delivery_man_id',
+        'shift_id',
     ];
-
-    public function table()
-    {
-        return $this->belongsTo(Table::class);
-    }
-
-    public function deliveryMan()
-    {
-        return $this->belongsTo(DeliveryMan::class);
-    }
-
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
 
     //    public function scopeOwnedBy(Builder $query, $userId): Builder
     public function scopeOwnedBy(Builder $query, $userId): Builder
@@ -62,21 +51,9 @@ class Order extends Model
         return $query->whereIn('type', ['table', 'free_seating']);
     }
 
-    public function items()
-    {
-        return $this->belongsToMany(ProductSize::class, 'order_product_sizes')
-            ->withPivot('price', 'quantity')
-            ->withTimestamps();
-    }
-
     protected $casts = [
         'created_at' => 'datetime',
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
 
     public function scopeFilter(Builder $builder)
     {

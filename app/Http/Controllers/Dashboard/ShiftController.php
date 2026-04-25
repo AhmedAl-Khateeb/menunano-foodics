@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ShiftRequest;
+use App\Models\Order;
 use App\Models\Shift;
 use App\Services\ShiftService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class ShiftController extends Controller
 {
@@ -53,6 +55,51 @@ class ShiftController extends Controller
             ->route('shifts.index')
             ->with('success', 'تم إضافة الشيفت بنجاح');
     }
+
+
+    public function show(\App\Models\Shift $shift)
+{
+    $shift->load([
+        'user',
+        'branch',
+        'closer',
+    ]);
+
+    $employeeShifts = Shift::with(['branch', 'closer'])
+        ->where('user_id', $shift->user_id)
+        ->latest('start_time')
+        ->get();
+
+    $totalStartingCash = $employeeShifts->sum('starting_cash');
+    $totalEndingCash = $employeeShifts->sum('ending_cash');
+    $totalCashDifference = $employeeShifts->sum('cash_difference');
+
+    $orders = collect();
+
+    if (Schema::hasColumn('orders', 'shift_id')) {
+        $orders = Order::with(['customer', 'table'])
+            ->where('shift_id', $shift->id)
+            ->latest()
+            ->get();
+    }
+
+    $ordersCount = $orders->count();
+    $ordersTotal = $orders->sum('total_price');
+    $paidTotal = $orders->sum('paid_amount');
+
+    return view('shifts.show', compact(
+        'shift',
+        'employeeShifts',
+        'totalStartingCash',
+        'totalEndingCash',
+        'totalCashDifference',
+        'orders',
+        'ordersCount',
+        'ordersTotal',
+        'paidTotal'
+    ));
+}
+
 
     public function edit(Shift $shift)
     {
