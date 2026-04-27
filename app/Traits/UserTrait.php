@@ -3,12 +3,14 @@
 namespace App\Traits;
 
 use App\Models\Branch;
+use App\Models\CashTransfer;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Order;
-use App\Models\Package;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Shift;
+use App\Models\ShiftExpense;
 use App\Models\Slider;
 use App\Models\Subscription;
 use App\Models\User;
@@ -40,7 +42,6 @@ trait UserTrait
         return $this->hasMany(Order::class, 'user_id');
     }
 
-
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
@@ -59,5 +60,41 @@ trait UserTrait
     public function branch()
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    // الشيفتات التي أغلقها هذا المستخدم
+    public function closedShifts()
+    {
+        return $this->hasMany(Shift::class, 'closed_by');
+    }
+
+    // مصروفات سجلها المستخدم
+    public function shiftExpenses()
+    {
+        return $this->hasMany(ShiftExpense::class);
+    }
+
+    // مصروفات اعتمدها المستخدم
+    public function approvedShiftExpenses()
+    {
+        return $this->hasMany(ShiftExpense::class, 'approved_by');
+    }
+
+    // تحويلات نقدية أرسلها المستخدم
+    public function sentCashTransfers()
+    {
+        return $this->hasMany(CashTransfer::class, 'from_user_id');
+    }
+
+    // تحويلات نقدية استلمها المستخدم
+    public function receivedCashTransfers()
+    {
+        return $this->hasMany(CashTransfer::class, 'to_user_id');
+    }
+
+    // تحويلات نقدية اعتمدها المستخدم
+    public function approvedCashTransfers()
+    {
+        return $this->hasMany(CashTransfer::class, 'approved_by');
     }
 }

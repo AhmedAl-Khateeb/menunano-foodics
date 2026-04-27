@@ -61,6 +61,27 @@ class PosPage extends Component
     public $showEndShiftModal = false;
     public $shiftEndingCash = '';
 
+    public $shiftExpectedCash = 0;
+    public $shiftCashDifferencePreview = 0;
+    public $shiftCloseNote = '';
+
+    public $shiftStartingCashPreview = 0;
+    public $shiftCashSalesPreview = 0;
+    public $shiftExpensesPreview = 0;
+    public $shiftTransfersPreview = 0;
+
+    public $showShiftExpenseModal = false;
+    public $expenseTitle = '';
+    public $expenseAmount = '';
+    public $expenseNotes = '';
+
+    public $showCashTransferModal = false;
+    public $transferAmount = '';
+    public $transferNotes = '';
+
+    public $suggestedStartingCash = 0;
+    public $hasPreviousClosedShift = false;
+
     // Computed Property to fetch product safely
     public function getSelectedProductForSizeProperty()
     {
@@ -116,32 +137,44 @@ class PosPage extends Component
     {
         // Fetch dynamic payment methods
         $storeId = StoreService::getStoreOwnerId();
+
         $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', true)
-                                ->where('created_by', $storeId)
-                                ->get();
+            ->where('created_by', $storeId)
+            ->get();
 
         // Fetch Tables with active orders
         $this->tables = \App\Models\Table::with(['diningArea', 'orders' => function ($q) {
             $q->where('status', 'pending');
-        }])->where('user_id', $storeId)->where('is_active', true)->get();
+        }])
+            ->where('user_id', $storeId)
+            ->where('is_active', true)
+            ->get();
 
         // Fetch Delivery Men
-        $this->deliveryMen = \App\Models\DeliveryMan::where('user_id', $storeId)->where('is_active', true)->get();
+        $this->deliveryMen = \App\Models\DeliveryMan::where('user_id', $storeId)
+            ->where('is_active', true)
+            ->get();
 
         // Default payment method
         /** @var \App\Models\PaymentMethod $firstPaymentMethod */
         $firstPaymentMethod = $this->paymentMethods->first();
+
         if ($firstPaymentMethod) {
             $this->paymentMethod = $firstPaymentMethod->id;
         }
 
-        if (request()->has('showEndShift') && request()->get('showEndShift') == 'true') {
-            $this->showEndShiftModal = true;
-        }
-
+        // فحص هل يوجد شيفت مفتوح أم لا
         $this->checkActiveShift();
 
-        // Fix: Recalculate total if cart has items (persisted in session)
+        // تحميل مبلغ بداية الشيفت المقترح من آخر شيفت مغلق
+        $this->loadSuggestedStartingCash();
+
+        // فتح مودال نهاية الشيفت لو جاي من رابط logout أو زر خارجي
+        if (request()->has('showEndShift') && request()->get('showEndShift') == 'true') {
+            $this->openEndShiftModal();
+        }
+
+        // Fix: Recalculate total if cart has items persisted in session
         if (!empty($this->cart)) {
             $this->calculateTotal();
         }
@@ -173,14 +206,75 @@ class PosPage extends Component
 
     public function startShift()
     {
-        $this->validate([
-            'shiftStartingCash' => 'required|numeric|min:0',
-        ], [
-            'shiftStartingCash.required' => 'يرجى إدخال مبلغ الدرج الافتتاحي',
-            'shiftStartingCash.numeric' => 'يجب أن يكون المبلغ رقماً',
-            'shiftStartingCash.min' => 'لا يمكن أن يكون المبلغ بالسالب',
+        $user = auth()->user();
+
+        $branchId = $this->getBranchIdForCurrentUser();
+
+        if (!$branchId) {
+            session()->flash('error', 'لا يوجد فرع مرتبط بهذا المستخدم. يرجى إنشاء فرع أو ربط المستخدم بفرع.');
+
+            return;
+        }
+
+        $hasActiveShift = Shift::where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->exists();
+
+        if ($hasActiveShift) {
+            session()->flash('error', 'يوجد شيفت مفتوح بالفعل لهذا المستخدم.');
+
+            return;
+        }
+
+        $lastClosedShift = Shift::where('branch_id', $branchId)
+            ->where('status', 'closed')
+            ->whereNotNull('end_time')
+            ->latest('end_time')
+            ->first();
+
+        if ($lastClosedShift) {
+            // القيمة من الجدول إجباريًا
+            $startingCash = (float) ($lastClosedShift->carryover_to_next_shift ?? 0);
+        } else {
+            // أول شيفت فقط يسمح بإدخال يدوي
+            $this->validate([
+                'shiftStartingCash' => 'required|numeric|min:0',
+            ], [
+                'shiftStartingCash.required' => 'يرجى إدخال مبلغ الدرج الافتتاحي',
+                'shiftStartingCash.numeric' => 'يجب أن يكون المبلغ رقماً',
+                'shiftStartingCash.min' => 'لا يمكن أن يكون المبلغ بالسالب',
+            ]);
+
+            $startingCash = (float) $this->shiftStartingCash;
+        }
+
+        $newShift = Shift::create([
+            'user_id' => auth()->id(),
+            'branch_id' => $branchId,
+            'starting_cash' => $startingCash,
+            'expected_cash' => $startingCash,
+            'start_time' => now(),
+            'status' => 'active',
         ]);
 
+        // ربط حركة الترحيل القديمة بالشيفت الجديد
+        if ($lastClosedShift && class_exists(\App\Models\CashTransfer::class)) {
+            \App\Models\CashTransfer::where('from_shift_id', $lastClosedShift->id)
+                ->where('type', 'to_next_shift')
+                ->whereNull('to_shift_id')
+                ->latest()
+                ->first()?->update([
+                    'to_shift_id' => $newShift->id,
+                    'to_user_id' => auth()->id(),
+                ]);
+        }
+
+        $this->requiresShiftStart = false;
+        $this->shiftStartingCash = '';
+    }
+
+    private function getBranchIdForCurrentUser()
+    {
         $user = auth()->user();
 
         $storeOwnerId = StoreService::getStoreOwnerId();
@@ -193,29 +287,72 @@ class PosPage extends Component
                 ->value('id');
         }
 
+        return $branchId;
+    }
+
+    private function loadSuggestedStartingCash()
+    {
+        $branchId = $this->getBranchIdForCurrentUser();
+
         if (!$branchId) {
-            session()->flash('error', 'لا يوجد فرع مرتبط بهذا المستخدم. يرجى إنشاء فرع أو ربط المستخدم بفرع.');
+            $this->suggestedStartingCash = 0;
+            $this->shiftStartingCash = 0;
+            $this->hasPreviousClosedShift = false;
 
             return;
         }
 
-        Shift::create([
-            'user_id' => auth()->id(),
-            'branch_id' => $branchId,
-            'starting_cash' => $this->shiftStartingCash,
-            'expected_cash' => $this->shiftStartingCash,
-            'start_time' => now(),
-            'status' => 'active',
-        ]);
+        $lastClosedShift = Shift::where('branch_id', $branchId)
+            ->where('status', 'closed')
+            ->whereNotNull('end_time')
+            ->latest('end_time')
+            ->first();
 
-        $this->requiresShiftStart = false;
-        $this->shiftStartingCash = '';
+        if ($lastClosedShift) {
+            $this->hasPreviousClosedShift = true;
+            $this->suggestedStartingCash = (float) ($lastClosedShift->carryover_to_next_shift ?? 0);
+            $this->shiftStartingCash = $this->suggestedStartingCash;
+        } else {
+            $this->hasPreviousClosedShift = false;
+            $this->suggestedStartingCash = 0;
+            $this->shiftStartingCash = 0;
+        }
     }
 
     public function openEndShiftModal()
     {
-        $this->shiftEndingCash = '';
+        $activeShift = Shift::where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+
+        if (!$activeShift) {
+            session()->flash('error', 'لا يوجد شيفت مفتوح لهذا المستخدم.');
+
+            return;
+        }
+
+        $shiftService = app(\App\Services\ShiftService::class);
+
+        $this->shiftStartingCashPreview = (float) $activeShift->starting_cash;
+        $this->shiftCashSalesPreview = $shiftService->calculateCashSalesForShift($activeShift);
+        $this->shiftExpensesPreview = $shiftService->calculateExpensesForShift($activeShift);
+        $this->shiftTransfersPreview = $shiftService->calculateTransfersToManagerForShift($activeShift);
+
+        $this->shiftExpectedCash = $shiftService->calculateExpectedCashForShift($activeShift);
+
+        $this->shiftEndingCash = $this->shiftExpectedCash;
+        $this->shiftCashDifferencePreview = 0;
+        $this->shiftCloseNote = '';
+        $this->resetErrorBag();
+
         $this->showEndShiftModal = true;
+    }
+
+    public function updatedShiftEndingCash()
+    {
+        $this->shiftCashDifferencePreview =
+            (float) $this->shiftEndingCash - (float) $this->shiftExpectedCash;
     }
 
     public function closeEndShiftModal()
@@ -237,21 +374,134 @@ class PosPage extends Component
             ->where('status', 'active')
             ->first();
 
-        if ($activeShift) {
-            $endingCash = floatval($this->shiftEndingCash);
-            $expectedCash = floatval($activeShift->expected_cash ?? $activeShift->starting_cash ?? 0);
+        $difference = (float) $this->shiftEndingCash - (float) $this->shiftExpectedCash;
 
-            $activeShift->update([
-                'ending_cash' => $endingCash,
-                'cash_difference' => $endingCash - $expectedCash,
-                'end_time' => now(),
-                'status' => 'closed',
-                'closed_by' => auth()->id(),
+        if ($difference != 0 && empty($this->shiftCloseNote)) {
+            $this->addError('shiftCloseNote', 'يوجد فرق في الدرج، يرجى كتابة سبب الفرق أو مراجعة الرقم قبل الإغلاق.');
+
+            return;
+        }
+
+        if ($activeShift) {
+            app(\App\Services\ShiftService::class)->closeShift($activeShift, [
+                'ending_cash' => $this->shiftEndingCash,
+                'notes' => $this->shiftCloseNote,
             ]);
         }
 
         $this->showEndShiftModal = false;
         $this->requiresShiftStart = true;
+    }
+
+    public function openShiftExpenseModal()
+    {
+        $this->expenseTitle = '';
+        $this->expenseAmount = '';
+        $this->expenseNotes = '';
+        $this->resetErrorBag();
+
+        $this->showShiftExpenseModal = true;
+    }
+
+    public function closeShiftExpenseModal()
+    {
+        $this->showShiftExpenseModal = false;
+    }
+
+    public function saveShiftExpense()
+    {
+        $this->validate([
+            'expenseTitle' => 'required|string|max:255',
+            'expenseAmount' => 'required|numeric|min:0.5',
+            'expenseNotes' => 'nullable|string',
+        ], [
+            'expenseTitle.required' => 'يرجى إدخال اسم المصروف',
+            'expenseAmount.required' => 'يرجى إدخال قيمة المصروف',
+            'expenseAmount.numeric' => 'قيمة المصروف يجب أن تكون رقمًا',
+            'expenseAmount.min' => 'قيمة المصروف يجب أن تكون أكبر من صفر',
+        ]);
+
+        $activeShift = Shift::where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+
+        if (!$activeShift) {
+            session()->flash('error', 'لا يوجد شيفت مفتوح لهذا المستخدم.');
+
+            return;
+        }
+
+        \App\Models\ShiftExpense::create([
+            'shift_id' => $activeShift->id,
+            'user_id' => auth()->id(),
+            'branch_id' => $activeShift->branch_id,
+            'title' => $this->expenseTitle,
+            'amount' => $this->expenseAmount,
+            'expense_date' => now(),
+            'status' => 'approved',
+            'approved_by' => auth()->id(),
+            'notes' => $this->expenseNotes,
+        ]);
+
+        $this->showShiftExpenseModal = false;
+
+        session()->flash('success', 'تم تسجيل المصروف بنجاح.');
+    }
+
+    public function openCashTransferModal()
+    {
+        $this->transferAmount = '';
+        $this->transferNotes = '';
+        $this->resetErrorBag();
+
+        $this->showCashTransferModal = true;
+    }
+
+    public function closeCashTransferModal()
+    {
+        $this->showCashTransferModal = false;
+    }
+
+    public function saveCashTransfer()
+    {
+        $this->validate([
+            'transferAmount' => 'required|numeric|min:0.5',
+            'transferNotes' => 'nullable|string',
+        ], [
+            'transferAmount.required' => 'يرجى إدخال المبلغ المسلم للمدير',
+            'transferAmount.numeric' => 'المبلغ يجب أن يكون رقمًا',
+            'transferAmount.min' => 'المبلغ يجب أن يكون أكبر من صفر',
+        ]);
+
+        $activeShift = Shift::where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+
+        if (!$activeShift) {
+            session()->flash('error', 'لا يوجد شيفت مفتوح لهذا المستخدم.');
+
+            return;
+        }
+        $managerId = \App\Models\User::where('role', 'admin')->value('id');
+
+        \App\Models\CashTransfer::create([
+            'from_shift_id' => $activeShift->id,
+            'to_shift_id' => null,
+            'branch_id' => $activeShift->branch_id,
+            'from_user_id' => auth()->id(),
+            'to_user_id' => $managerId,
+            'type' => 'to_manager',
+            'amount' => $this->transferAmount,
+            'status' => 'approved',
+            'approved_by' => auth()->id(),
+            'notes' => $this->transferNotes,
+        ]);
+
+        $this->showCashTransferModal = false;
+
+        session()->flash('success', 'تم تسجيل تسليم المبلغ للمدير بنجاح.');
     }
 
     #[Layout('layouts.app')]
@@ -260,18 +510,31 @@ class PosPage extends Component
     {
         $storeOwnerId = StoreService::getStoreOwnerId();
 
-        // Fetch Categories
-        $categories = \App\Models\Category::where('user_id', $storeOwnerId)->get();
+        if ($this->requiresShiftStart) {
+            return view('livewire.pos-page', [
+                'products' => collect(),
+                'categories' => collect(),
+                'cartProductIds' => [],
+            ]);
+        }
 
-        // Fetch Products
+        $categories = \App\Models\Category::where('user_id', $storeOwnerId)
+            ->select('id', 'name')
+            ->get();
+
         $productsQuery = Product::where('user_id', $storeOwnerId)
-                        ->where('name', 'like', '%'.$this->search.'%');
+            ->select('id', 'name', 'price', 'cover', 'category_id', 'created_at')
+            ->where('name', 'like', '%'.$this->search.'%');
 
         if ($this->activeCategoryId) {
             $productsQuery->where('category_id', $this->activeCategoryId);
         }
 
-        $products = $productsQuery->with('sizes')->latest()->get();
+        $products = $productsQuery
+            ->with(['sizes:id,product_id,size,price'])
+            ->latest('id')
+            ->take(80)
+            ->get();
 
         return view('livewire.pos-page', [
             'products' => $products,

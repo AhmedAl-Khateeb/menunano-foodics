@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class CheckSubscription
@@ -19,7 +20,21 @@ class CheckSubscription
             return $next($request);
         }
 
-        $hasActiveSubscription = $user->subscriptions()
+        /*
+         * لو المستخدم Admin: نفحص اشتراكه هو
+         * لو المستخدم كاشير/موظف: نفحص اشتراك صاحب المتجر created_by
+         */
+        $storeOwner = $user;
+
+        if ($user->role !== 'admin') {
+            $storeOwner = User::find($user->created_by);
+        }
+
+        if (!$storeOwner) {
+            return redirect()->route('inactive');
+        }
+
+        $hasActiveSubscription = $storeOwner->subscriptions()
             ->where('status', 'active')
             ->where('is_active', true)
             ->where('starts_at', '<=', now())

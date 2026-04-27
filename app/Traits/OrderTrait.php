@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Models\Customer;
 use App\Models\DeliveryMan;
 use App\Models\ProductSize;
+use App\Models\Shift;
 use App\Models\Table;
 use App\Models\User;
 

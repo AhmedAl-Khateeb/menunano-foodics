@@ -21,6 +21,9 @@ class Shift extends Model
         'expected_cash',
         'cash_difference',
         'closed_by',
+        'expenses_total',
+        'sent_to_manager',
+        'carryover_to_next_shift',
     ];
 
     protected $casts = [
@@ -30,9 +33,10 @@ class Shift extends Model
         'ending_cash' => 'decimal:2',
         'expected_cash' => 'decimal:2',
         'cash_difference' => 'decimal:2',
+        'expenses_total' => 'decimal:2',
+        'sent_to_manager' => 'decimal:2',
+        'carryover_to_next_shift' => 'decimal:2',
     ];
-
-  
 
     public function isActive(): bool
     {

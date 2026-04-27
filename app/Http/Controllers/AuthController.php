@@ -3,13 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Facades\ApiResponse;
-use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
-use App\Models\User;
 use App\Models\Package;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -31,7 +29,6 @@ class AuthController extends Controller
                 $subscriptionEnd = now()->addDays($package->duration);
             }
         }
-
 
         // إنشاء المستخدم
         $user = User::create([
@@ -57,13 +54,10 @@ class AuthController extends Controller
         ], 'registered successfully');
     }
 
-
-
     public function login(Request $request)
     {
         $request->validate(['password' => 'required|string']);
         $user = User::get()->firstOrFail();
-
 
         if (!Hash::check($request->password, $user->password)) {
             return ApiResponse::unauthrized('can\'t login.');
@@ -85,16 +79,16 @@ class AuthController extends Controller
             [
                 'access_token' => $token,
                 'role' => $user->role,
-                'redirect_to'  => $redirectTo,
+                'redirect_to' => $redirectTo,
                 'token_type' => 'bearer',
-            ]
+            ],
         ], 'logged in successfully');
     }
-
 
     public function logout(Request $request)
     {
         $request->user()->tokens()->delete();
+
         return ApiResponse::message('Logged out successfully');
     }
 
@@ -113,6 +107,7 @@ class AuthController extends Controller
 
         $user->update(['password' => Hash::make($request->new_password)]);
         $user->tokens()->delete();
+
         return ApiResponse::message('Password successfully changed');
     }
 }

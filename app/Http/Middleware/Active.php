@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class Active
@@ -14,9 +15,18 @@ class Active
             return redirect()->route('login');
         }
 
-        // السوبر أدمن لا يخضع لفحص التفعيل/الاشتراك
         if ($user->role === 'super_admin') {
             return $next($request);
+        }
+
+        $storeOwner = $user;
+
+        if ($user->role !== 'admin') {
+            $storeOwner = User::find($user->created_by);
+        }
+
+        if (!$storeOwner || (int) $storeOwner->status !== 1) {
+            return redirect()->route('inactive');
         }
 
         if ((int) $user->status !== 1) {

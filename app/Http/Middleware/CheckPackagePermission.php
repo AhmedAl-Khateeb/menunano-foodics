@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class CheckPackagePermission
@@ -19,10 +20,23 @@ class CheckPackagePermission
             return $next($request);
         }
 
-        if (!$user->hasPackagePermission($permission)) {
-            return redirect()
-                ->route('dashboard')
-                ->with('permission_denied', 'انتهت الباقة أو هذه الميزة غير متاحة حاليًا، يمكنك استعراض الواجهة فقط حتى يتم التجديد.');
+        /*
+         * لو Admin نفحص الباقة الخاصة به
+         * لو Cashier / Employee نفحص باقة صاحب المتجر created_by
+         */
+        $storeOwner = $user;
+
+        if ($user->role !== 'admin') {
+            $storeOwner = User::find($user->created_by);
+        }
+
+        if (!$storeOwner) {
+            return redirect()->route('inactive')
+                ->with('permission_denied', 'لا يوجد صاحب متجر مرتبط بهذا المستخدم.');
+        }
+
+        if (!$storeOwner->hasPackagePermission($permission)) {
+            abort(403, 'هذه الميزة غير متاحة في الباقة الحالية.');
         }
 
         return $next($request);

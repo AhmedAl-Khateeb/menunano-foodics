@@ -56,50 +56,48 @@ class ShiftController extends Controller
             ->with('success', 'تم إضافة الشيفت بنجاح');
     }
 
+    public function show(Shift $shift)
+    {
+        $shift->load([
+            'user',
+            'branch',
+            'closer',
+        ]);
 
-    public function show(\App\Models\Shift $shift)
-{
-    $shift->load([
-        'user',
-        'branch',
-        'closer',
-    ]);
-
-    $employeeShifts = Shift::with(['branch', 'closer'])
-        ->where('user_id', $shift->user_id)
-        ->latest('start_time')
-        ->get();
-
-    $totalStartingCash = $employeeShifts->sum('starting_cash');
-    $totalEndingCash = $employeeShifts->sum('ending_cash');
-    $totalCashDifference = $employeeShifts->sum('cash_difference');
-
-    $orders = collect();
-
-    if (Schema::hasColumn('orders', 'shift_id')) {
-        $orders = Order::with(['customer', 'table'])
-            ->where('shift_id', $shift->id)
-            ->latest()
+        $employeeShifts = Shift::with(['branch', 'closer'])
+            ->where('user_id', $shift->user_id)
+            ->latest('start_time')
             ->get();
+
+        $totalStartingCash = $employeeShifts->sum('starting_cash');
+        $totalEndingCash = $employeeShifts->sum('ending_cash');
+        $totalCashDifference = $employeeShifts->sum('cash_difference');
+
+        $orders = collect();
+
+        if (Schema::hasColumn('orders', 'shift_id')) {
+            $orders = Order::with(['customer', 'table'])
+                ->where('shift_id', $shift->id)
+                ->latest()
+                ->get();
+        }
+
+        $ordersCount = $orders->count();
+        $ordersTotal = $orders->sum('total_price');
+        $paidTotal = $orders->sum('paid_amount');
+
+        return view('shifts.show', compact(
+            'shift',
+            'employeeShifts',
+            'totalStartingCash',
+            'totalEndingCash',
+            'totalCashDifference',
+            'orders',
+            'ordersCount',
+            'ordersTotal',
+            'paidTotal'
+        ));
     }
-
-    $ordersCount = $orders->count();
-    $ordersTotal = $orders->sum('total_price');
-    $paidTotal = $orders->sum('paid_amount');
-
-    return view('shifts.show', compact(
-        'shift',
-        'employeeShifts',
-        'totalStartingCash',
-        'totalEndingCash',
-        'totalCashDifference',
-        'orders',
-        'ordersCount',
-        'ordersTotal',
-        'paidTotal'
-    ));
-}
-
 
     public function edit(Shift $shift)
     {
@@ -136,16 +134,18 @@ class ShiftController extends Controller
     public function close(Request $request, Shift $shift)
     {
         $request->validate([
-            'ending_cash' => ['nullable', 'numeric', 'min:0'],
-            'expected_cash' => ['nullable', 'numeric', 'min:0'],
+            'ending_cash' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
+        ], [
+            'ending_cash.required' => 'يجب إدخال رصيد نهاية الدرج',
+            'ending_cash.numeric' => 'رصيد نهاية الدرج يجب أن يكون رقمًا',
+            'ending_cash.min' => 'رصيد نهاية الدرج لا يمكن أن يكون بالسالب',
         ]);
 
-        $this->shiftService->closeShift($shift, $request->only([
-            'ending_cash',
-            'expected_cash',
-            'notes',
-        ]));
+        $this->shiftService->closeShift($shift, [
+            'ending_cash' => $request->ending_cash,
+            'notes' => $request->notes,
+        ]);
 
         return redirect()
             ->route('shifts.index')

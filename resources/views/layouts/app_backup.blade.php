@@ -137,12 +137,15 @@
     <div id="content-wrapper" class="min-h-screen bg-gray-50 lg:mr-64 transition-all duration-300">
 
         <!-- Navbar -->
-        <nav class="main-header navbar navbar-expand navbar-white navbar-light sticky top-0 z-30 shadow-sm border-b border-gray-200">
-            <div class="container-fluid max-w-7xl mx-auto flex items-center justify-between w-full px-4 sm:px-6 lg:px-8">
-                    <!-- Right Side (Hamburger) -->
+        <nav
+            class="main-header navbar navbar-expand navbar-white navbar-light sticky top-0 z-30 shadow-sm border-b border-gray-200">
+            <div
+                class="container-fluid max-w-7xl mx-auto flex items-center justify-between w-full px-4 sm:px-6 lg:px-8">
+                <!-- Right Side (Hamburger) -->
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <button class="p-2 rounded-md hover:bg-gray-100 focus:outline-none transition-colors" onclick="toggleSidebar()">
+                        <button class="p-2 rounded-md hover:bg-gray-100 focus:outline-none transition-colors"
+                            onclick="toggleSidebar()">
                             <i class="fas fa-bars text-gray-600 text-xl"></i>
                         </button>
                     </li>
@@ -161,7 +164,8 @@
 
                     @if (auth()->user()->role === 'admin')
                         <li class="nav-item relative">
-                            <a href="{{ route('orders.index') }}" class="p-2 text-gray-600 hover:text-blue-600 relative transition-colors">
+                            <a href="{{ route('orders.index') }}"
+                                class="p-2 text-gray-600 hover:text-blue-600 relative transition-colors">
                                 <i class="fas fa-shopping-cart text-xl"></i>
                                 <span
                                     class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
@@ -173,26 +177,83 @@
 
                     <!-- User Dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200" href="#" id="userDropdown"
-                            role="button" data-toggle="dropdown">
-                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
+                        <a class="nav-link dropdown-toggle flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200"
+                            href="#" id="userDropdown" role="button" data-toggle="dropdown">
+                            <div
+                                class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
                                 <i class="fas fa-user"></i>
                             </div>
                         </a>
                         <div class="dropdown-menu dropdown-menu-left shadow-xl border-0 rounded-xl mt-2 p-1 w-48"
                             aria-labelledby="userDropdown">
-                             <div class="px-4 py-2 border-b border-gray-50 mb-1">
+                            <div class="px-4 py-2 border-b border-gray-50 mb-1">
                                 <p class="text-sm font-bold text-gray-900 mb-0">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-gray-400 mb-0">{{ auth()->user()->email }}</p>
-                             </div>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                            </div>
+                            @php
+                                $activeShiftForLogout = auth()->check()
+                                    ? \App\Models\Shift::where('user_id', auth()->id())
+                                        ->where('status', 'active')
+                                        ->latest()
+                                        ->first()
+                                    : null;
+                            @endphp
+
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST">
                                 @csrf
+
+                                <div class="modal fade" id="logoutShiftModal" tabindex="-1" role="dialog"
+                                    aria-labelledby="logoutShiftModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered" role="document" dir="rtl">
+                                        <div class="modal-content border-0 rounded-xl shadow-lg">
+
+                                            <div class="modal-header bg-dark text-white">
+                                                <h5 class="modal-title" id="logoutShiftModalLabel">
+                                                    إنهاء الشفت وتسجيل الخروج
+                                                </h5>
+
+                                                <button type="button" class="close text-white ml-0"
+                                                    data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+
+                                            <div class="modal-body text-right">
+                                                @if ($activeShiftForLogout)
+                                                    <p class="text-muted mb-3">
+                                                        من فضلك أدخل رصيد نهاية الدرج قبل تسجيل الخروج.
+                                                    </p>
+
+                                                    <label class="font-weight-bold">
+                                                        رصيد نهاية الدرج <span class="text-danger">*</span>
+                                                    </label>
+
+                                                    <input type="number" step="0.5" min="0"
+                                                        name="ending_cash"
+                                                        class="form-control form-control-lg text-right"
+                                                        placeholder="0.00" required>
+                                                @else
+                                                    <div class="alert alert-info mb-0">
+                                                        لا يوجد شفت مفتوح حاليًا، سيتم تسجيل الخروج مباشرة.
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            <div class="modal-footer justify-content-between">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                    إلغاء
+                                                </button>
+
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="fas fa-sign-out-alt"></i>
+                                                    {{ $activeShiftForLogout ? 'إنهاء الشفت والخروج' : 'تسجيل الخروج' }}
+                                                </button>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
                             </form>
-                            <a class="dropdown-item text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2 px-4 py-2.5 transition-colors font-bold text-sm"
-                                href="#"
-                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                <i class="fas fa-sign-out-alt w-5"></i> تسجيل الخروج
-                            </a>
                         </div>
                     </li>
                 </ul>
@@ -200,13 +261,13 @@
         </nav>
 
         <!-- Page Content -->
-        <div class="{{ request()->routeIs('pos') ? '' : 'p-4 sm:p-6 lg:p-8' }}">
-            @if(!request()->routeIs('pos'))
-            <section class="content-header mb-6">
-                <div class="container-fluid">
-                    <!-- Breadcrumbs can go here -->
-                </div>
-            </section>
+        <div class="{{ request()->routeIs('pos.index') ? '' : 'p-4 sm:p-6 lg:p-8' }}">
+            @if (!request()->routeIs('pos.index'))
+                <section class="content-header mb-6">
+                    <div class="container-fluid">
+                        <!-- Breadcrumbs can go here -->
+                    </div>
+                </section>
             @endif
 
             @yield('main-content')
@@ -232,6 +293,20 @@
     <script src="https://cdn.jsdelivr.net/npm/resumablejs@1.1.0/resumable.min.js"></script>
 
     @include('sweetalert::alert', ['cdn' => 'https://cdn.jsdelivr.net/npm/sweetalert2@9'])
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const logoutBtn = document.getElementById('openLogoutModal');
+
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                $('#logoutShiftModal').modal('show');
+            });
+        }
+    });
+</script>
+
 
     <script>
         function toggleSidebar() {

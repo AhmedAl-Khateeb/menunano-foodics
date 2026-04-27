@@ -10,6 +10,8 @@
         </div>
     @endif
 
+
+
     <!-- Start Shift Overlay Modal (Blocks everything if no active shift) -->
     @if ($requiresShiftStart)
         <div class="start-shift-overlay" dir="rtl">
@@ -24,23 +26,34 @@
                 <div class="mb-4 text-right">
                     <label class="block text-sm font-bold text-gray-700 mb-1">مبلغ الدرج الافتتاحي (ج.م) <span
                             class="text-red-500">*</span></label>
-                    <input type="number" step="0.5" wire:model="shiftStartingCash"
-                        class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
-                        placeholder="0.00" autofocus>
+                    <input type="number" step="0.5" min="0" wire:model="shiftStartingCash"
+                        class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg font-bold text-right bg-gray-100"
+                        {{ $hasPreviousClosedShift ? 'readonly' : '' }} placeholder="0.00" autofocus>
                     @error('shiftStartingCash')
                         <span class="text-red-500 text-xs mt-1 block font-bold">{{ $message }}</span>
                     @enderror
                 </div>
+                @if ($hasPreviousClosedShift)
+                    <p class="text-xs text-gray-500 mt-2 text-right">
+                        تم تحديد مبلغ بداية الشيفت تلقائيًا من المبلغ المرحل من آخر شيفت مغلق.
+                    </p>
+                @else
+                    <p class="text-xs text-gray-500 mt-2 text-right">
+                        لا يوجد شيفت سابق، يمكنك إدخال مبلغ بداية الدرج لأول مرة.
+                    </p>
+                @endif
 
-                <button wire:click="startShift"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 text-lg">
+                <button wire:click="startShift" wire:loading.attr="disabled" wire:target="startShift"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl">
+
                     <span wire:loading.remove wire:target="startShift">بدء الشفت</span>
-                    <span wire:loading wire:target="startShift"><i class="fas fa-spinner fa-spin"></i> جاري
-                        البدء...</span>
+                    <span wire:loading wire:target="startShift">
+                        <i class="fas fa-spinner fa-spin"></i> جاري البدء...
+                    </span>
                 </button>
             </div>
         </div>
-    @endif
+    @else
 
     <!-- Main Tabs Navigation (Mobile Only) -->
     <div class="flex mb-3 bg-white rounded-xl shadow-sm p-1 max-w-4xl mx-auto md:hidden sticky top-2 z-20">
@@ -143,6 +156,7 @@
                                 <!-- Image with Overlay -->
                                 <div class="relative aspect-square overflow-hidden bg-gray-100 shrink-0">
                                     <img src="{{ $product->cover ? asset('storage/' . $product->cover) : asset('dist/img/prod-1.jpg') }}"
+                                        loading="lazy"
                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                         alt="{{ $product->name }}">
                                     <!-- Add Overlay -->
@@ -219,6 +233,30 @@
                                 <i class="fas fa-trash-alt text-lg"></i>
                             </button>
                         @endif
+                    </div>
+                </div>
+
+
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 m-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <h6 class="font-black text-gray-800 text-sm mb-0">
+                            <i class="fas fa-cash-register text-green-600 ml-1"></i>
+                            حركات الدرج
+                        </h6>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button wire:click="openCashTransferModal"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg text-sm">
+                            <i class="fas fa-hand-holding-usd ml-1"></i>
+                            تسليم للمدير
+                        </button>
+
+                        <button wire:click="openShiftExpenseModal"
+                            class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-3 rounded-lg text-sm">
+                            <i class="fas fa-receipt ml-1"></i>
+                            تسجيل مصروف
+                        </button>
                     </div>
                 </div>
 
@@ -970,47 +1008,293 @@
         </div>
     @endif
 
+
+    {{--     Shift Expense Modal --}}
+    @if ($showShiftExpenseModal)
+        <div class="pos-shift-expense-overlay" dir="rtl">
+            <div class="pos-shift-expense-card">
+
+                <div class="expense-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+
+                <h3 class="expense-title">
+                    تسجيل مصروف من الدرج
+                </h3>
+
+                <p class="expense-subtitle">
+                    سجل أي مبلغ تم صرفه من درج الكاشير أثناء الشفت.
+                </p>
+
+                <div class="form-group text-right mb-3">
+                    <label class="font-weight-bold">
+                        اسم المصروف <span class="text-danger">*</span>
+                    </label>
+
+                    <input type="text" wire:model.defer="expenseTitle" class="form-control text-right"
+                        placeholder="مثال: مصروف توصيل">
+
+                    @error('expenseTitle')
+                        <small class="text-danger d-block mt-1">{{ $message }}</small>
+                    @enderror
+                </div>
+
+                <div class="form-group text-right mb-3">
+                    <label class="font-weight-bold">
+                        قيمة المصروف <span class="text-danger">*</span>
+                    </label>
+
+                    <input type="number" step="0.5" min="0" wire:model.defer="expenseAmount"
+                        class="form-control text-right" placeholder="0.00">
+
+                    @error('expenseAmount')
+                        <small class="text-danger d-block mt-1">{{ $message }}</small>
+                    @enderror
+                </div>
+
+                <div class="form-group text-right mb-4">
+                    <label class="font-weight-bold">
+                        ملاحظات
+                    </label>
+
+                    <textarea wire:model.defer="expenseNotes" rows="2" class="form-control text-right"
+                        placeholder="اكتب أي تفاصيل عن المصروف"></textarea>
+                </div>
+
+                <div class="expense-actions">
+                    <button wire:click="saveShiftExpense" class="btn-save-expense" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="saveShiftExpense">
+                            <i class="fas fa-save ml-1"></i>
+                            حفظ المصروف
+                        </span>
+
+                        <span wire:loading wire:target="saveShiftExpense">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            جاري الحفظ...
+                        </span>
+                    </button>
+
+                    <button wire:click="closeShiftExpenseModal" class="btn-cancel-expense">
+                        إلغاء
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    @endif
+
+
+
+    @if ($showCashTransferModal)
+        <div class="pos-cash-transfer-overlay" dir="rtl">
+            <div class="pos-cash-transfer-card">
+
+                <div class="cash-transfer-icon">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+
+                <h3 class="cash-transfer-title">
+                    تسليم مبلغ للمدير
+                </h3>
+
+                <p class="cash-transfer-subtitle">
+                    سجل أي مبلغ تم تسليمه للمدير من درج الكاشير أثناء الشفت.
+                </p>
+
+                <div class="form-group text-right mb-3">
+                    <label class="font-weight-bold">
+                        المبلغ المسلم <span class="text-danger">*</span>
+                    </label>
+
+                    <input type="number" step="0.5" min="0" wire:model.defer="transferAmount"
+                        class="form-control text-right" placeholder="0.00">
+
+                    @error('transferAmount')
+                        <small class="text-danger d-block mt-1">{{ $message }}</small>
+                    @enderror
+                </div>
+
+                <div class="form-group text-right mb-4">
+                    <label class="font-weight-bold">
+                        ملاحظات
+                    </label>
+
+                    <textarea wire:model.defer="transferNotes" rows="2" class="form-control text-right"
+                        placeholder="مثال: تم تسليم مبلغ للمدير أثناء الشيفت"></textarea>
+                </div>
+
+                <div class="cash-transfer-actions">
+                    <button wire:click="saveCashTransfer" class="btn-save-transfer" wire:loading.attr="disabled">
+
+                        <span wire:loading.remove wire:target="saveCashTransfer">
+                            <i class="fas fa-save ml-1"></i>
+                            حفظ التسليم
+                        </span>
+
+                        <span wire:loading wire:target="saveCashTransfer">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            جاري الحفظ...
+                        </span>
+                    </button>
+
+                    <button wire:click="closeCashTransferModal" class="btn-cancel-transfer">
+                        إلغاء
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    @endif
+
+
+
     <!-- End Shift Modal -->
     @if ($showEndShiftModal)
-        <div class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        <div class="pos-end-shift-overlay fixed inset-0 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm"
             dir="rtl">
-            <div
-                class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center transform scale-100 animate-fade-in">
+
+            <div class="pos-end-shift-card bg-white rounded-[24px] shadow-2xl w-full text-center overflow-y-auto"
+                style="max-width: 460px; max-height: 88vh; padding: 22px;">
+
                 <div
                     class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 text-2xl">
                     <i class="fas fa-door-closed"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">إنهاء الشفت</h3>
-                <p class="text-gray-500 text-sm mb-6">يرجى إدخال المبلغ النهائي الموجود في الدرج لتسليم العهدة.</p>
 
-                <div class="mb-4 text-right">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">مبلغ الدرج النهائي (ج.م) <span
-                            class="text-red-500">*</span></label>
-                    <input type="number" step="0.5" wire:model="shiftEndingCash"
-                        class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50"
+                <h3 class="text-2xl font-black text-gray-900 mb-1">
+                    إنهاء الشفت
+                </h3>
+
+                <p class="text-gray-500 text-sm mb-4">
+                    راجع المبلغ المتوقع في الدرج، ثم أكد رصيد نهاية الشفت.
+                </p>
+
+                <div class="bg-blue-50 border border-blue-100 rounded-2xl p-3 mb-4 text-right">
+
+                    <div class="flex justify-between items-center py-1.5 border-b border-blue-100 text-sm">
+                        <span class="text-gray-600 font-bold">رصيد بداية الشفت</span>
+                        <strong class="text-gray-700">
+                            {{ number_format((float) $shiftStartingCashPreview, 2) }} ج.م
+                        </strong>
+                    </div>
+
+                    <div class="flex justify-between items-center py-1.5 border-b border-blue-100 text-sm">
+                        <span class="text-gray-600 font-bold">مبيعات الكاش</span>
+                        <strong class="text-green-700">
+                            {{ number_format((float) $shiftCashSalesPreview, 2) }} ج.م
+                        </strong>
+                    </div>
+
+                    <div class="flex justify-between items-center py-1.5 border-b border-blue-100 text-sm">
+                        <span class="text-gray-600 font-bold">مصروفات الدرج</span>
+                        <strong class="text-red-600">
+                            - {{ number_format((float) $shiftExpensesPreview, 2) }} ج.م
+                        </strong>
+                    </div>
+
+                    <div class="flex justify-between items-center py-1.5 border-b border-blue-100 text-sm">
+                        <span class="text-gray-600 font-bold">المسلم للمدير</span>
+                        <strong class="text-red-600">
+                            - {{ number_format((float) $shiftTransfersPreview, 2) }} ج.م
+                        </strong>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-blue-700 font-black text-base">
+                            المبلغ المتوقع في الدرج
+                        </span>
+
+                        <strong class="text-blue-700 font-black text-xl whitespace-nowrap">
+                            {{ number_format((float) $shiftExpectedCash, 2) }} ج.م
+                        </strong>
+                    </div>
+
+                </div>
+
+                <div class="mb-3 text-right">
+                    <label class="block text-base font-black text-gray-800 mb-1.5">
+                        رصيد نهاية الدرج الفعلي <span class="text-red-500">*</span>
+                    </label>
+
+                    <input type="number" step="0.5" min="0" wire:model.live="shiftEndingCash"
+                        class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-base font-bold text-left focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
                         placeholder="0.00" autofocus>
+
                     @error('shiftEndingCash')
-                        <span class="text-red-500 text-xs mt-1 block font-bold">{{ $message }}</span>
+                        <span class="text-red-500 text-xs mt-1 block font-bold">
+                            {{ $message }}
+                        </span>
                     @enderror
                 </div>
 
-                <div class="flex gap-2 border-t pt-4 border-gray-100">
+                <div class="mb-4 text-right">
+                    @if ((float) $shiftCashDifferencePreview == 0)
+                        <div
+                            class="bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 text-sm font-black">
+                            <i class="fas fa-check-circle ml-1"></i>
+                            الدرج مضبوط ولا يوجد فرق.
+                        </div>
+                    @elseif ((float) $shiftCashDifferencePreview > 0)
+                        <div
+                            class="bg-blue-50 border border-blue-200 text-blue-700 rounded-xl px-4 py-3 text-sm font-black">
+                            <i class="fas fa-plus-circle ml-1"></i>
+                            يوجد زيادة قدرها
+                            {{ number_format((float) $shiftCashDifferencePreview, 2) }} ج.م
+                        </div>
+                    @else
+                        <div
+                            class="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-black">
+                            <i class="fas fa-exclamation-triangle ml-1"></i>
+                            يوجد عجز قدره
+                            {{ number_format(abs((float) $shiftCashDifferencePreview), 2) }} ج.م
+                        </div>
+                    @endif
+                </div>
+
+                @if ((float) $shiftCashDifferencePreview != 0)
+                    <div class="mb-4 text-right">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">
+                            سبب الفرق <span class="text-red-500">*</span>
+                        </label>
+
+                        <textarea wire:model.defer="shiftCloseNote" rows="2"
+                            class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50"
+                            placeholder="اكتب سبب العجز أو الزيادة قبل إغلاق الشفت"></textarea>
+
+                        @error('shiftCloseNote')
+                            <span class="text-red-500 text-xs mt-1 block font-bold">
+                                {{ $message }}
+                            </span>
+                        @enderror
+                    </div>
+                @endif
+
+                <div class="flex gap-3 border-t pt-4 border-gray-100">
                     <button wire:click="endShift"
-                        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl transition-colors shadow-sm"
+                        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-black py-2.5 px-4 rounded-xl transition-colors shadow-sm"
                         wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="endShift"><i class="fas fa-check mr-1"></i> إنهاء
-                            الشفت</span>
-                        <span wire:loading wire:target="endShift"><i class="fas fa-spinner fa-spin"></i>
-                            معالجة...</span>
+
+                        <span wire:loading.remove wire:target="endShift">
+                            <i class="fas fa-check ml-1"></i>
+                            إنهاء الشفت
+                        </span>
+
+                        <span wire:loading wire:target="endShift">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            معالجة...
+                        </span>
                     </button>
+
                     <button wire:click="closeEndShiftModal"
-                        class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-xl transition-colors shadow-sm">
+                        class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-2.5 px-4 rounded-xl transition-colors shadow-sm">
                         إلغاء
                     </button>
                 </div>
+
             </div>
         </div>
     @endif
+
 
     <!-- Merge Tables Modal -->
     @if ($showMergeModal)
@@ -1082,7 +1366,21 @@
         </div>
     @endif
 
+    {{-- نهاية جزء نقاط البيع الذي لا يظهر إلا بعد فتح الشيفت --}}
+    @endif
+
     <style>
+        .pos-end-shift-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999999 !important;
+        }
+
+        .pos-end-shift-card {
+            position: relative !important;
+            z-index: 1000000 !important;
+        }
+
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -1120,6 +1418,211 @@
             padding: 16px !important;
             background: rgba(17, 24, 39, 0.92) !important;
             backdrop-filter: blur(6px);
+        }
+
+        .pos-end-shift-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999999 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 16px !important;
+            background: rgba(0, 0, 0, 0.60) !important;
+            backdrop-filter: blur(6px);
+        }
+
+        .pos-end-shift-card {
+            position: relative !important;
+            z-index: 1000000 !important;
+        }
+
+
+        .pos-shift-expense-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 9999999 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 16px !important;
+            background: rgba(0, 0, 0, 0.62) !important;
+            backdrop-filter: blur(6px);
+        }
+
+        .pos-shift-expense-card {
+            width: 100%;
+            max-width: 430px;
+            max-height: 88vh;
+            overflow-y: auto;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.28);
+            position: relative !important;
+            z-index: 10000000 !important;
+        }
+
+        .expense-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #fff7ed;
+            color: #f97316;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            font-size: 26px;
+        }
+
+        .expense-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: #111827;
+            margin-bottom: 6px;
+        }
+
+        .expense-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 18px;
+        }
+
+        .pos-shift-expense-card .form-control {
+            border-radius: 12px;
+            padding: 11px 14px;
+            border: 1px solid #d1d5db;
+            font-weight: 700;
+        }
+
+        .expense-actions {
+            display: flex;
+            gap: 10px;
+            padding-top: 14px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .btn-save-expense,
+        .btn-cancel-expense {
+            flex: 1;
+            border: 0;
+            border-radius: 12px;
+            padding: 11px 14px;
+            font-weight: 900;
+        }
+
+        .btn-save-expense {
+            background: #f97316;
+            color: #ffffff;
+        }
+
+        .btn-save-expense:hover {
+            background: #ea580c;
+        }
+
+        .btn-cancel-expense {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-cancel-expense:hover {
+            background: #e5e7eb;
+        }
+
+
+        .pos-cash-transfer-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 9999999 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 16px !important;
+            background: rgba(0, 0, 0, 0.62) !important;
+            backdrop-filter: blur(6px);
+        }
+
+        .pos-cash-transfer-card {
+            width: 100%;
+            max-width: 430px;
+            max-height: 88vh;
+            overflow-y: auto;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.28);
+            position: relative !important;
+            z-index: 10000000 !important;
+        }
+
+        .cash-transfer-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #dbeafe;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            font-size: 26px;
+        }
+
+        .cash-transfer-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: #111827;
+            margin-bottom: 6px;
+        }
+
+        .cash-transfer-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 18px;
+        }
+
+        .pos-cash-transfer-card .form-control {
+            border-radius: 12px;
+            padding: 11px 14px;
+            border: 1px solid #d1d5db;
+            font-weight: 700;
+        }
+
+        .cash-transfer-actions {
+            display: flex;
+            gap: 10px;
+            padding-top: 14px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .btn-save-transfer,
+        .btn-cancel-transfer {
+            flex: 1;
+            border: 0;
+            border-radius: 12px;
+            padding: 11px 14px;
+            font-weight: 900;
+        }
+
+        .btn-save-transfer {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .btn-save-transfer:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-cancel-transfer {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-cancel-transfer:hover {
+            background: #e5e7eb;
         }
     </style>
 </div>

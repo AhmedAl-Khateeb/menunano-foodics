@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\Dashboard\AttendanceController;
+use App\Http\Controllers\Dashboard\AuthController as DashboardAuthController;
 use App\Http\Controllers\Dashboard\BranchController;
+use App\Http\Controllers\Dashboard\CashierCashReportController;
 use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\CompositeItemController;
 use App\Http\Controllers\Dashboard\CustomerController;
@@ -48,7 +50,37 @@ use App\Models\Shift;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/dashboard');
+// Route::redirect('/', '/dashboard');
+Route::get('/', function () {
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
+
+    $user = auth()->user();
+
+    if ($user->role === 'super_admin') {
+        return redirect()->route('admins.index');
+    }
+
+    if (in_array($user->role, ['cashier', 'staff', 'employee'])) {
+        return redirect()->route('pos.index');
+    }
+
+    return redirect()->route('dashboard');
+});
+
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [DashboardAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [DashboardAuthController::class, 'webLogin']);
+});
+
+Route::get('/logout-shift-info', [DashboardAuthController::class, 'logoutShiftInfo'])
+    ->middleware('auth')
+    ->name('logout.shift.info');
+
+Route::post('/logout', [DashboardAuthController::class, 'webLogout'])
+    ->middleware('auth')
+    ->name('logout');
 
 Route::get('/inactive', function () {
     return view('inactive');
@@ -108,11 +140,17 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         ]);
     })->middleware('package.permission:dashboard.access')->name('orders.count');
 
-
-
     // Invoices
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/invoices/{order}/print', [InvoiceController::class, 'print'])->name('invoices.print');
+
+    // Cashier Cash Reports
+    Route::get('/cashier-cash-reports', [CashierCashReportController::class, 'index'])
+    ->middleware('package.permission:cashier-cash-reports.access')
+    ->name('cashier-cash-reports.index');
+
+    Route::get('/cashier-cash-reports/{user}', [CashierCashReportController::class, 'show'])
+        ->name('cashier-cash-reports.show');
 
     /*
     |--------------------------------------------------------------------------
@@ -219,7 +257,7 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::resource('shifts', ShiftController::class)
         ->except(['show'])
         ->middleware('package.permission:shifts.access');
-        
+
     Route::get('shifts/{shift}', [ShiftController::class, 'show'])
     ->middleware('package.permission:shifts.access')
     ->name('shifts.show');

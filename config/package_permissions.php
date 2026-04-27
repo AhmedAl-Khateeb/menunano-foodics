@@ -112,6 +112,12 @@ return [
         'icon' => 'fas fa-clock',
         'group' => 'الإدارة',
     ],
+    [
+        'key' => 'cashier-cash-reports.access',
+        'label' => 'تقارير عهدة الكاشير',
+        'icon' => 'fas fa-wallet',
+        'group' => 'الإدارة',
+    ],
 
     // المخزن
     [
