@@ -9,14 +9,14 @@ class InventoryMovement extends Model
 {
     use InventoryMovementTrait;
 
-    const TYPE_PURCHASE = 'purchase';
-    const TYPE_SALE = 'sale';
-    const TYPE_WASTE = 'waste';
-    const TYPE_ADJUSTMENT = 'adjustment';
-    const TYPE_TRANSFER_IN = 'transfer_in';
-    const TYPE_TRANSFER_OUT = 'transfer_out';
-    const TYPE_PRODUCTION_IN = 'production_in';
-    const TYPE_PRODUCTION_OUT = 'production_out';
+    public const TYPE_PURCHASE = 'purchase';
+    public const TYPE_SALE = 'sale';
+    public const TYPE_WASTE = 'waste';
+    public const TYPE_ADJUSTMENT = 'adjustment';
+    public const TYPE_TRANSFER_IN = 'transfer_in';
+    public const TYPE_TRANSFER_OUT = 'transfer_out';
+    public const TYPE_PRODUCTION_IN = 'production_in';
+    public const TYPE_PRODUCTION_OUT = 'production_out';
 
     protected $fillable = [
         'user_id',
@@ -32,6 +32,7 @@ class InventoryMovement extends Model
         'description',
         'notes',
         'movement_date',
+        'branch_id',
     ];
 
     protected $casts = [
@@ -42,5 +43,4 @@ class InventoryMovement extends Model
         'balance_after' => 'decimal:3',
         'movement_date' => 'datetime',
     ];
-
 }

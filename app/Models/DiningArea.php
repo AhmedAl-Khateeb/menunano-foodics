@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DiningArea extends Model
 {
-    protected $fillable = ['name', 'user_id', 'is_active'];
+    protected $fillable = ['name', 'user_id', 'is_active', 'branch_id'];
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -15,5 +15,10 @@ class DiningArea extends Model
     public function tables()
     {
         return $this->hasMany(Table::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

@@ -18,12 +18,11 @@ class StockCount extends Model
         'notes',
         'approved_by',
         'approved_at',
+        'branch_id',
     ];
 
     protected $casts = [
         'count_date' => 'date',
         'approved_at' => 'datetime',
     ];
-
-
 }

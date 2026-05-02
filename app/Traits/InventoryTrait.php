@@ -2,13 +2,14 @@
 
 namespace App\Traits;
 
+use App\Models\Branch;
 use App\Models\InventoryMovement;
 use App\Models\Unit;
 use App\Models\User;
 
 trait InventoryTrait
 {
-        public function inventoriable()
+    public function inventoriable()
     {
         return $this->morphTo();
     }
@@ -26,5 +27,10 @@ trait InventoryTrait
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

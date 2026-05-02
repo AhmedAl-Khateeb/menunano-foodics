@@ -49,6 +49,16 @@ return [
             ],
         ],
         [
+            'title' => 'طلبات إنشاء الفروع',
+            'icon' => 'fas fa-code-branch',
+            'route' => 'branch-creation-requests.index',
+            'active_routes' => ['branch-creation-requests.*'],
+            'badge' => [
+                'type' => 'branch_creation_pending',
+                'class' => 'bg-yellow-500 text-black',
+            ],
+        ],
+        [
             'title' => 'الأقسام',
             'icon' => 'fas fa-list-alt',
             'route' => 'sections.index',
@@ -56,6 +66,7 @@ return [
         ],
     ],
 
+    // Admin
     'admin' => [
         [
             'title' => 'الرئيسية',
@@ -168,7 +179,7 @@ return [
             'icon' => 'fas fa-user-shield',
             'type' => 'dropdown',
             'id' => 'users-menu',
-            'active_routes' => ['users.*', 'roles.*', 'branches.*', 'shifts.*', 'attendances.*'],
+            'active_routes' => ['users.*', 'roles.*', 'branches.*', 'shifts.*', 'attendances.*', 'branch-creation-requests.*', 'branch-links.*'],
             'permission' => 'management.access',
             'children' => [
                 [
@@ -209,6 +220,21 @@ return [
                     'route' => 'branches.index',
                     'active_routes' => ['branches.*'],
                     'permission' => 'branches.access',
+                ],
+                [
+                    'title' => 'طلب إضافة فرع',
+                    'icon' => 'fas fa-plus-circle',
+                    'route' => 'branch-creation-requests.index',
+                    'active_routes' => ['branch-creation-requests.*'],
+                    'permission' => 'branch_creation_request.access',
+                ],
+
+                [
+                    'title' => 'ربط الفروع',
+                    'icon' => 'fas fa-link',
+                    'route' => 'branch-links.index',
+                    'active_routes' => ['branch-links.*'],
+                    'permission' => 'branch_links.access',
                 ],
                 [
                     'title' => 'تسجيل الحضور والانصراف',

@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
 use App\Traits\UserTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -47,31 +45,30 @@ class User extends Authenticatable
     protected static function booted()
     {
         static::deleting(function ($user) {
-            // 🟢 احذف المنتجات مع الصور
             foreach ($user->products as $product) {
                 if ($product->image) {
                     Storage::disk('public')->delete($product->image);
                 }
+
                 $product->delete();
             }
 
-            // 🟢 احذف الكاتيجوريز مع الصور
             foreach ($user->categories as $category) {
                 if ($category->image) {
                     Storage::disk('public')->delete($category->image);
                 }
+
                 $category->delete();
             }
 
-            // 🟢 احذف السلايدر مع الصور
             foreach ($user->sliders as $slider) {
                 if ($slider->image) {
                     Storage::disk('public')->delete($slider->image);
                 }
+
                 $slider->delete();
             }
 
-            // احذف الإعدادات
             $user->settings()->delete();
         });
 
@@ -108,6 +105,12 @@ class User extends Authenticatable
 
     public function setPhoneAttribute($value)
     {
+        if (empty($value)) {
+            $this->attributes['phone'] = null;
+
+            return;
+        }
+
         $this->attributes['phone'] = str_starts_with($value, '+2')
             ? $value
             : '+20'.ltrim($value, '0+');
@@ -115,22 +118,28 @@ class User extends Authenticatable
 
     public function getLogoUrlAttribute()
     {
-        // get logo from settings
         $logoPathFromSetting = $this->settings()->firstWhere('key', 'logo')?->value;
 
-        return $logoPathFromSetting ? asset('storage/'.$logoPathFromSetting) : null;
+        return $logoPathFromSetting
+            ? asset('storage/'.$logoPathFromSetting)
+            : null;
     }
 
-    // Relations subscriptions
+    /*
+    |--------------------------------------------------------------------------
+    | Basic Relations
+    |--------------------------------------------------------------------------
+    */
+
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
     }
 
     public function latestSubscription()
-{
-    return $this->hasOne(Subscription::class)->latestOfMany();
-}
+    {
+        return $this->hasOne(Subscription::class)->latestOfMany();
+    }
 
     public function activeSubscriptions()
     {
@@ -141,19 +150,70 @@ class User extends Authenticatable
             ->where('ends_at', '>=', now());
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'branch_users')
+            ->withPivot([
+                'role',
+                'is_primary_manager',
+                'can_manage_permissions',
+                'permissions',
+                'assigned_by',
+            ])
+            ->withTimestamps();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Store Owner / Subscription Owner
+    |--------------------------------------------------------------------------
+    */
+
+    public function storeOwner()
+    {
+        if ($this->role === 'super_admin') {
+            return $this;
+        }
+
+        // لو المستخدم معمول بواسطة صاحب حساب، يبقى تابع له حتى لو role = admin
+        if (!empty($this->created_by)) {
+            return self::find($this->created_by);
+        }
+
+        // الأدمن الأساسي فقط هو صاحب الحساب
+        return $this;
+    }
+
     public function hasActiveSubscription(): bool
     {
         if ($this->role === 'super_admin') {
             return true;
         }
 
-        return $this->activeSubscriptions()->exists();
+        $storeOwner = $this->storeOwner();
+
+        if (!$storeOwner) {
+            return false;
+        }
+
+        return $storeOwner->activeSubscriptions()->exists();
     }
 
     public function activePackages()
     {
-        return Package::whereHas('subscriptions', function ($q) {
-            $q->where('user_id', $this->id)
+        $storeOwner = $this->storeOwner();
+
+        if (!$storeOwner) {
+            return collect();
+        }
+
+        return Package::whereHas('subscriptions', function ($q) use ($storeOwner) {
+            $q->where('user_id', $storeOwner->id)
                 ->where('status', 'active')
                 ->where('is_active', true)
                 ->where('starts_at', '<=', now())
@@ -163,7 +223,17 @@ class User extends Authenticatable
 
     public function hasPackagePermission(string $permissionKey): bool
     {
-        return $this->activeSubscriptions()
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        $storeOwner = $this->storeOwner();
+
+        if (!$storeOwner) {
+            return false;
+        }
+
+        return $storeOwner->activeSubscriptions()
             ->whereHas('package.permissions', function ($q) use ($permissionKey) {
                 $q->where('permission_key', $permissionKey);
             })
@@ -172,10 +242,81 @@ class User extends Authenticatable
 
     public function hasBusinessType(string $slug): bool
     {
-        return $this->activeSubscriptions()
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        $storeOwner = $this->storeOwner();
+
+        if (!$storeOwner) {
+            return false;
+        }
+
+        return $storeOwner->activeSubscriptions()
             ->whereHas('package.businessType', function ($q) use ($slug) {
                 $q->where('slug', $slug);
             })
             ->exists();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Branch Permissions
+    |--------------------------------------------------------------------------
+    */
+
+    public function branchPermissions($branchId = null): array
+    {
+        $branch = null;
+
+        if ($branchId) {
+            $branch = $this->branches()
+                ->where('branches.id', $branchId)
+                ->first();
+        }
+
+        if (!$branch && $this->branch_id) {
+            $branch = $this->branches()
+                ->where('branches.id', $this->branch_id)
+                ->first();
+        }
+
+        if (!$branch) {
+            $branch = $this->branches()->first();
+        }
+
+        if (!$branch) {
+            return [];
+        }
+
+        $permissions = $branch->pivot->permissions ?? [];
+
+        if (is_string($permissions)) {
+            $permissions = json_decode($permissions, true) ?: [];
+        }
+
+        return $permissions;
+    }
+
+    public function hasBranchPermission(string $permission, $branchId = null): bool
+    {
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        $permissions = $this->branchPermissions($branchId);
+
+        return in_array('*', $permissions, true)
+            || in_array($permission, $permissions, true);
+    }
+
+    public function canAccessFeature(string $permission, $branchId = null): bool
+    {
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        return $this->hasPackagePermission($permission)
+            && $this->hasBranchPermission($permission, $branchId);
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class DeliveryMan extends Model
 {
@@ -15,6 +15,7 @@ class DeliveryMan extends Model
         'phone',
         'commission_percent',
         'is_active',
+        'branch_id',
     ];
 
     public function user()
@@ -25,5 +26,10 @@ class DeliveryMan extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

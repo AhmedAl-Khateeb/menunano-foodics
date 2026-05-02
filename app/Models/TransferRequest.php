@@ -17,6 +17,7 @@ class TransferRequest extends Model
         'transfer_date',
         'status',
         'notes',
+        'branch_id',
     ];
 
     protected $casts = [

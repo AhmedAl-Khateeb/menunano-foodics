@@ -18,6 +18,7 @@ class PurchaseInvoice extends Model
         'due_date',
         'notes',
         'status',
+        'branch_id',
     ];
 
  

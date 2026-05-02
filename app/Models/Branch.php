@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Branch extends Model
 {
-    use HasFactory,BranchTrait;
+    use HasFactory;
+    use BranchTrait;
 
     protected $fillable = [
         'name',
@@ -17,8 +18,7 @@ class Branch extends Model
         'address',
         'is_active',
         'created_by',
-        // 'user_id',
+        'business_id',
+        'owner_id',
     ];
-
- 
 }

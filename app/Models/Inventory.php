@@ -22,6 +22,7 @@ class Inventory extends Model
         'max_quantity',
         'is_active',
         'user_id',
+        'branch_id',
     ];
 
     protected $casts = [

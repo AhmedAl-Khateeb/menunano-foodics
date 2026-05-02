@@ -97,4 +97,21 @@ trait UserTrait
     {
         return $this->hasMany(CashTransfer::class, 'approved_by');
     }
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'branch_users')
+            ->withPivot([
+                'role',
+                'is_primary_manager',
+                'can_manage_permissions',
+                'permissions',
+            ])
+            ->withTimestamps();
+    }
+
+    public function ownedBranches()
+    {
+        return $this->hasMany(Branch::class, 'owner_id');
+    }
 }

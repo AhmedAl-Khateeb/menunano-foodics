@@ -17,6 +17,7 @@ class Attendance extends Model
         'check_out',
         'status',
         'notes',
+        'branch_id',
     ];
 
     protected $casts = [

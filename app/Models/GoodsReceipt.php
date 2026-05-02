@@ -21,6 +21,7 @@ class GoodsReceipt extends Model
         'tax',
         'total',
         'notes',
+        'branch_id',
     ];
 
     protected $casts = [
@@ -30,6 +31,4 @@ class GoodsReceipt extends Model
         'tax' => 'decimal:3',
         'total' => 'decimal:3',
     ];
-
-
 }

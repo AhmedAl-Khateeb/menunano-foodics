@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Branch;
 use App\Models\ProductionOrderItem;
 use App\Models\Recipe;
 use App\Models\User;
@@ -21,5 +22,10 @@ trait ProductionOrderTrait
     public function items()
     {
         return $this->hasMany(ProductionOrderItem::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Branch;
 use App\Models\Inventory;
 use App\Models\User;
 
@@ -15,5 +16,10 @@ trait InventoryMovementTrait
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

@@ -9,7 +9,5 @@ class Table extends Model
 {
     use TableTrait;
 
-    protected $fillable = ['name', 'dining_area_id', 'capacity', 'is_active', 'user_id'];
-
- 
+    protected $fillable = ['name', 'dining_area_id', 'capacity', 'is_active', 'user_id', 'branch_id'];
 }

@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\DeliveryMan;
 use App\Models\ProductSize;
@@ -41,5 +42,10 @@ trait OrderTrait
     public function shift()
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

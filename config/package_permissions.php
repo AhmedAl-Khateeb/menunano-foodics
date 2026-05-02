@@ -101,6 +101,18 @@ return [
         'group' => 'الإدارة',
     ],
     [
+        'key' => 'branch_creation_request.access',
+        'label' => 'طلبات إنشاء الفروع',
+        'icon' => 'fas fa-user-cog',
+        'group' => 'الإدارة',
+    ],
+    [
+        'key' => 'branch_links.access',
+        'label' => 'روابط الفروع',
+        'icon' => 'fas fa-link',
+        'group' => 'الإدارة',
+    ],
+    [
         'key' => 'shifts.access',
         'label' => 'الشيفتات',
         'icon' => 'fas fa-user-clock',

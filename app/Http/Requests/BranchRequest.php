@@ -19,6 +19,13 @@ class BranchRequest extends FormRequest
             'phone' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
             'is_active' => 'nullable|boolean',
+
+            'manager_user_id' => 'nullable|exists:users,id',
+            'branch_role' => 'nullable|in:manager,cashier,staff',
+            'is_primary_manager' => 'nullable|boolean',
+            'can_manage_permissions' => 'nullable|boolean',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string',
         ];
     }
 }

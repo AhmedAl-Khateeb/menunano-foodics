@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Branch;
 use App\Models\GoodsReceipt;
 use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseRequest;
@@ -33,5 +34,10 @@ trait PurchaseOrderTrait
     public function receipts()
     {
         return $this->hasMany(GoodsReceipt::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

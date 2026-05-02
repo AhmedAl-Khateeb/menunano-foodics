@@ -23,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'CheckSubscription' => App\Http\Middleware\CheckSubscription::class,
             'package.permission' => App\Http\Middleware\CheckPackagePermission::class,
             'active' => App\Http\Middleware\Active::class,
+            'branch.permissions' => \App\Http\Middleware\CheckBranchPermission::class,
+            
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

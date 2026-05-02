@@ -22,6 +22,7 @@ class PurchaseOrder extends Model
         'tax',
         'total',
         'notes',
+        'branch_id',
     ];
 
     protected $casts = [

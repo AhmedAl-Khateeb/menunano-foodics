@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Branch;
 use App\Models\StockCountItem;
 use App\Models\User;
 
@@ -20,5 +21,10 @@ trait StockCountTrait
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

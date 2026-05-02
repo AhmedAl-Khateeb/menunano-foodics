@@ -36,12 +36,19 @@ class AuthController extends Controller
         }
 
         if (in_array($user->role, ['cashier', 'staff', 'employee'])) {
-            return redirect()->route('pos.index');
+            if ($user->hasBranchPermission('pos.access')) {
+                return redirect()->route('pos.index');
+            }
+
+            return redirect()
+                ->route('dashboard')
+                ->with('error', 'ليس لديك صلاحية للدخول إلى نقطة البيع.');
         }
 
         return redirect()->route('dashboard');
     }
 
+    
     public function webLogout(Request $request)
     {
         $request->validate([

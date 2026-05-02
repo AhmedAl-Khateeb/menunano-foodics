@@ -199,7 +199,7 @@
                                     : null;
                             @endphp
 
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST">
+                            {{-- <form id="logout-form" action="{{ route('logout') }}" method="POST">
                                 @csrf
 
                                 <div class="modal fade" id="logoutShiftModal" tabindex="-1" role="dialog"
@@ -253,7 +253,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </form>
+                            </form> --}}
                         </div>
                     </li>
                 </ul>

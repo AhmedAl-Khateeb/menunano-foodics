@@ -304,7 +304,7 @@
     </nav>
 
 
-  
+
 
     <form id="logout-form" action="{{ route('logout') }}" method="POST">
         @csrf
@@ -544,6 +544,8 @@
     <!-- AdminLTE JS -->
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/resumablejs@1.1.0/resumable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('dist/js/custom-alerts.js') }}"></script>
 
     @include('sweetalert::alert', ['cdn' => 'https://cdn.jsdelivr.net/npm/sweetalert2@9'])
 

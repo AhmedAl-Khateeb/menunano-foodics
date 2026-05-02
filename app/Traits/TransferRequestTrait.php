@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Branch;
 use App\Models\TransferRequestItem;
 use App\Models\User;
 
@@ -15,5 +16,10 @@ trait TransferRequestTrait
     public function items()
     {
         return $this->hasMany(TransferRequestItem::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

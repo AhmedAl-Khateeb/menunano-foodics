@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Branch;
 use App\Models\PurchaseInvoiceItem;
 use App\Models\Supplier;
 use App\Models\User;
@@ -21,5 +22,10 @@ trait PurchaseInvoiceTrait
     public function items()
     {
         return $this->hasMany(PurchaseInvoiceItem::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

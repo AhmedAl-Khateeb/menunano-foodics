@@ -19,6 +19,7 @@ class ProductionOrder extends Model
         'status',
         'total_cost',
         'notes',
+        'branch_id',
     ];
 
     protected $casts = [
@@ -27,6 +28,4 @@ class ProductionOrder extends Model
         'produced_quantity' => 'decimal:3',
         'total_cost' => 'decimal:3',
     ];
-
- 
 }

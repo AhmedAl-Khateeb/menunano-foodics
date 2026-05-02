@@ -17,11 +17,11 @@ class PurchaseRequest extends Model
         'notes',
         'approved_by',
         'approved_at',
+        'branch_id',
     ];
 
     protected $casts = [
         'request_date' => 'date',
         'approved_at' => 'datetime',
     ];
-
 }

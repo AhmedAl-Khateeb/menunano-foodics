@@ -28,6 +28,7 @@ class Order extends Model
         'delivery_fee',
         'delivery_man_id',
         'shift_id',
+        'branch_id',
     ];
 
     //    public function scopeOwnedBy(Builder $query, $userId): Builder

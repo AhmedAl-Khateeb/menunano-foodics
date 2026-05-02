@@ -61,7 +61,7 @@
                                         </a>
                                     </form>
 
-                                    <a href="{{ route('branches.create') }}" class="btn btn-primary btn-sm">
+                                    <a href="{{ route('branch-creation-requests.create') }}" class="btn btn-primary btn-sm">
                                         <i class="fas fa-plus"></i> إضافة فرع
                                     </a>
                                 </div>
@@ -115,11 +115,13 @@
                                                         </a>
 
                                                         <form action="{{ route('branches.destroy', $branch->id) }}"
-                                                            method="POST" style="display:inline-block;">
+                                                            method="POST" class="swal-delete-form"
+                                                            data-text="هل أنت متأكد من حذف هذا الفرع؟"
+                                                            style="display:inline-block;">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="btn btn-danger btn-sm"
-                                                                onclick="return confirm('هل أنت متأكد؟')">
+
+                                                            <button type="submit" class="btn btn-danger btn-sm">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
                                                         </form>
@@ -158,12 +160,11 @@
                                                 </a>
 
                                                 <form action="{{ route('branches.destroy', $branch->id) }}" method="POST"
-                                                    class="flex-grow-1">
+                                                    class="swal-delete-form" style="display:inline-block;">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm w-100"
-                                                        onclick="return confirm('هل أنت متأكد؟')">
-                                                        حذف
+                                                    <button type="submit" class="btn btn-danger btn-sm w-100">
+                                                        <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
                                             </div>
@@ -198,8 +199,6 @@
             </div>
         </div>
     </section>
-
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     @if (session('success'))
         <script>

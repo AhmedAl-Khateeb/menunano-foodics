@@ -18,6 +18,8 @@ return new class extends Migration {
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->foreignId('business_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('owner_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

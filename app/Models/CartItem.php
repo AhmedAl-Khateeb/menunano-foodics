@@ -10,10 +10,11 @@ class CartItem extends Model
         'customer_id',
         'product_size_id',
         'quantity',
+        'branch_id',
     ];
 
     /**
-     * Get the customer that owns this cart item
+     * Get the customer that owns this cart item.
      */
     public function customer()
     {
@@ -21,10 +22,15 @@ class CartItem extends Model
     }
 
     /**
-     * Get the product size for this cart item
+     * Get the product size for this cart item.
      */
     public function productSize()
     {
         return $this->belongsTo(ProductSize::class)->with('product');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 }
