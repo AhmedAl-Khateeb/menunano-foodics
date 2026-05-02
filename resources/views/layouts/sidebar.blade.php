@@ -3,17 +3,29 @@
     <!-- Brand -->
     <div
         class="h-20 flex items-center justify-center border-b border-slate-700 bg-[#0a0a0a]/50 backdrop-blur-sm sticky top-0 z-10 px-4">
-        <a href="{{ env('WEB_URL') }}"
-            class="flex items-center gap-3 text-white hover:text-blue-400 transition w-full">
+        <a href="{{ env('WEB_URL') }}" class="flex items-center gap-3 text-white hover:text-blue-400 transition w-full">
 
             @php
                 $ownerId = \App\Services\StoreService::getStoreOwnerId();
                 $storeUser = $ownerId ? \App\Models\User::find($ownerId) : null;
+
+                $logo = $storeUser->logo_url ?? null;
+
+                if ($logo) {
+                    if (\Illuminate\Support\Str::startsWith($logo, ['http://', 'https://'])) {
+                        $logoSrc = $logo;
+                    } else {
+                        $logoSrc = asset('storage/' . ltrim($logo, '/'));
+                    }
+                } else {
+                    $logoSrc = null;
+                }
             @endphp
 
-            @if ($storeUser && $storeUser->logo_url)
-                <img src="{{ $storeUser->logo_url }}"
-                    class="w-10 h-10 rounded-full object-cover border border-slate-600 shadow-sm" alt="Store Logo">
+            @if ($logoSrc)
+                <img src="{{ $logoSrc }}"
+                    class="w-10 h-10 rounded-full object-cover border border-slate-600 shadow-sm shrink-0"
+                    alt="Store Logo">
             @else
                 <div
                     class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold border border-blue-400 shrink-0">
@@ -25,8 +37,11 @@
                 <span class="font-bold text-base truncate leading-tight">
                     {{ $storeUser->store_name ?? ($storeUser->name ?? 'لوحة التحكم') }}
                 </span>
+
                 @if ($storeUser && $storeUser->store_name)
-                    <span class="text-[10px] text-slate-400 truncate">نظام الإدارة</span>
+                    <span class="text-[10px] text-slate-400 truncate">
+                        نظام الإدارة
+                    </span>
                 @endif
             </div>
         </a>
@@ -38,10 +53,11 @@
             $user = auth()->user();
             $role = $user->role ?? null;
 
-            $subscriptionExpired = auth()->check()
-                && $role !== 'super_admin'
-                && method_exists($user, 'hasActiveSubscription')
-                && !$user->hasActiveSubscription();
+            $subscriptionExpired =
+                auth()->check() &&
+                $role !== 'super_admin' &&
+                method_exists($user, 'hasActiveSubscription') &&
+                !$user->hasActiveSubscription();
 
             // لو عندك Layout مستقل للكاشير/اليوزر، خليه فاضي كما كان
             if ($role === 'user' || $role === 'cashier') {
@@ -56,7 +72,8 @@
                 $isDropdown = isset($item['type']) && $item['type'] === 'dropdown';
 
                 $itemPermission = $item['permission'] ?? null;
-                $canSeeItem = empty($itemPermission) || $role === 'super_admin' || $user->hasPackagePermission($itemPermission);
+                $canSeeItem =
+                    empty($itemPermission) || $role === 'super_admin' || $user->hasPackagePermission($itemPermission);
 
                 $isActive = false;
                 foreach ($item['active_routes'] ?? [] as $routePattern) {
@@ -68,13 +85,18 @@
 
                 $visibleChildren = collect($item['children'] ?? [])->filter(function ($child) use ($user, $role) {
                     $childPermission = $child['permission'] ?? null;
-                    return empty($childPermission) || $role === 'super_admin' || $user->hasPackagePermission($childPermission);
+                    return empty($childPermission) ||
+                        $role === 'super_admin' ||
+                        $user->hasPackagePermission($childPermission);
                 });
 
                 if (!$isActive && $isDropdown) {
-                    foreach (($item['children'] ?? []) as $child) {
-                        foreach (($child['active_routes'] ?? []) as $childRoutePattern) {
-                            if (fnmatch($childRoutePattern, Route::currentRouteName()) || request()->routeIs($childRoutePattern)) {
+                    foreach ($item['children'] ?? [] as $child) {
+                        foreach ($child['active_routes'] ?? [] as $childRoutePattern) {
+                            if (
+                                fnmatch($childRoutePattern, Route::currentRouteName()) ||
+                                request()->routeIs($childRoutePattern)
+                            ) {
                                 $isActive = true;
                                 break 2;
                             }
@@ -86,7 +108,9 @@
                 // لو الاشتراك نشط: أظهر فقط العناصر المسموح بها
                 $showItem = $subscriptionExpired
                     ? true
-                    : ($isDropdown ? ($canSeeItem || $visibleChildren->isNotEmpty()) : $canSeeItem);
+                    : ($isDropdown
+                        ? $canSeeItem || $visibleChildren->isNotEmpty()
+                        : $canSeeItem);
 
                 $isOpen = $isActive || request('open') == str_replace('-menu', '', $item['id'] ?? '');
             @endphp
@@ -116,11 +140,14 @@
 
                         <div id="{{ $item['id'] }}"
                             class="{{ $isOpen ? '' : 'hidden' }} bg-black pr-6 space-y-1 mt-1">
-                            @foreach (($subscriptionExpired ? collect($item['children'] ?? []) : $visibleChildren) as $child)
+                            @foreach ($subscriptionExpired ? collect($item['children'] ?? []) : $visibleChildren as $child)
                                 @php
                                     $isChildActive = false;
                                     foreach ($child['active_routes'] ?? [] as $childRoutePattern) {
-                                        if (fnmatch($childRoutePattern, Route::currentRouteName()) || request()->routeIs($childRoutePattern)) {
+                                        if (
+                                            fnmatch($childRoutePattern, Route::currentRouteName()) ||
+                                            request()->routeIs($childRoutePattern)
+                                        ) {
                                             $isChildActive = true;
                                             break;
                                         }
@@ -147,7 +174,10 @@
                     @php
                         $singleActive = false;
                         foreach ($item['active_routes'] ?? [] as $routePattern) {
-                            if (fnmatch($routePattern, Route::currentRouteName()) || request()->routeIs($routePattern)) {
+                            if (
+                                fnmatch($routePattern, Route::currentRouteName()) ||
+                                request()->routeIs($routePattern)
+                            ) {
                                 $singleActive = true;
                                 break;
                             }
@@ -172,7 +202,10 @@
                                     @endif
                                 </div>
 
-                                @if ($item['badge']['type'] === 'subscription_pending' && isset($pendingSubscriptionsCount) && $pendingSubscriptionsCount > 0)
+                                @if (
+                                    $item['badge']['type'] === 'subscription_pending' &&
+                                        isset($pendingSubscriptionsCount) &&
+                                        $pendingSubscriptionsCount > 0)
                                     <span
                                         class="{{ $item['badge']['class'] }} text-xs font-bold px-2 py-0.5 rounded-full">
                                         {{ $pendingSubscriptionsCount }}
