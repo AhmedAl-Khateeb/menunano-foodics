@@ -40,7 +40,7 @@ return [
             'badge' => [
                 'type' => 'subscription_pending', // Special handler for badge logic
                 'class' => 'bg-yellow-500 text-black',
-            ]
+            ],
         ],
         [
             'title' => 'الأقسام',
@@ -49,6 +49,7 @@ return [
             'active_routes' => ['sections.*'],
         ],
     ],
+
     'admin' => [
         [
             'title' => 'الرئيسية',
@@ -65,7 +66,7 @@ return [
             'id' => 'emenu-menu',
             'active_routes' => ['categories.*', 'products.*', 'sliders.*', 'orders.*'],
             'children' => [
-                 // Categories
+                // Categories
                 [
                     'title' => 'الفئات',
                     'icon' => 'far fa-circle',
@@ -86,7 +87,7 @@ return [
                     'route' => 'sliders.index',
                     'active_routes' => ['sliders.*'],
                 ],
-            ]
+            ],
         ],
         // Orders Group
         [
@@ -130,7 +131,7 @@ return [
                     'active_routes' => ['orders.index'],
                     'query' => ['type' => 'table'],
                 ],
-            ]
+            ],
         ],
         // Users Group
         [
@@ -164,7 +165,7 @@ return [
                     'route' => 'delivery_men.index',
                     'active_routes' => ['delivery_men.*'],
                 ],
-            ]
+            ],
         ],
         // Inventory & Items Module
         [
@@ -210,7 +211,7 @@ return [
                     'route' => 'inventory.reconcile',
                     'active_routes' => ['inventory.reconcile'],
                 ],
-            ]
+            ],
         ],
 
         // Purchases Module  (new)
@@ -227,9 +228,8 @@ return [
                     'route' => 'suppliers.index',
                     'active_routes' => ['suppliers.*'],
                 ],
-            ]
+            ],
         ],
-
 
         // Purchases Module  (new)
         [
@@ -245,7 +245,7 @@ return [
                     'route' => 'expenses.index',
                     'active_routes' => ['expenses.*'],
                 ],
-            ]
+            ],
         ],
 
         // Reports Group
@@ -275,7 +275,7 @@ return [
                     'route' => 'reports.staff-performance',
                     'active_routes' => ['reports.staff-performance'],
                 ],
-            ]
+            ],
         ],
         // Settings Group
         [
@@ -285,7 +285,7 @@ return [
             'id' => 'settings-menu',
             'active_routes' => ['settings.*'],
             'children' => [
-                 [
+                [
                     'title' => 'الإعدادات العامة',
                     'icon' => 'far fa-circle',
                     'route' => 'settings.index',
@@ -315,7 +315,7 @@ return [
                     'route' => 'charges.index',
                     'active_routes' => ['charges.*'],
                 ],
-            ]
+            ],
         ],
     ],
     'cashier' => [
@@ -325,5 +325,5 @@ return [
             'route' => 'pos.index',
             'active_routes' => ['pos.*'],
         ],
-    ]
+    ],
 ];

@@ -11,11 +11,7 @@ class Expense extends Model
 
     protected $table = 'expenses';
 
-    protected $fillable = ['TITLE', 'Amount', 'Notes','attach_File','user_id'];
+    protected $fillable = ['TITLE', 'Amount', 'Notes', 'attach_File', 'user_id'];
 
-    public $timestamps=true;   // default  true or false
-
-
-
-
+    public $timestamps = true;   // default  true or false
 }

@@ -1,35 +1,23 @@
 <?php
 
-namespace App\Http\Traits;
+namespace App\Traits;
 
-Trait UploadImg
+trait UploadImg
 {
-  
+    public function saveImage($path, $folder)
+    {
+        // $path= $request -> IMG;  ->  $photo
 
- function saveImage($path,$folder){
+        $filename = $path->getClientOriginalExtension();
 
-    //$path= $request -> IMG;  ->  $photo
+        $FILENAME = time().'.'.$filename;
 
+        // $dir='IMG/';  -> folder
 
-          
-    $filename= $path->getClientOriginalExtension();
-    
-    $FILENAME=time().'.'.$filename;
-    
-   // $dir='IMG/';  -> folder 
+        $dir = $folder;
 
-    $dir=$folder; 
-    
-    $path->move($dir,$FILENAME);
+        $path->move($dir, $FILENAME);
 
-  return $FILENAME;
-
-
+        return $FILENAME;
+    }
 }
-
-
-}
-
-
-
-?>

@@ -76,6 +76,7 @@ return [
             'permission' => 'dashboard.access',
         ],
 
+        // E-Menu Module
         [
             'title' => 'المنيو الإلكتروني',
             'icon' => 'fas fa-tablet-alt',
@@ -84,6 +85,7 @@ return [
             'active_routes' => ['categories.*', 'products.*', 'sliders.*'],
             'permission' => 'emenu.access',
             'children' => [
+                // Categories
                 [
                     'title' => 'الفئات',
                     'icon' => 'far fa-circle',
@@ -91,6 +93,7 @@ return [
                     'active_routes' => ['categories.*'],
                     'permission' => 'categories.access',
                 ],
+                // Products
                 [
                     'title' => 'المنتجات',
                     'icon' => 'far fa-circle',
@@ -98,6 +101,7 @@ return [
                     'active_routes' => ['products.index', 'products.show', 'products.store', 'products.update'],
                     'permission' => 'products.access',
                 ],
+                // Sliders
                 [
                     'title' => 'البنرات (Sliders)',
                     'icon' => 'far fa-circle',
@@ -108,6 +112,7 @@ return [
             ],
         ],
 
+        // Orders Group
         [
             'title' => 'الطلبات',
             'icon' => 'fas fa-shopping-cart',
@@ -116,6 +121,7 @@ return [
             'active_routes' => ['orders.*'],
             'permission' => 'orders.access',
             'children' => [
+                // All Orders
                 [
                     'title' => 'كل الطلبات',
                     'icon' => 'fas fa-list',
@@ -123,6 +129,7 @@ return [
                     'active_routes' => ['orders.index', 'orders.show'],
                     'permission' => 'orders.all',
                 ],
+                // Delivery Orders
                 [
                     'title' => 'طلبات التوصيل',
                     'icon' => 'fas fa-motorcycle',
@@ -130,6 +137,7 @@ return [
                     'active_routes' => ['orders.delivery'],
                     'permission' => 'orders.delivery',
                 ],
+                // Pickup Orders
                 [
                     'title' => 'طلبات الاستلام',
                     'icon' => 'fas fa-hand-holding',
@@ -137,6 +145,7 @@ return [
                     'active_routes' => ['orders.pickup'],
                     'permission' => 'orders.pickup',
                 ],
+                // Local Orders
                 [
                     'title' => 'الطلبات المحلية',
                     'icon' => 'fas fa-store',
@@ -144,6 +153,7 @@ return [
                     'active_routes' => ['orders.local'],
                     'permission' => 'orders.local',
                 ],
+                // POS Orders
                 [
                     'title' => 'نقاط البيع',
                     'icon' => 'fas fa-cash-register',
@@ -151,29 +161,33 @@ return [
                     'active_routes' => ['pos.*'],
                     'permission' => 'pos.access',
                 ],
+                // Invoices
                 [
                     'title' => 'الفواتير',
                     'icon' => 'fas fa-file-invoice-dollar',
                     'route' => 'invoices.index',
                     'active_routes' => ['invoices.*'],
                 ],
-                // [
-                //     'title' => 'طلبات المنيو',
-                //     'icon' => 'far fa-circle',
-                //     'route' => 'orders.index',
-                //     'active_routes' => ['orders.index'],
-                //     'query' => ['source' => 'menu'],
-                // ],
-                // [
-                //     'title' => 'طلبات نقاط البيع',
-                //     'icon' => 'far fa-circle',
-                //     'route' => 'orders.index',
-                //     'active_routes' => ['orders.index'],
-                //     'query' => ['source' => 'pos'],
-                // ],
+                // Menu Orders
+                [
+                    'title' => 'طلبات المنيو',
+                    'icon' => 'far fa-circle',
+                    'route' => 'orders.index',
+                    'active_routes' => ['orders.index'],
+                    'query' => ['source' => 'menu'],
+                ],
+                // POS Orders
+                [
+                    'title' => 'طلبات نقاط البيع',
+                    'icon' => 'far fa-circle',
+                    'route' => 'orders.index',
+                    'active_routes' => ['orders.index'],
+                    'query' => ['source' => 'pos'],
+                ],
             ],
         ],
 
+        // Management Group
         [
             'title' => 'الأدارة',
             'icon' => 'fas fa-user-shield',
@@ -182,6 +196,7 @@ return [
             'active_routes' => ['users.*', 'roles.*', 'branches.*', 'shifts.*', 'attendances.*', 'branch-creation-requests.*', 'branch-links.*'],
             'permission' => 'management.access',
             'children' => [
+                // Users
                 [
                     'title' => 'المستخدمين',
                     'icon' => 'fas fa-user',
@@ -189,24 +204,28 @@ return [
                     'active_routes' => ['users.index', 'users.create', 'users.edit'],
                     'permission' => 'users.access',
                 ],
+                // Delivery
                 [
                     'title' => 'عمال التوصيل',
                     'icon' => 'fas fa-motorcycle',
                     'route' => 'delivery_men.index',
                     'active_routes' => ['delivery_men.*'],
                 ],
+                // Staff (Cashiers)
                 [
                     'title' => 'الموظفين (الكاشير)',
                     'icon' => 'fas fa-cash-register',
-                    'route' => 'users.staff',
-                    'active_routes' => ['users.staff'],
+                    'route' => 'staff.index',
+                    'active_routes' => ['staff.index.*'],
                 ],
+                // Customers
                 [
                     'title' => 'العملاء',
                     'icon' => 'fas fa-users',
                     'route' => 'users.customers',
                     'active_routes' => ['users.customers'],
                 ],
+                // Roles & Permissions
                 [
                     'title' => 'الأدوار والصلاحيات',
                     'icon' => 'fas fa-key',
@@ -214,6 +233,7 @@ return [
                     'active_routes' => ['roles.*'],
                     'permission' => 'roles.access',
                 ],
+                // Branches
                 [
                     'title' => 'الفروع',
                     'icon' => 'fas fa-store',
@@ -221,6 +241,7 @@ return [
                     'active_routes' => ['branches.*'],
                     'permission' => 'branches.access',
                 ],
+                // Branch Creation Requests
                 [
                     'title' => 'طلب إضافة فرع',
                     'icon' => 'fas fa-plus-circle',
@@ -228,7 +249,7 @@ return [
                     'active_routes' => ['branch-creation-requests.*'],
                     'permission' => 'branch_creation_request.access',
                 ],
-
+                // Branch Links
                 [
                     'title' => 'ربط الفروع',
                     'icon' => 'fas fa-link',
@@ -236,6 +257,7 @@ return [
                     'active_routes' => ['branch-links.*'],
                     'permission' => 'branch_links.access',
                 ],
+                // Attendances
                 [
                     'title' => 'تسجيل الحضور والانصراف',
                     'icon' => 'fas fa-clock',
@@ -243,6 +265,7 @@ return [
                     'active_routes' => ['attendances.*'],
                     'permission' => 'attendances.access',
                 ],
+                // Shifts
                 [
                     'title' => 'الشيفتات',
                     'icon' => 'fas fa-user-clock',
@@ -250,6 +273,7 @@ return [
                     'active_routes' => ['shifts.*'],
                     'permission' => 'shifts.access',
                 ],
+                // Cashier Cash Reports
                 [
                     'title' => 'تقرير عهدة الكاشير',
                     'icon' => 'fas fa-wallet',
@@ -259,7 +283,7 @@ return [
                 ],
             ],
         ],
-
+        // Inventory & Items Module
         [
             'title' => 'المخزن',
             'icon' => 'fas fa-warehouse',
@@ -268,13 +292,8 @@ return [
             'active_routes' => ['inventory.*', 'units.*'],
             'permission' => 'inventory.access',
             'children' => [
-                [
-                    'title' => 'الموردون',
-                    'icon' => 'fas fa-truck',
-                    'route' => 'inventory.suppliers.index',
-                    'active_routes' => ['inventory.suppliers.*'],
-                    'permission' => 'inventory.suppliers',
-                ],
+               
+                // Categories inventory
                 [
                     'title' => 'فئات المخزون',
                     'icon' => 'fas fa-tags',
@@ -282,6 +301,7 @@ return [
                     'active_routes' => ['inventory.categories.*'],
                     'permission' => 'inventory.categories',
                 ],
+                // Units
                 [
                     'title' => 'وحدات القياس',
                     'icon' => 'fas fa-balance-scale',
@@ -289,6 +309,7 @@ return [
                     'active_routes' => ['units.*'],
                     'permission' => 'units.access',
                 ],
+                // Materials
                 [
                     'title' => 'مواد المخزن',
                     'icon' => 'fas fa-boxes',
@@ -296,6 +317,7 @@ return [
                     'active_routes' => ['inventory.materials.*'],
                     'permission' => 'inventory.materials',
                 ],
+                // Purchase Requests
                 [
                     'title' => 'طلبات الشراء',
                     'icon' => 'fas fa-file-alt',
@@ -303,6 +325,7 @@ return [
                     'active_routes' => ['inventory.purchase-requests.*'],
                     'permission' => 'inventory.purchase_requests',
                 ],
+                // Purchase Orders
                 [
                     'title' => 'أوامر الشراء',
                     'icon' => 'fas fa-shopping-cart',
@@ -310,6 +333,7 @@ return [
                     'active_routes' => ['inventory.purchase-orders.*'],
                     'permission' => 'inventory.purchase_orders',
                 ],
+                // Receipts
                 [
                     'title' => 'الشراء / الاستلام',
                     'icon' => 'fas fa-dolly',
@@ -317,6 +341,7 @@ return [
                     'active_routes' => ['inventory.receipts.*'],
                     'permission' => 'inventory.receipts',
                 ],
+                // Production Orders
                 [
                     'title' => 'الإنتاج',
                     'icon' => 'fas fa-industry',
@@ -324,6 +349,7 @@ return [
                     'active_routes' => ['inventory.production-orders.*'],
                     'permission' => 'inventory.production_orders',
                 ],
+                // Transfer Requests
                 [
                     'title' => 'طلبات التحويل',
                     'icon' => 'fas fa-exchange-alt',
@@ -331,6 +357,7 @@ return [
                     'active_routes' => ['inventory.transfer-requests.*'],
                     'permission' => 'inventory.transfer_requests',
                 ],
+                // Stock Counts
                 [
                     'title' => 'جرد المخزن',
                     'icon' => 'fas fa-clipboard-check text-warning',
@@ -338,6 +365,7 @@ return [
                     'active_routes' => ['inventory.stock-counts.*'],
                     'permission' => 'inventory.stock_counts',
                 ],
+                // Inventory Movements
                 [
                     'title' => 'حركات المخزون',
                     'icon' => 'fas fa-random',
@@ -345,6 +373,7 @@ return [
                     'active_routes' => ['inventory.movements.*'],
                     'permission' => 'inventory.movements',
                 ],
+                // Inventory Dashboard
                 [
                     'title' => 'لوحة المخزن',
                     'icon' => 'fas fa-chart-line',
@@ -355,6 +384,42 @@ return [
             ],
         ],
 
+        // Purchases Module  (new)
+        [
+            'title' => 'المشتريات',
+            'icon' => 'fas fa-shopping-cart',
+            'type' => 'dropdown',
+            'id' => 'purchases-menu',
+            'active_routes' => ['inventory.suppliers.index.*'],
+            'children' => [
+                [
+                    'title' => 'الموردون',
+                    'icon' => 'fas fa-truck',
+                    'route' => 'inventory.suppliers.index',
+                    'active_routes' => ['inventory.suppliers.*'],
+                    'permission' => 'inventory.suppliers',
+                ],
+            ],
+        ],
+
+        // Purchases Module  (new)
+        [
+            'title' => 'المصروفات',
+            'icon' => 'fas fa-shopping-cart',
+            'type' => 'dropdown',
+            'id' => 'Expense-menu',
+            'active_routes' => ['expense.*', 'purchases.*'],
+            'children' => [
+                [
+                    'title' => 'تسجيل المصروفات',
+                    'icon' => 'far fa-circle',
+                    'route' => 'expenses.index',
+                    'active_routes' => ['expenses.*'],
+                ],
+            ],
+        ],
+
+        // Reports Group
         [
             'title' => 'التقارير',
             'icon' => 'fas fa-chart-line',
@@ -386,6 +451,8 @@ return [
                 ],
             ],
         ],
+
+        // Settings Group
 
         [
             'title' => 'الإعدادات',

@@ -39,8 +39,11 @@ use App\Http\Controllers\Dashboard\SuperAdmin\TermsAndConditionsController;
 use App\Http\Controllers\Dashboard\TableController;
 use App\Http\Controllers\Dashboard\TransferRequestController;
 use App\Http\Controllers\DeliveryManController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\PurchaseInvoiceController;
+use App\Http\Controllers\Salary_mcontroller;
+use App\Http\Controllers\stuffcontroller;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\Web\RoleController;
@@ -52,6 +55,12 @@ use App\Models\Shift;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Root Redirect Route
+|--------------------------------------------------------------------------
+| Handles the first landing redirect according to authentication and role.
+*/
 // Route::redirect('/', '/dashboard');
 Route::get('/', function () {
     if (!auth()->check()) {
@@ -75,11 +84,23 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Guest Authentication Routes
+|--------------------------------------------------------------------------
+| Login form and login submit routes for unauthenticated users.
+*/
 Route::middleware('guest')->group(function () {
     Route::get('/login', [DashboardAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [DashboardAuthController::class, 'webLogin']);
 });
 
+/*
+|--------------------------------------------------------------------------
+| Authenticated Logout Routes
+|--------------------------------------------------------------------------
+| Routes related to logout and shift information before logout.
+*/
 Route::get('/logout-shift-info', [DashboardAuthController::class, 'logoutShiftInfo'])
     ->middleware('auth')
     ->name('logout.shift.info');
@@ -88,9 +109,20 @@ Route::post('/logout', [DashboardAuthController::class, 'webLogout'])
     ->middleware('auth')
     ->name('logout');
 
+/*
+|--------------------------------------------------------------------------
+| Inactive Page Route
+|--------------------------------------------------------------------------
+*/
 Route::get('/inactive', function () {
     return view('inactive');
 })->name('inactive');
+
+/*
+|--------------------------------------------------------------------------
+| Cache Clear Utility Route
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/clear-cache', function () {
     Artisan::call('view:clear');
@@ -140,16 +172,31 @@ Route::middleware(['auth', 'active'])->group(function () {
 });
 
 Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard Counters
+    |--------------------------------------------------------------------------
+    */
     Route::get('/orders-count', function () {
         return response()->json([
             'count' => Order::count(),
         ]);
     })->middleware('package.permission:dashboard.access')->name('orders.count');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Invoices
+    |--------------------------------------------------------------------------
+    */
     // Invoices
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/invoices/{order}/print', [InvoiceController::class, 'print'])->name('invoices.print');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cashier Cash Reports
+    |--------------------------------------------------------------------------
+    */
     // Cashier Cash Reports
     Route::get('/cashier-cash-reports', [CashierCashReportController::class, 'index'])
     ->middleware([
@@ -229,6 +276,11 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
             ->name('serve');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Order Placeholder Routes
+    |--------------------------------------------------------------------------
+    */
     Route::get('/orders/new', function () {
         return redirect()->route('under.development');
     })->middleware([
@@ -356,6 +408,10 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         'package.permission:shifts.access',
         'branch.permissions:shifts.access',
     ])->name('shifts.pause');
+
+    Route::resource('staff', stuffcontroller::class);
+    Route::resource('salary_m', Salary_mcontroller::class);
+    Route::resource('expenses', ExpenseController::class);
 
     /*
     |--------------------------------------------------------------------------
@@ -623,6 +679,11 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
             ->name('composite.recipe.remove');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Branch Creation Requests
+    |--------------------------------------------------------------------------
+    */
     // Branch Creation Requests
     Route::resource('branch-creation-requests', BranchCreationRequestController::class)
     ->middleware([
@@ -638,6 +699,11 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         ->name('branch-creation-requests.reject')
         ->middleware('super_admin');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Branch Links
+    |--------------------------------------------------------------------------
+    */
     // Branch Links
     Route::get('branch-links', [BranchLinkController::class, 'index'])
     ->name('branch-links.index')
