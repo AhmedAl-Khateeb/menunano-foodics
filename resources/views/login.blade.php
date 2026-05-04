@@ -89,12 +89,30 @@
         a:hover {
             color: #2980b9;
         }
+
+      @media  (min-width:1200px)
+{
+        .login-page, .register-page {
+    -ms-flex-align: center;
+    align-items: flex-start;
+    background-color: #e9ecef;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    height: 100vh;
+    -ms-flex-pack: center;
+    justify-content: center;
+}
+}
+
+        
     </style>
 </head>
 
-<body class="hold-transition login-page">
+<body class="hold-transition login-page" style="background: url(../images/MenuNano.png) no-repeat center center fixed; background-size: cover;     margin-left: 20px; ">
     <div class="login-box">
-        <div class="login-logo">
+        <div class="login-logo" style="align-content: flex-start;">
             <b>{{ \App\Models\Setting::where('key', 'name')->first()->value }}</b>
         </div>
 
