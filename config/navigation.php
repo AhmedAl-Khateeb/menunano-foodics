@@ -114,7 +114,7 @@ return [
 
         // Orders Group
         [
-            'title' => 'الطلبات',
+            'title' => 'الطلبات ونقاط البيع',
             'icon' => 'fas fa-shopping-cart',
             'type' => 'dropdown',
             'id' => 'orders-menu',
@@ -189,7 +189,7 @@ return [
 
         // Management Group
         [
-            'title' => 'الأدارة',
+            'title' => 'الأشخاص',
             'icon' => 'fas fa-user-shield',
             'type' => 'dropdown',
             'id' => 'users-menu',
