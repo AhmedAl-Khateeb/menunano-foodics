@@ -17,6 +17,7 @@ use App\Http\Controllers\Dashboard\InventoryDashboardController;
 use App\Http\Controllers\Dashboard\InventoryMovementController;
 use App\Http\Controllers\Dashboard\InvoiceController;
 use App\Http\Controllers\Dashboard\OrderController;
+use App\Http\Controllers\Dashboard\PosPrintController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\ProductionOrderController;
 use App\Http\Controllers\Dashboard\PurchaseOrderController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Dashboard\RawMaterialController;
 use App\Http\Controllers\Dashboard\ReadyItemController;
 use App\Http\Controllers\Dashboard\SettingController;
 use App\Http\Controllers\Dashboard\ShiftController;
+use App\Http\Controllers\Dashboard\ShiftReceiptController;
 use App\Http\Controllers\Dashboard\ShowController;
 use App\Http\Controllers\Dashboard\SliderController;
 use App\Http\Controllers\Dashboard\StockCountController;
@@ -191,6 +193,15 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     // Invoices
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/invoices/{order}/print', [InvoiceController::class, 'print'])->name('invoices.print');
+
+    // Shift closing receipt
+    Route::get('/pos/shifts/{shift}/closing-receipt', [ShiftReceiptController::class, 'show'])
+        ->name('pos.shift.closing-reipt');
+
+    // pos routes print
+    Route::get('/pos/orders/{order}/print-two', [PosPrintController::class, 'printTwo'])
+    ->middleware(['auth'])
+    ->name('pos.orders.print-two');
 
     /*
     |--------------------------------------------------------------------------

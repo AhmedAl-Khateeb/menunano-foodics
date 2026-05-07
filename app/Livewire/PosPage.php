@@ -5,7 +5,9 @@ namespace App\Livewire;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\Shift;
+use App\Models\User;
 use App\Services\StoreService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Session;
 use Livewire\Attributes\Title;
@@ -55,6 +57,15 @@ class PosPage extends Component
     public $tables = [];
     public $deliveryMen = [];
 
+    public $businessTypeSlug = 'rest';
+
+    public $availableOrderTypes = [
+        'takeaway',
+        'table',
+        'free_seating',
+        'delivery',
+    ];
+
     // Shift Properties
     public $requiresShiftStart = false;
     public $shiftStartingCash = '';
@@ -81,6 +92,8 @@ class PosPage extends Component
 
     public $suggestedStartingCash = 0;
     public $hasPreviousClosedShift = false;
+
+    public $kitchenNote = '';
 
     // Computed Property to fetch product safely
     public function getSelectedProductForSizeProperty()
@@ -137,6 +150,8 @@ class PosPage extends Component
     {
         // Fetch dynamic payment methods
         $storeId = StoreService::getStoreOwnerId();
+        $this->loadBusinessType($storeId);
+        $this->normalizeOrderType();
 
         $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', true)
             ->where('created_by', $storeId)
@@ -156,13 +171,13 @@ class PosPage extends Component
             ->get();
 
         // Default payment method
-        /** @var \App\Models\PaymentMethod $firstPaymentMethod */
-        $firstPaymentMethod = $this->paymentMethods->first();
+        /* @var \App\Models\PaymentMethod $firstPaymentMethod */
+        // $firstPaymentMethod = $this->paymentMethods->first();
 
-        if ($firstPaymentMethod) {
-            $this->paymentMethod = $firstPaymentMethod->id;
-        }
-
+        // if ($firstPaymentMethod) {
+        //     $this->paymentMethod = $firstPaymentMethod->id;
+        // }
+        $this->paymentMethod = 'cash';
         // فحص هل يوجد شيفت مفتوح أم لا
         $this->checkActiveShift();
 
@@ -182,7 +197,7 @@ class PosPage extends Component
 
     public function checkActiveShift()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
         if (!$user) {
             return;
@@ -226,27 +241,21 @@ class PosPage extends Component
             return;
         }
 
+        $this->validate([
+            'shiftStartingCash' => 'required|numeric|min:0',
+        ], [
+            'shiftStartingCash.required' => 'يرجى إدخال مبلغ الدرج الافتتاحي',
+            'shiftStartingCash.numeric' => 'يجب أن يكون المبلغ رقماً',
+            'shiftStartingCash.min' => 'لا يمكن أن يكون المبلغ بالسالب',
+        ]);
+
+        $startingCash = (float) $this->shiftStartingCash;
+
         $lastClosedShift = Shift::where('branch_id', $branchId)
             ->where('status', 'closed')
             ->whereNotNull('end_time')
             ->latest('end_time')
             ->first();
-
-        if ($lastClosedShift) {
-            // القيمة من الجدول إجباريًا
-            $startingCash = (float) ($lastClosedShift->carryover_to_next_shift ?? 0);
-        } else {
-            // أول شيفت فقط يسمح بإدخال يدوي
-            $this->validate([
-                'shiftStartingCash' => 'required|numeric|min:0',
-            ], [
-                'shiftStartingCash.required' => 'يرجى إدخال مبلغ الدرج الافتتاحي',
-                'shiftStartingCash.numeric' => 'يجب أن يكون المبلغ رقماً',
-                'shiftStartingCash.min' => 'لا يمكن أن يكون المبلغ بالسالب',
-            ]);
-
-            $startingCash = (float) $this->shiftStartingCash;
-        }
 
         $newShift = Shift::create([
             'user_id' => auth()->id(),
@@ -292,31 +301,24 @@ class PosPage extends Component
 
     private function loadSuggestedStartingCash()
     {
-        $branchId = $this->getBranchIdForCurrentUser();
+        $this->suggestedStartingCash = 0;
+        $this->shiftStartingCash = '';
+        $this->hasPreviousClosedShift = false;
+    }
 
-        if (!$branchId) {
-            $this->suggestedStartingCash = 0;
-            $this->shiftStartingCash = 0;
-            $this->hasPreviousClosedShift = false;
+    // دفع الكاش
+    public function selectCashPayment()
+    {
+        $this->paymentMethod = 'cash';
+        $this->paidAmount = (float) $this->total;
+        $this->updatedPaidAmount();
+    }
 
-            return;
-        }
-
-        $lastClosedShift = Shift::where('branch_id', $branchId)
-            ->where('status', 'closed')
-            ->whereNotNull('end_time')
-            ->latest('end_time')
-            ->first();
-
-        if ($lastClosedShift) {
-            $this->hasPreviousClosedShift = true;
-            $this->suggestedStartingCash = (float) ($lastClosedShift->carryover_to_next_shift ?? 0);
-            $this->shiftStartingCash = $this->suggestedStartingCash;
-        } else {
-            $this->hasPreviousClosedShift = false;
-            $this->suggestedStartingCash = 0;
-            $this->shiftStartingCash = 0;
-        }
+    public function selectPaymentMethod($methodId)
+    {
+        $this->paymentMethod = (string) $methodId;
+        $this->paidAmount = (float) $this->total;
+        $this->changeAmount = 0;
     }
 
     public function openEndShiftModal()
@@ -372,7 +374,14 @@ class PosPage extends Component
 
         $activeShift = Shift::where('user_id', auth()->id())
             ->where('status', 'active')
+            ->latest()
             ->first();
+
+        if (!$activeShift) {
+            session()->flash('error', 'لا يوجد شيفت مفتوح لهذا المستخدم.');
+
+            return;
+        }
 
         $difference = (float) $this->shiftEndingCash - (float) $this->shiftExpectedCash;
 
@@ -382,15 +391,14 @@ class PosPage extends Component
             return;
         }
 
-        if ($activeShift) {
-            app(\App\Services\ShiftService::class)->closeShift($activeShift, [
-                'ending_cash' => $this->shiftEndingCash,
-                'notes' => $this->shiftCloseNote,
-            ]);
-        }
+        app(\App\Services\ShiftService::class)->closeShift($activeShift, [
+            'ending_cash' => $this->shiftEndingCash,
+            'notes' => $this->shiftCloseNote,
+        ]);
 
         $this->showEndShiftModal = false;
-        $this->requiresShiftStart = true;
+
+        return redirect()->route('pos.shift.closing-reipt', $activeShift->id);
     }
 
     public function openShiftExpenseModal()
@@ -484,7 +492,7 @@ class PosPage extends Component
 
             return;
         }
-        $managerId = \App\Models\User::where('role', 'admin')->value('id');
+        $managerId = User::where('role', 'admin')->value('id');
 
         \App\Models\CashTransfer::create([
             'from_shift_id' => $activeShift->id,
@@ -822,8 +830,73 @@ class PosPage extends Component
         $this->updatedPaidAmount();
     }
 
+    private function loadBusinessType($storeOwnerId)
+    {
+        $this->businessTypeSlug = 'rest';
+
+        $user = User::find($storeOwnerId);
+
+        $businessTypeId = $user?->business_type_id ?? null;
+
+        if ($businessTypeId) {
+            $slug = DB::table('business_types')
+                ->where('id', $businessTypeId)
+                ->where('is_active', 1)
+                ->value('slug');
+
+            $this->businessTypeSlug = $slug ?: 'rest';
+        }
+
+        if ($this->businessTypeSlug === 'acc') {
+            // محل
+            $this->availableOrderTypes = [
+                'takeaway',
+                'delivery',
+            ];
+
+            return;
+        }
+
+        // مطعم
+        $this->availableOrderTypes = [
+            'takeaway',
+            'table',
+            'free_seating',
+            'delivery',
+        ];
+    }
+
+    private function normalizeOrderType()
+    {
+        if (!in_array($this->orderType, $this->availableOrderTypes, true)) {
+            $this->orderType = 'takeaway';
+            $this->selectedTableId = null;
+        }
+    }
+
+    public function setOrderType($type)
+    {
+        if (!in_array($type, $this->availableOrderTypes, true)) {
+            return;
+        }
+
+        $this->orderType = $type;
+
+        if ($type !== 'table') {
+            $this->selectedTableId = null;
+        }
+
+        if ($type !== 'delivery') {
+            $this->deliveryFee = 0;
+            $this->selectedDeliveryManId = null;
+        }
+
+        $this->calculateTotal();
+    }
+
     public function updatedOrderType()
     {
+        $this->normalizeOrderType();
         $this->calculateTotal();
     }
 
@@ -866,9 +939,9 @@ class PosPage extends Component
         }
 
         $activeShift = Shift::where('user_id', auth()->id())
-    ->where('status', 'active')
-    ->latest()
-    ->first();
+            ->where('status', 'active')
+            ->latest()
+            ->first();
 
         if (!$activeShift) {
             session()->flash('error', 'لا يوجد شيفت مفتوح لهذا المستخدم.');
@@ -876,53 +949,60 @@ class PosPage extends Component
             return;
         }
 
-        // DB Transaction to ensure data integrity
-        \Illuminate\Support\Facades\DB::transaction(function () use ($isDraft, $activeShift) {
-            // Determine Store Owner ID
-            $userId = auth()->id();
-            $storeOwnerId = auth()->user()->role === 'super_admin' ? $userId : (auth()->user()->created_by ?? $userId);
+        $savedOrderId = null;
 
-            // Handle Customer (Find or Create)
+        DB::transaction(function () use ($isDraft, $activeShift, &$savedOrderId) {
+            $userId = auth()->id();
+
+            $storeOwnerId = auth()->user()->role === 'super_admin'
+                ? $userId
+                : (auth()->user()->created_by ?? $userId);
+
             $finalCustomerId = $this->selectedCustomerId;
 
             if (!$finalCustomerId && !empty($this->customerPhone) && !empty($this->customerName)) {
-                // Create New Customer
                 $customer = \App\Models\Customer::create([
                     'user_id' => $storeOwnerId,
                     'name' => $this->customerName,
                     'phone' => $this->customerPhone,
                 ]);
+
                 $finalCustomerId = $customer->id;
             }
 
-            // Handle Existing Table Order
             $order = null;
+
             if ($this->orderType === 'table' && $this->selectedTableId) {
                 $order = \App\Models\Order::where('table_id', $this->selectedTableId)
-                                          ->where('status', 'pending')
-                                          ->where('user_id', $storeOwnerId)
-                                          ->first();
+                    ->where('status', 'pending')
+                    ->where('user_id', $storeOwnerId)
+                    ->first();
             }
 
             $orderStatus = $isDraft ? 'pending' : 'served';
 
             if ($order) {
-                // Append to existing Order
                 $order->update([
                     'shift_id' => $order->shift_id ?? $activeShift->id,
-                    'total_price' => $order->total_price + $this->total,
-                    // If it's being paid now, update status and payment details
+                    'customer_id' => $finalCustomerId ?? $order->customer_id,
+                    'total_price' => $this->total,
                     'status' => $orderStatus,
                     'payment_method' => $isDraft ? $order->payment_method : $this->paymentMethod,
                     'paid_amount' => $isDraft ? $order->paid_amount : $this->paidAmount,
                     'change_amount' => $isDraft ? $order->change_amount : $this->changeAmount,
+                    'delivery_fee' => $this->orderType === 'delivery' ? $this->deliveryFee : 0,
+                    'delivery_man_id' => $this->orderType === 'delivery' ? $this->selectedDeliveryManId : null,
+                    'kitchen_note' => !empty($this->kitchenNote) ? $this->kitchenNote : $order->kitchen_note,
                 ]);
+
+                DB::table('order_product_sizes')
+                    ->where('order_id', $order->id)
+                    ->delete();
             } else {
-                // Create New Order
                 $order = \App\Models\Order::create([
                     'user_id' => $storeOwnerId,
                     'shift_id' => $activeShift->id,
-                    'customer_id' => $finalCustomerId, // Linked Customer
+                    'customer_id' => $finalCustomerId,
                     'status' => $orderStatus,
                     'type' => $this->orderType,
                     'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
@@ -933,30 +1013,28 @@ class PosPage extends Component
                     'change_amount' => $isDraft ? 0 : $this->changeAmount,
                     'delivery_fee' => $this->orderType === 'delivery' ? $this->deliveryFee : 0,
                     'delivery_man_id' => $this->orderType === 'delivery' ? $this->selectedDeliveryManId : null,
+                    'kitchen_note' => !empty($this->kitchenNote) ? $this->kitchenNote : null,
                 ]);
             }
 
-            // Create Order Product Sizes (Pivot Table)
             foreach ($this->cart as $item) {
-                $productSizeId = $item['size_id'];
+                $productSizeId = $item['size_id'] ?? null;
 
-                // Handle Simple Products (No Size Selected)
                 if (!$productSizeId) {
-                    // Check if any size exists or create default
                     $productSize = \App\Models\ProductSize::where('product_id', $item['id'])->first();
 
                     if (!$productSize) {
-                        // Auto-create a default size for this product to satisfy DB constraints
                         $productSize = \App\Models\ProductSize::create([
                             'product_id' => $item['id'],
                             'size' => 'Standard',
                             'price' => $item['price'],
                         ]);
                     }
+
                     $productSizeId = $productSize->id;
                 }
 
-                \Illuminate\Support\Facades\DB::table('order_product_sizes')->insert([
+                DB::table('order_product_sizes')->insert([
                     'order_id' => $order->id,
                     'product_size_id' => $productSizeId,
                     'quantity' => $item['quantity'],
@@ -966,8 +1044,13 @@ class PosPage extends Component
                 ]);
             }
 
+            $savedOrderId = $order->id;
             $this->lastOrderId = $order->id;
         });
+
+        if (!$isDraft) {
+            return redirect()->route('pos.orders.print-two', $savedOrderId);
+        }
 
         $this->showSuccessModal = true;
     }
@@ -1017,7 +1100,7 @@ class PosPage extends Component
             return;
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
         $storeOwnerId = $user->role === 'super_admin' ? $user->id : ($user->getAttribute('created_by') ?? $user->id);
 
@@ -1027,11 +1110,11 @@ class PosPage extends Component
             ->where('user_id', $storeOwnerId)
             ->first();
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($sourceOrder, $targetOrder) {
+        DB::transaction(function () use ($sourceOrder, $targetOrder) {
             if ($targetOrder) {
                 // Target has an active order, transfer items and update totals
                 foreach ($sourceOrder->items as $item) {
-                    \Illuminate\Support\Facades\DB::table('order_product_sizes')->insert([
+                    DB::table('order_product_sizes')->insert([
                         'order_id' => $targetOrder->id,
                         'product_size_id' => $item->pivot->product_size_id,
                         'quantity' => $item->pivot->quantity,
@@ -1078,6 +1161,7 @@ class PosPage extends Component
         $this->deliveryFee = 0;
         $this->selectedDeliveryManId = null;
         $this->activeTab = 'products';
+        $this->kitchenNote = '';
     }
 
     public function selectTable($tableId)
