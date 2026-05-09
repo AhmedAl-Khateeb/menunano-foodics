@@ -420,7 +420,7 @@
             </div>
 
             <!-- Sidebar Links -->
-            <div class="flex-1 overflow-y-auto no-scrollbar py-4 space-y-2 text-right">
+            <div class="flex-1 overflow-y-auto  py-4 space-y-2 text-right">   <!-- no-scrollbar -->
                 @php
                     $role = auth()->user()->role;
                     $menuItems = config('navigation.' . $role, []);
