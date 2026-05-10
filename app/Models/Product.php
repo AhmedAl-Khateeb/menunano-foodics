@@ -14,8 +14,10 @@ class Product extends Model
         'cover',
         'price',
         'category_id',
-        'type'
+        'type',
+      
     ];
+
 
     public function inventory()
     {
@@ -39,14 +41,14 @@ class Product extends Model
 
     public function user()
     {
-       return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function scopeCategoryFilter(Builder $builder)
     {
         $category_id = request()->query('category') ?? null;
-        $builder->when($category_id,function ($builder,$value){
-            $builder->where('category_id',$value);
+        $builder->when($category_id, function ($builder, $value) {
+            $builder->where('category_id', $value);
         });
     }
 
@@ -57,29 +59,36 @@ class Product extends Model
 
     public function getMaxProductionQuantityAttribute()
     {
-        if ($this->recipes->isEmpty())  return 0;
-        
+        if ($this->recipes->isEmpty()) {
+            return 0;
+        }
+
         $min_production = null;
         foreach ($this->recipes->whereNull('product_size_id') as $recipe) {
-            if (!$recipe->ingredient || !$recipe->ingredient->inventory) continue;
+            if (!$recipe->ingredient || !$recipe->ingredient->inventory) {
+                continue;
+            }
 
             $ingredient_stock = max(0, $recipe->ingredient->inventory->current_quantity ?? 0);
-            
+
             // If any ingredient is out of stock, max production is zero
             if ($ingredient_stock <= 0) {
                 $min_production = 0;
                 break;
             }
-            
+
             // Prevent division by zero and invalid recipe quantities
-            if ($recipe->quantity <= 0) continue;
-            
+            if ($recipe->quantity <= 0) {
+                continue;
+            }
+
             $possible = (int) floor($ingredient_stock / $recipe->quantity);
-            
+
             if ($min_production === null || $possible < $min_production) {
                 $min_production = $possible;
             }
         }
+
         return $min_production ?? 0;
     }
 }

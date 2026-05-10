@@ -12,7 +12,7 @@ class ProductSize extends Model
     protected $fillable = [
         'size',
         'price',
-        'product_id'
+        'product_id',
     ];
 
     public function getMaxProductionQuantityAttribute()
@@ -20,34 +20,39 @@ class ProductSize extends Model
         // Combine Common Ingredients (null size) and Specific Ingredients
         $commonRecipes = $this->product->recipes()->whereNull('product_size_id')->get();
         $specificRecipes = $this->recipes;
-        
+
         $allRecipes = $commonRecipes->concat($specificRecipes);
 
-        if ($allRecipes->isEmpty()) return 0;
-        
+        if ($allRecipes->isEmpty()) {
+            return 0;
+        }
+
         $min_production = null;
         foreach ($allRecipes as $recipe) {
-            if (!$recipe->ingredient || !$recipe->ingredient->inventory) continue;
-            
+            if (!$recipe->ingredient || !$recipe->ingredient->inventory) {
+                continue;
+            }
+
             $ingredient_stock = max(0, $recipe->ingredient->inventory->current_quantity ?? 0);
-            
+
             // If any ingredient is out of stock, max production is zero
             if ($ingredient_stock <= 0) {
                 $min_production = 0;
                 break;
             }
-            
+
             // Prevent division by zero and invalid recipe quantities
-            if ($recipe->quantity <= 0) continue;
-            
+            if ($recipe->quantity <= 0) {
+                continue;
+            }
+
             $possible = (int) floor($ingredient_stock / $recipe->quantity);
-            
+
             if ($min_production === null || $possible < $min_production) {
                 $min_production = $possible;
             }
         }
+
         return $min_production ?? 0;
     }
-
-  
 }
