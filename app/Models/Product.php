@@ -12,7 +12,8 @@ class Product extends Model
         'user_id',
         'description',
         'cover',
-        'price',
+        'Purchase_price',
+        'selling_price',
         'category_id',
         'type'
     ];
