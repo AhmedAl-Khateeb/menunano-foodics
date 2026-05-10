@@ -249,6 +249,21 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
             ])
             ->name('index');
 
+        Route::put('/orders/{order}/delivery-return', [OrderController::class, 'returnDeliveryOrder'])
+        ->name('deliveryReturn');
+
+        Route::put('/orders/{order}/return', [OrderController::class, 'returnOrder'])
+            ->name('return');
+
+        Route::get('/orders/returned', [OrderController::class, 'returned'])
+          ->name('returned');
+
+        Route::put('/orders/{order}/restore-returned', [OrderController::class, 'restoreReturned'])
+        ->name('restoreReturned');
+
+        Route::put('/orders/{order}/source', [OrderController::class, 'updateSource'])
+            ->name('updateSource');
+
         Route::get('/delivery', [OrderController::class, 'delivery'])
             ->middleware([
                 'package.permission:orders.delivery',

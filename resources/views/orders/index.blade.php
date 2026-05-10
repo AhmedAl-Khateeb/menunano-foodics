@@ -23,6 +23,70 @@
         </div>
 
         {{-- ====== FILTERS ====== --}}
+
+
+        <div class="row mb-4">
+
+            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                <div class="card stats-card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted small">إجمالي الطلبات</div>
+                        <h4 class="mb-0">{{ $stats['total'] ?? 0 }}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                <div class="card stats-card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted small">انتظار</div>
+                        <h4 class="mb-0 text-danger">{{ $stats['pending'] ?? 0 }}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                <div class="card stats-card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted small">تم</div>
+                        <h4 class="mb-0 text-success">{{ $stats['served'] ?? 0 }}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                <div class="card stats-card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted small">مرتجع</div>
+                        <h4 class="mb-0 text-warning">{{ $stats['returned'] ?? 0 }}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                <div class="card stats-card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted small">إجمالي البيع</div>
+                        <h4 class="mb-0 text-primary">
+                            {{ number_format($stats['sales'] ?? 0, 2) }}
+                        </h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                <div class="card stats-card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-muted small">إجمالي الشراء</div>
+                        <h4 class="mb-0 text-info">
+                            {{ number_format($stats['purchase_total'] ?? 0, 2) }}
+                        </h4>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">
                 <form method="GET" class="form-row align-items-center">
@@ -53,6 +117,8 @@
                             <option value="">الحالات</option>
                             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="served" {{ request('status') == 'served' ? 'selected' : '' }}>Served</option>
+                            <option value="returned" {{ request('status') == 'returned' ? 'selected' : '' }}>Returned
+                            </option>
                         </select>
                     </div>
 
@@ -69,9 +135,8 @@
                     <div class="col-lg-1 col-md-4 mb-2">
                         <select name="source" class="form-control">
                             <option value="">المصادر</option>
-                            <option value="web" {{ request('source') == 'web' ? 'selected' : '' }}>Web</option>
-                            <option value="app" {{ request('source') == 'app' ? 'selected' : '' }}>App</option>
-                            <option value="pos" {{ request('source') == 'pos' ? 'selected' : '' }}>POS</option>
+                            <option value="online" {{ request('source') == 'online' ? 'selected' : '' }}>Online</option>
+                            <option value="cachire" {{ request('source') == 'cachire' ? 'selected' : '' }}>Cachire</option>
                         </select>
                     </div>
 
@@ -107,6 +172,7 @@
             <a href="{{ route('orders.pickup', ['type' => 'takeaway']) }}" class="btn btn-warning">استلام</a>
             {{-- <a href="{{ route('orders.index', ['type'=>'table']) }}" class="btn btn-success">طاولات</a> --}}
             <a href="{{ route('orders.local', ['type' => 'free_seating']) }}" class="btn btn-success">محلي</a>
+            <a href="{{ route('orders.returned') }}" class="btn btn-danger"> المرتجعات</a>
         </div>
 
         {{-- ====== TABLE ====== --}}
@@ -116,10 +182,16 @@
 
                     <thead class="bg-light">
                         <tr>
-                            <th>#</th>
-                            <th>الاسم</th>
-                            <th>الهاتف</th>
-                            <th>العنوان</th>
+                            <th>NU</th>
+                            <th>اسم الكاشير</th>
+                            {{-- <th>الهاتف</th> --}}
+                            {{-- <th>العنوان</th> --}}
+                            @if (($pageType ?? '') === 'delivery')
+                                <th>الدليفري</th>
+                                <th>حالة الدفع</th>
+                                <th>المدفوع</th>
+                                <th>المتبقي</th>
+                            @endif
                             <th>النوع</th>
                             <th>المصدر</th>
                             <th>الدفع</th>
@@ -133,13 +205,53 @@
                     <tbody>
                         @forelse($orders as $order)
                             <tr>
-                                <td>#{{ $order->id }}</td>
+                                <td>{{ $loop->iteration }}</td>
 
-                                <td>{{ $order->name ?? '-' }}</td>
+                                <td>{{ $order->cashier->name ?? '-' }}</td>
+                                {{-- <td>{{ $order->phone ?? '-' }}</td> --}}
 
-                                <td>{{ $order->phone ?? '-' }}</td>
+                                @if (($pageType ?? '') === 'delivery')
+                                    @php
+                                        $total = (float) ($order->total_price ?? 0);
+                                        $paid = (float) ($order->paid_amount ?? 0);
+                                        $remaining = max($total - $paid, 0);
+                                        $change = max($paid - $total, 0);
+                                    @endphp
 
-                                <td>{{ $order->address ?? '-' }}</td>
+                                    <td>
+                                        {{ $order->deliveryMan->name ?? 'غير محدد' }}
+                                    </td>
+
+                                    <td>
+                                        @if ($paid <= 0)
+                                            <span class="badge badge-danger">غير مدفوع</span>
+                                        @elseif ($remaining > 0)
+                                            <span class="badge badge-warning">دفع جزئي</span>
+                                        @else
+                                            <span class="badge badge-success">مدفوع</span>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        {{ number_format($paid, 2) }}
+                                    </td>
+
+                                    <td>
+                                        @if ($remaining > 0)
+                                            <span class="text-danger font-weight-bold">
+                                                {{ number_format($remaining, 2) }}
+                                            </span>
+                                        @elseif ($change > 0)
+                                            <span class="text-success font-weight-bold">
+                                                فكة: {{ number_format($change, 2) }}
+                                            </span>
+                                        @else
+                                            <span class="text-success font-weight-bold">
+                                                0.00
+                                            </span>
+                                        @endif
+                                    </td>
+                                @endif
 
                                 <td>
                                     @if ($order->type == 'delivery')
@@ -153,7 +265,58 @@
                                     @endif
                                 </td>
 
-                                <td>{{ strtoupper($order->source) }}</td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-sm dropdown-toggle
+                                           {{ $order->source == 'online' ? 'btn-primary' : 'btn-dark' }}"
+                                            type="button" data-toggle="dropdown" aria-haspopup="true"
+                                            aria-expanded="false">
+
+                                            @if ($order->source == 'online')
+                                                Online
+                                            @elseif ($order->source == 'cachire')
+                                                Cachire
+                                            @else
+                                                {{ $order->source ?? '-' }}
+                                            @endif
+                                        </button>
+
+                                        <div class="dropdown-menu text-center">
+
+                                            <form action="{{ route('orders.updateSource', $order->id) }}" method="POST"
+                                                class="swal-confirm-form" data-title="تغيير المصدر"
+                                                data-text="هل تريد تغيير مصدر الطلب إلى Online؟" data-icon="question"
+                                                data-confirm-button="نعم، تغيير" data-cancel-button="إلغاء"
+                                                data-confirm-color="#007bff" data-cancel-color="#6c757d">
+                                                @csrf
+                                                @method('PUT')
+
+                                                <input type="hidden" name="source" value="online">
+
+                                                <button type="submit" class="dropdown-item">
+                                                    Online
+                                                </button>
+                                            </form>
+
+                                            <form action="{{ route('orders.updateSource', $order->id) }}" method="POST"
+                                                class="swal-confirm-form" data-title="تغيير المصدر"
+                                                data-text="هل تريد تغيير مصدر الطلب إلى Cachire؟" data-icon="question"
+                                                data-confirm-button="نعم، تغيير" data-cancel-button="إلغاء"
+                                                data-confirm-color="#343a40" data-cancel-color="#6c757d">
+                                                @csrf
+                                                @method('PUT')
+
+                                                <input type="hidden" name="source" value="cachire">
+
+                                                <button type="submit" class="dropdown-item">
+                                                    Cachire
+                                                </button>
+                                            </form>
+
+                                        </div>
+                                    </div>
+                                </td>
 
                                 <td>{{ $order->payment_method }}</td>
 
@@ -162,6 +325,12 @@
                                 <td>
                                     @if ($order->status == 'served')
                                         <span class="badge badge-success status-check">تم</span>
+                                    @elseif ($order->status == 'returned')
+                                        @if (($pageType ?? '') === 'delivery' && $order->type === 'delivery')
+                                            <span class="badge badge-warning status-check">مرتجع دليفري</span>
+                                        @else
+                                            <span class="badge badge-warning status-check">مرتجع</span>
+                                        @endif
                                     @else
                                         <span class="badge badge-danger status-check">انتظار</span>
                                     @endif
@@ -170,20 +339,56 @@
                                 <td>{{ $order->created_at->format('Y-m-d') }}</td>
 
                                 <td>
-                                    <a href="{{ route('orders.show', $order->id) }}" class="btn btn-sm btn-info">
+                                    <a href="{{ route('orders.show', $order->id) }}" class="btn btn-sm btn-info mb-1">
                                         عرض
                                     </a>
 
-                                    @if ($order->status != 'served')
+                                    @if ($order->status == 'pending')
                                         <form action="{{ route('orders.serve', $order->id) }}" method="POST"
-                                            style="display:inline;">
+                                            style="display:inline;" class="swal-confirm-form" data-title="تأكيد الطلب"
+                                            data-text="هل أنت متأكد من تحويل الطلب إلى تم؟" data-icon="question"
+                                            data-confirm-button="نعم، تم" data-cancel-button="إلغاء"
+                                            data-confirm-color="#28a745" data-cancel-color="#6c757d">
                                             @csrf
                                             @method('PUT')
 
-                                            <button class="btn btn-success btn-sm">
+                                            <button type="submit" class="btn btn-success btn-sm mb-1">
                                                 تم التوصيل
                                             </button>
                                         </form>
+                                    @endif
+
+                                    @if ($order->status != 'returned')
+                                        @if (($pageType ?? '') === 'delivery' && $order->type === 'delivery')
+                                            <form action="{{ route('orders.deliveryReturn', $order->id) }}"
+                                                method="POST" style="display:inline;" class="swal-confirm-form"
+                                                data-title="مرتجع دليفري"
+                                                data-text="هل أنت متأكد من تحويل طلب التوصيل هذا إلى مرتجع؟"
+                                                data-icon="warning" data-confirm-button="نعم، تحويل لمرتجع"
+                                                data-cancel-button="إلغاء" data-confirm-color="#ffc107"
+                                                data-cancel-color="#6c757d">
+                                                @csrf
+                                                @method('PUT')
+
+                                                <button type="submit" class="btn btn-warning btn-sm mb-1">
+                                                    مرتجع دليفري
+                                                </button>
+                                            </form>
+                                        @elseif (($pageType ?? '') !== 'delivery')
+                                            <form action="{{ route('orders.return', $order->id) }}" method="POST"
+                                                style="display:inline;" class="swal-confirm-form"
+                                                data-title="تأكيد المرتجع"
+                                                data-text="هل أنت متأكد من تحويل هذا الطلب إلى مرتجع؟" data-icon="warning"
+                                                data-confirm-button="نعم، تحويل لمرتجع" data-cancel-button="إلغاء"
+                                                data-confirm-color="#ffc107" data-cancel-color="#6c757d">
+                                                @csrf
+                                                @method('PUT')
+
+                                                <button type="submit" class="btn btn-warning btn-sm mb-1">
+                                                    مرتجع
+                                                </button>
+                                            </form>
+                                        @endif
                                     @endif
                                 </td>
 
@@ -191,8 +396,9 @@
 
                         @empty
                             <tr>
-                                <td colspan="11" class="text-center text-muted py-4">
-                                    لا توجد طلبات
+                                <td colspan="{{ ($pageType ?? '') === 'delivery' ? 15 : 11 }}"
+                                    class="text-center text-muted py-4">
+                                    لا توجد طلبات لعرضها
                                 </td>
                             </tr>
                         @endforelse
@@ -212,7 +418,7 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
 
         const audio = document.getElementById('pendingSound');
         const reminder = document.getElementById('clickReminder');
@@ -224,7 +430,7 @@
 
             let hasPending = false;
 
-            statusBadges.forEach(function (badge) {
+            statusBadges.forEach(function(badge) {
                 const text = badge.innerText.trim();
 
                 if (
@@ -298,7 +504,7 @@
                 audio.muted = false;
                 audio.volume = 1;
 
-                audio.play().catch(function (error) {
+                audio.play().catch(function(error) {
                     console.log('Audio blocked:', error);
                 });
             } else {
@@ -308,7 +514,7 @@
         }
 
         if (reminder) {
-            reminder.addEventListener('click', function (e) {
+            reminder.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 toggleAlarm();
@@ -319,7 +525,7 @@
 
         setInterval(runCheck, 10000);
 
-        setTimeout(function () {
+        setTimeout(function() {
             location.reload();
         }, 30000);
 
@@ -329,6 +535,24 @@
 
 
 <style>
+    .stats-card {
+        border-radius: 16px;
+    }
+
+    .stats-card .card-body {
+        padding: 18px 10px;
+    }
+
+    .stats-card h4 {
+        font-weight: 800;
+        margin-top: 6px;
+    }
+
+    .badge-warning {
+        background-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+
     .rounded-2xl {
         border-radius: 1.5rem !important;
     }

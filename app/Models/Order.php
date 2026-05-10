@@ -30,10 +30,16 @@ class Order extends Model
         'shift_id',
         'branch_id',
         'kitchen_note',
+        'returned_at',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'returned_at' => 'datetime',
     ];
 
     //    public function scopeOwnedBy(Builder $query, $userId): Builder
-    public function scopeOwnedBy(Builder $query, $userId): Builder
+    public function scopeOwnedBy(Builder $query,int $userId): Builder
     {
         return $query->where('user_id', $userId);
     }
@@ -53,9 +59,6 @@ class Order extends Model
         return $query->whereIn('type', ['table', 'free_seating']);
     }
 
-    protected $casts = [
-        'created_at' => 'datetime',
-    ];
 
     public function scopeFilter(Builder $builder)
     {

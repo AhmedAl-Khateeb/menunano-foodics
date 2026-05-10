@@ -48,4 +48,9 @@ trait OrderTrait
     {
         return $this->belongsTo(Branch::class);
     }
+
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

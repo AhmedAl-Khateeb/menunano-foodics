@@ -16,7 +16,6 @@ class Product extends Model
         'selling_price',
         'category_id',
         'type',
-      
     ];
 
 
