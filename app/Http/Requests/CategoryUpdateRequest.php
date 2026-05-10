@@ -16,6 +16,7 @@ class CategoryUpdateRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'cover' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp,heic,avif|max:2048',
+            'parent_id' => ['nullable', 'exists:categories,id'],
         ];
     }
 }

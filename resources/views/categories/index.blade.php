@@ -34,6 +34,24 @@
                                         @enderror
                                     </div>
                                     <div class="form-group">
+                                        <label for="parent_id">الفئة الرئيسية</label>
+                                        <select name="parent_id" id="parent_id"
+                                            class="form-control @error('parent_id') is-invalid @enderror">
+                                            <option value="">فئة رئيسية</option>
+
+                                            @foreach ($parentCategories as $parentCategory)
+                                                <option value="{{ $parentCategory->id }}"
+                                                    {{ old('parent_id') == $parentCategory->id ? 'selected' : '' }}>
+                                                    {{ $parentCategory->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        @error('parent_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group">
                                         <label for="cover">الصورة</label>
                                         <input type="file" name="cover" id="cover"
                                             class="form-control @error('cover') is-invalid @enderror" required
@@ -61,6 +79,7 @@
                             <tr>
                                 <th style="width: 5%;">#</th>
                                 <th style="width: 40%;">الاسم</th>
+                                <th style="width: 20%;">الفئة الرئيسية</th>
                                 <th style="width: 25%;">الصورة</th>
                                 <th style="width: 30%;">الإجراءات</th>
                             </tr>
@@ -69,7 +88,25 @@
                             @forelse($categories as $category)
                                 <tr class="bg-white shadow-sm rounded-lg">
                                     <td>{{ $loop->iteration }}</td>
-                                    <td class="font-weight-bold text-primary">{{ $category->name }}</td>
+                                    <td
+                                        class="font-weight-bold {{ $category->parent_id ? 'text-secondary' : 'text-primary' }}">
+                                        @if ($category->parent_id)
+                                            — {{ $category->name }}
+                                        @else
+                                            {{ $category->name }}
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($category->parent)
+                                            <span class="badge badge-info">
+                                                {{ $category->parent->name }}
+                                            </span>
+                                        @else
+                                            <span class="badge badge-primary">
+                                                فئة رئيسية
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td>
                                         @if ($category->cover)
                                             <img src="{{ asset('storage/' . $category->cover) }}" alt="Cover Image"
@@ -117,6 +154,30 @@
                                                                 @enderror
                                                             </div>
                                                             <div class="form-group">
+                                                                <label for="parent_id-{{ $category->id }}">الفئة
+                                                                    الرئيسية</label>
+
+                                                                <select name="parent_id"
+                                                                    id="parent_id-{{ $category->id }}"
+                                                                    class="form-control @error('parent_id') is-invalid @enderror">
+
+                                                                    <option value="">فئة رئيسية</option>
+
+                                                                    @foreach ($parentCategories as $parentCategory)
+                                                                        @if ($parentCategory->id != $category->id)
+                                                                            <option value="{{ $parentCategory->id }}"
+                                                                                {{ old('parent_id', $category->parent_id) == $parentCategory->id ? 'selected' : '' }}>
+                                                                                {{ $parentCategory->name }}
+                                                                            </option>
+                                                                        @endif
+                                                                    @endforeach
+                                                                </select>
+
+                                                                @error('parent_id')
+                                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                                @enderror
+                                                            </div>
+                                                            <div class="form-group">
                                                                 <label for="cover-{{ $category->id }}">الصورة (اتركها
                                                                     فارغة للاحتفاظ بالصورة الحالية)</label>
                                                                 <input type="file" name="cover"
@@ -154,7 +215,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">لا توجد فئات لعرضها.</td>
+                                    <td colspan="5" class="text-center text-muted py-4">لا توجد فئات لعرضها.</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -18,20 +18,7 @@ class ProductController extends Controller
 {
     use UploadImg;   //  use Traits
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  App\Http\UploadImg;
-     */
-    use UploadImg;   //  use Traits
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  App\Http\UploadImg;
-     */
-    use UploadImg;   //  use Traits
-
+   
     public function index()
     {
         $categories = Category::where('user_id', Auth::id())

@@ -18,7 +18,7 @@ class CategoryController extends Controller
      */
     use StoreHelper;
 
-    public function index($storeName)
+    public function index(string $storeName)
     {
         $user = $this->getUserByStoreName($storeName);
 
@@ -35,7 +35,6 @@ class CategoryController extends Controller
     public function store(CategoryStoreRequest $request)
     {
         $category = DB::transaction(function () use ($request) {
-
             $data['name'] = $request->name;
             if ($request->hasFile('cover')) {
                 $data['cover'] = FileHandler::storeFile($request->file('cover'), null, $request->file('cover')->getClientOriginalExtension());
@@ -51,15 +50,15 @@ class CategoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($storeName, string $name)
+    public function show(string $storeName, string $name)
     {
         $user = $this->getUserByStoreName($storeName);
 
-        $category = Category::with(['products' => function($q) {
-                $q->whereHas('categories', function($subQ) {
-                     $subQ->where('type', Category::TYPE_MENU);
-                });
-            }])
+        $category = Category::with(['products' => function ($q) {
+            $q->whereHas('categories', function ($subQ) {
+                $subQ->where('type', Category::TYPE_MENU);
+            });
+        }])
             ->where('user_id', $user->id)
             ->where('name', $name)
             ->where('type', Category::TYPE_MENU)
@@ -101,6 +100,7 @@ class CategoryController extends Controller
             }
             $category->delete();
         });
+
         return ApiResponse::deleted();
     }
 }

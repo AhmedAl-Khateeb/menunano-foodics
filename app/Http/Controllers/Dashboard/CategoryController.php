@@ -13,27 +13,37 @@ use RealRashid\SweetAlert\Facades\Alert;
 
 class CategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $categories = Category::where('user_id', Auth::id())->get();
+        $categories = Category::where('user_id', Auth::id())
+            ->with('parent')
+            ->orderByRaw('COALESCE(parent_id, id)')
+            ->orderBy('parent_id')
+            ->orderBy('name')
+            ->get();
 
-        return view('categories.index', compact('categories'));
+        $parentCategories = Category::where('user_id', Auth::id())
+            ->whereNull('parent_id')
+            ->orderBy('name')
+            ->get();
+
+        return view('categories.index', compact('categories', 'parentCategories'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(CategoryStoreRequest $request)
     {
         try {
             $data['name'] = $request->name;
             $data['user_id'] = Auth::id();
+            $data['parent_id'] = $request->parent_id ?: null;
+
+            if ($data['parent_id']) {
+                Category::where('id', $data['parent_id'])
+                    ->where('user_id', Auth::id())
+                    ->firstOrFail();
+            }
 
             if ($request->hasFile('cover')) {
-                // نفس فكرة SettingController
                 $file = $request->file('cover');
                 $path = $file->store('images/category', 'public');
                 $data['cover'] = $path;
@@ -47,13 +57,10 @@ class CategoryController extends Controller
         } catch (\Exception $exception) {
             Alert::error('error', 'category not created');
 
-            return redirect()->back();
+            return redirect()->back()->withInput();
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(CategoryUpdateRequest $request, string $id)
     {
         try {
@@ -61,22 +68,35 @@ class CategoryController extends Controller
                 ->where('user_id', Auth::id())
                 ->firstOrFail();
 
-            // تحديث الاسم
-            $category->update($request->only(['name']));
+            $parentId = $request->parent_id ?: null;
 
-            // لو في صورة جديدة
+            if ($parentId == $category->id) {
+                Alert::error('error', 'category cannot be parent of itself');
+
+                return redirect()->back()->withInput();
+            }
+
+            if ($parentId) {
+                Category::where('id', $parentId)
+                    ->where('user_id', Auth::id())
+                    ->where('id', '!=', $category->id)
+                    ->firstOrFail();
+            }
+
+            $category->name = $request->name;
+            $category->parent_id = $parentId;
+
             if ($request->hasFile('cover')) {
-                // نحذف القديمة لو موجودة
-                if ($category->cover && \Storage::disk('public')->exists($category->cover)) {
-                    \Storage::disk('public')->delete($category->cover);
+                if ($category->cover && Storage::disk('public')->exists($category->cover)) {
+                    Storage::disk('public')->delete($category->cover);
                 }
 
-                // نخزن الجديدة
                 $file = $request->file('cover');
                 $path = $file->store('images/category', 'public');
                 $category->cover = $path;
-                $category->save();
             }
+
+            $category->save();
 
             Alert::success('success', 'category updated successfully');
 
@@ -84,23 +104,23 @@ class CategoryController extends Controller
         } catch (\Exception $exception) {
             Alert::error('error', 'category not updated');
 
-            return redirect()->back();
+            return redirect()->back()->withInput();
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         try {
             $category = Category::where('id', $id)
-            ->where('user_id', Auth::id())
-            ->firstOrFail();
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
             if ($category->cover) {
                 FileHandler::deleteFile($category->cover);
             }
+
             $category->delete();
+
             Alert::success('success', 'category deleted successfully');
 
             return redirect()->route('categories.index');
