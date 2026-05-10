@@ -155,7 +155,7 @@
                                     wire:click="openSizeModal({{ $product->id }})">
                                     <!-- Image with Overlay -->
                                     <div class="relative aspect-square overflow-hidden bg-gray-100 shrink-0">
-                                        <img src="{{ $product->cover ? asset('storage/' . $product->cover) : asset('dist/img/prod-1.jpg') }}"
+                                        <img src="{{ $product->cover ? asset('Attachfile/products/' . $product->cover) : asset('dist/img/prod-1.jpg') }}"
                                             loading="lazy"
                                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                             alt="{{ $product->name }}">
@@ -178,14 +178,24 @@
                                                 {{ $product->name }}</h6>
                                             <div
                                                 class="inline-block bg-blue-50 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                                                @if ($product->price > 0)
-                                                    {{ number_format($product->price, 2) }}
-                                                @elseif($product->sizes->isNotEmpty())
-                                                    {{ number_format($product->sizes->first()->price, 2) }}
-                                                @else
-                                                    0.00
-                                                @endif
-                                                ج.م
+                                                @php
+                                                    $firstSize = $product->sizes->first();
+
+                                                    if (($product->selling_price ?? 0) > 0) {
+                                                        $displayPrice = $product->selling_price;
+                                                    } elseif (($product->price ?? 0) > 0) {
+                                                        $displayPrice = $product->price;
+                                                    } elseif ($firstSize) {
+                                                        $displayPrice =
+                                                            ($firstSize->selling_price ?? 0) > 0
+                                                                ? $firstSize->selling_price
+                                                                : $firstSize->price ?? 0;
+                                                    } else {
+                                                        $displayPrice = 0;
+                                                    }
+                                                @endphp
+
+                                                {{ number_format($displayPrice, 2) }}
                                             </div>
                                         </div>
 
@@ -751,7 +761,14 @@
                                             <span class="font-bold text-lg mb-1">{{ $size->size }}</span>
                                             <span
                                                 class="text-xs font-bold bg-white px-2 py-0.5 rounded border {{ $modalSelectedSizeId === $size->id ? 'border-blue-200 text-blue-600' : 'border-gray-200 text-gray-500' }}">
-                                                {{ number_format($size->price, 2) }}
+                                                @php
+                                                    $sizeDisplayPrice =
+                                                        ($size->selling_price ?? 0) > 0
+                                                            ? $size->selling_price
+                                                            : $size->price ?? 0;
+                                                @endphp
+
+                                                {{ number_format($sizeDisplayPrice, 2) }}
                                             </span>
                                             @if ($modalSelectedSizeId === $size->id)
                                                 <div
@@ -792,11 +809,19 @@
                     <div class="p-6 pt-4">
                         @php
                             $selectedSize = $this->selectedProductForSize->sizes->find($modalSelectedSizeId);
-                            $unitPrice = $selectedSize
-                                ? $selectedSize->price
-                                : ($this->selectedProductForSize->sizes->isEmpty()
-                                    ? $this->selectedProductForSize->price
-                                    : 0);
+
+                            if ($selectedSize) {
+                                $unitPrice =
+                                    ($selectedSize->selling_price ?? 0) > 0
+                                        ? $selectedSize->selling_price
+                                        : $selectedSize->price ?? 0;
+                            } else {
+                                $unitPrice =
+                                    ($this->selectedProductForSize->selling_price ?? 0) > 0
+                                        ? $this->selectedProductForSize->selling_price
+                                        : $this->selectedProductForSize->price ?? 0;
+                            }
+
                             $totalPrice = $unitPrice * $modalQuantity;
                         @endphp
 

@@ -3,7 +3,9 @@
 namespace App\Livewire;
 
 use App\Models\Branch;
+use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductSize;
 use App\Models\Shift;
 use App\Models\User;
 use App\Services\StoreService;
@@ -531,7 +533,7 @@ class PosPage extends Component
             ->get();
 
         $productsQuery = Product::where('user_id', $storeOwnerId)
-            ->select('id', 'name', 'price', 'cover', 'category_id', 'created_at')
+            ->select('id', 'name', 'selling_price', 'Purchase_price', 'price', 'cover', 'category_id', 'created_at')
             ->where('name', 'like', '%'.$this->search.'%');
 
         if ($this->activeCategoryId) {
@@ -539,7 +541,9 @@ class PosPage extends Component
         }
 
         $products = $productsQuery
-            ->with(['sizes:id,product_id,size,price'])
+            ->with([
+                'sizes:id,product_id,size,price,Purchase_price,selling_price',
+            ])
             ->latest('id')
             ->take(80)
             ->get();
@@ -559,7 +563,7 @@ class PosPage extends Component
     public function loadOpenOrders()
     {
         $storeId = StoreService::getStoreOwnerId();
-        $this->openOrders = \App\Models\Order::with('table', 'customer')
+        $this->openOrders = Order::with('table', 'customer')
             ->where('user_id', $storeId)
             ->whereIn('status', ['pending', 'dining'])
             ->orderBy('created_at', 'desc')
@@ -576,7 +580,7 @@ class PosPage extends Component
     public function selectOpenOrderForPayment($orderId)
     {
         $this->selectedOpenOrderId = $orderId;
-        $order = \App\Models\Order::find($orderId);
+        $order = Order::find($orderId);
         if ($order) {
             $this->paidAmount = $order->total_price;
             $this->total = $order->total_price;
@@ -585,7 +589,7 @@ class PosPage extends Component
 
     public function payOpenOrder()
     {
-        $order = \App\Models\Order::find($this->selectedOpenOrderId);
+        $order = Order::find($this->selectedOpenOrderId);
 
         if ($order) {
             if ($this->paymentMethod === 'cash' && $this->paidAmount < $order->total_price) {
@@ -673,6 +677,7 @@ class PosPage extends Component
     public function confirmModalAddToCart()
     {
         $product = $this->selectedProductForSize;
+
         if (!$product) {
             return;
         }
@@ -681,26 +686,30 @@ class PosPage extends Component
             return;
         }
 
-        $price = $product->price;
+        $price = $this->getPosSellingPrice($product);
+        $purchasePrice = (float) ($product->Purchase_price ?? 0);
+
         $name = $product->name;
         $effectiveSizeId = null;
         $sizeName = null;
 
         if ($this->modalSelectedSizeId) {
             $size = $product->sizes->find($this->modalSelectedSizeId);
+
             if ($size) {
-                $price = $size->price;
+               $price = $this->getPosSellingPrice($size);
+                $purchasePrice = (float) ($size->Purchase_price ?? $product->Purchase_price ?? 0);
+
                 $name = $product->name;
                 $sizeName = $size->size;
                 $effectiveSizeId = $size->id;
             }
-        } elseif ($price <= 0 && $product->sizes->isNotEmpty()) {
-            // validation fallback
         }
 
         $cartItemId = $product->id.($effectiveSizeId ? '-'.$effectiveSizeId : '');
 
         $found = false;
+
         foreach ($this->cart as $index => $item) {
             if (isset($item['cart_item_id']) && $item['cart_item_id'] === $cartItemId) {
                 $this->cart[$index]['quantity'] += $this->modalQuantity;
@@ -716,7 +725,14 @@ class PosPage extends Component
                 'size_id' => $effectiveSizeId,
                 'name' => $name,
                 'size_name' => $sizeName,
-                'price' => floatval($price),
+
+                // سعر البيع المستخدم في POS
+                'price' => $price,
+                'selling_price' => $price,
+
+                // سعر الشراء / التكلفة
+                'purchase_price' => $purchasePrice,
+
                 'quantity' => $this->modalQuantity,
                 'cover' => $product->cover,
             ];
@@ -729,6 +745,7 @@ class PosPage extends Component
     public function addToCart($productId, $sizeId = null)
     {
         $product = Product::with('sizes')->find($productId);
+
         if (!$product) {
             return;
         }
@@ -739,22 +756,30 @@ class PosPage extends Component
             return;
         }
 
-        $price = $product->price;
+        $price = $this->getPosSellingPrice($product);
+        $purchasePrice = (float) ($product->Purchase_price ?? 0);
+
         $name = $product->name;
         $effectiveSizeId = null;
         $sizeName = null;
 
         if ($sizeId) {
             $size = $product->sizes->find($sizeId);
+
             if ($size) {
-                $price = $size->price;
+                $price = $this->getPosSellingPrice($size);
+                $purchasePrice = (float) ($size->Purchase_price ?? $product->Purchase_price ?? 0);
+
                 $name = $product->name;
                 $sizeName = $size->size;
                 $effectiveSizeId = $size->id;
             }
         } elseif ($price <= 0 && $product->sizes->isNotEmpty()) {
             $size = $product->sizes->first();
-            $price = $size->price;
+
+            $price = $this->getPosSellingPrice($size);
+            $purchasePrice = (float) ($size->Purchase_price ?? $product->Purchase_price ?? 0);
+
             $name = $product->name;
             $sizeName = $size->size;
             $effectiveSizeId = $size->id;
@@ -778,10 +803,18 @@ class PosPage extends Component
             'size_id' => $effectiveSizeId,
             'name' => $name,
             'size_name' => $sizeName,
-            'price' => floatval($price),
+
+            // سعر البيع
+            'price' => $price,
+            'selling_price' => $price,
+
+            // سعر الشراء
+            'purchase_price' => $purchasePrice,
+
             'quantity' => 1,
             'cover' => $product->cover,
         ];
+
         $this->calculateTotal();
         $this->closeSizeModal();
     }
@@ -819,6 +852,7 @@ class PosPage extends Component
     public function calculateTotal()
     {
         $this->total = 0;
+
         foreach ($this->cart as $item) {
             $this->total += $item['price'] * $item['quantity'];
         }
@@ -973,7 +1007,7 @@ class PosPage extends Component
             $order = null;
 
             if ($this->orderType === 'table' && $this->selectedTableId) {
-                $order = \App\Models\Order::where('table_id', $this->selectedTableId)
+                $order = Order::where('table_id', $this->selectedTableId)
                     ->where('status', 'pending')
                     ->where('user_id', $storeOwnerId)
                     ->first();
@@ -999,7 +1033,7 @@ class PosPage extends Component
                     ->where('order_id', $order->id)
                     ->delete();
             } else {
-                $order = \App\Models\Order::create([
+                $order = Order::create([
                     'user_id' => $storeOwnerId,
                     'shift_id' => $activeShift->id,
                     'customer_id' => $finalCustomerId,
@@ -1021,13 +1055,15 @@ class PosPage extends Component
                 $productSizeId = $item['size_id'] ?? null;
 
                 if (!$productSizeId) {
-                    $productSize = \App\Models\ProductSize::where('product_id', $item['id'])->first();
+                    $productSize = ProductSize::where('product_id', $item['id'])->first();
 
                     if (!$productSize) {
-                        $productSize = \App\Models\ProductSize::create([
+                        $productSize = ProductSize::create([
                             'product_id' => $item['id'],
                             'size' => 'Standard',
-                            'price' => $item['price'],
+                            'price' => $item['selling_price'] ?? $item['price'],
+                            'selling_price' => $item['selling_price'] ?? $item['price'],
+                            'Purchase_price' => $item['purchase_price'] ?? 0,
                         ]);
                     }
 
@@ -1087,7 +1123,7 @@ class PosPage extends Component
             'mergeTargetTableId.required' => 'يرجى اختيار طاولة للدمج إليها.',
         ]);
 
-        $sourceOrder = \App\Models\Order::find($this->mergeSourceOrderId);
+        $sourceOrder = Order::find($this->mergeSourceOrderId);
         if (!$sourceOrder || $sourceOrder->type !== 'table') {
             session()->flash('merge_error', 'طلب المصدر غير صالح للدمج.');
 
@@ -1105,7 +1141,7 @@ class PosPage extends Component
         $storeOwnerId = $user->role === 'super_admin' ? $user->id : ($user->getAttribute('created_by') ?? $user->id);
 
         // Find Target Order (if exists and pending)
-        $targetOrder = \App\Models\Order::where('table_id', $this->mergeTargetTableId)
+        $targetOrder = Order::where('table_id', $this->mergeTargetTableId)
             ->where('status', 'pending')
             ->where('user_id', $storeOwnerId)
             ->first();
@@ -1178,7 +1214,7 @@ class PosPage extends Component
         $this->orderType = 'table';
 
         // Find if this table has a pending order
-        $order = \App\Models\Order::with(['items.product', 'items.inventory', 'customer'])
+        $order = Order::with(['items.product', 'items.inventory', 'customer'])
             ->where('table_id', $tableId)
             ->where('status', 'pending')
             ->first();
@@ -1198,6 +1234,8 @@ class PosPage extends Component
                     'name' => $product->name,
                     'size_name' => $item->size ?? 'Standard',
                     'price' => floatval($item->pivot->price),
+                    'selling_price' => floatval($item->pivot->price),
+                    'purchase_price' => floatval($item->pivot->purchase_price ?? 0),
                     'quantity' => $item->pivot->quantity,
                     'cover' => $product->cover,
                 ];
@@ -1221,5 +1259,12 @@ class PosPage extends Component
             $this->customerName = '';
             $this->selectedCustomerId = null;
         }
+    }
+
+    private function getPosSellingPrice($model): float
+    {
+        return (float) (($model->selling_price ?? 0) > 0
+            ? $model->selling_price
+            : ($model->price ?? 0));
     }
 }

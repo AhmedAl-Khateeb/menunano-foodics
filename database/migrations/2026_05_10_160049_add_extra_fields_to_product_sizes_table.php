@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('ProductSize', function (Blueprint $table) {
+        Schema::table('product_sizes', function (Blueprint $table) {
             $table->decimal('Purchase_price', 10, 2)->nullable()->default(0);
             $table->decimal('selling_price', 10, 2)->nullable()->default(0);
         });

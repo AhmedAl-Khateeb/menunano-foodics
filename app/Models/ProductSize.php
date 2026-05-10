@@ -13,11 +13,38 @@ class ProductSize extends Model
         'size',
         'price',
         'product_id',
+        'Purchase_price',
+        'selling_price',
     ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'Purchase_price' => 'decimal:2',
+        'selling_price' => 'decimal:2',
+    ];
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function recipes()
+    {
+        return $this->hasMany(ProductRecipe::class, 'product_size_id');
+    }
+
+    public function getPosSellingPriceAttribute()
+    {
+        return (float) ($this->selling_price ?? $this->price ?? 0);
+    }
+
+    public function getPosPurchasePriceAttribute()
+    {
+        return (float) ($this->Purchase_price ?? 0);
+    }
 
     public function getMaxProductionQuantityAttribute()
     {
-        // Combine Common Ingredients (null size) and Specific Ingredients
         $commonRecipes = $this->product->recipes()->whereNull('product_size_id')->get();
         $specificRecipes = $this->recipes;
 
@@ -28,6 +55,7 @@ class ProductSize extends Model
         }
 
         $min_production = null;
+
         foreach ($allRecipes as $recipe) {
             if (!$recipe->ingredient || !$recipe->ingredient->inventory) {
                 continue;
@@ -35,13 +63,11 @@ class ProductSize extends Model
 
             $ingredient_stock = max(0, $recipe->ingredient->inventory->current_quantity ?? 0);
 
-            // If any ingredient is out of stock, max production is zero
             if ($ingredient_stock <= 0) {
                 $min_production = 0;
                 break;
             }
 
-            // Prevent division by zero and invalid recipe quantities
             if ($recipe->quantity <= 0) {
                 continue;
             }
