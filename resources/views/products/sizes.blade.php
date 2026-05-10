@@ -14,8 +14,9 @@
                         <thead class="text-dark">
                             <tr>
                                 <th>#</th>
-                                <th>Size</th>
-                                <th>Price</th>
+                                <th>الحجم</th>
+                                <th style="width:10%;">سعرالشراء</th>
+                                 <th style="width:10%;">سعر بيع</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -23,7 +24,8 @@
                                 <tr class="bg-light">
                                     <td>{{ $loop->iteration }}</td>
                                     <td class="fw-bold">{{ $size->size }}</td>
-                                    <td class="fw-bold">{{ number_format($size->price, 2) }}</td>
+                                    <td class="fw-bold">{{ number_format($size->Purchase_price, 2) }}</td>
+                                    <td class="fw-bold">{{ number_format($size->selling_price, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

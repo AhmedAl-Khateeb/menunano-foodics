@@ -18,6 +18,20 @@ class ProductController extends Controller
 {
     use UploadImg;   //  use Traits
 
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  App\Http\UploadImg;
+     */
+    use UploadImg;   //  use Traits
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  App\Http\UploadImg;
+     */
+    use UploadImg;   //  use Traits
+
     public function index()
     {
         $categories = Category::where('user_id', Auth::id())
@@ -55,6 +69,8 @@ class ProductController extends Controller
                     if (!empty($size['size']) || !empty($size['price'])) {
                         $product->sizes()->create([
                             'size' => $size['size'] ?? null,
+                            'Purchase_price' => $size['Purchase_price'] ?? null,
+                            'selling_price' => $size['selling_price'] ?? null,
                             'Purchase_price' => $size['Purchase_price'] ?? null,
                             'selling_price' => $size['selling_price'] ?? null,
                         ]);
@@ -104,6 +120,13 @@ class ProductController extends Controller
 
             if ($request->has('sizes') && is_array($request->sizes)) {
                 foreach ($request->sizes as $size) {
+                    if (!empty($size['size']) || !empty($size['price'])) {
+                        $product->sizes()->create([
+                            'size' => $size['size'] ?? null,
+                            'Purchase_price' => $size['Purchase_price'] ?? null,
+                            'selling_price' => $size['selling_price'] ?? null,
+                        ]);
+                    }
                     if (!empty($size['size']) || !empty($size['price'])) {
                         $product->sizes()->create([
                             'size' => $size['size'] ?? null,

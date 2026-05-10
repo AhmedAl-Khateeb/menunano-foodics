@@ -93,14 +93,7 @@ return [
                     'active_routes' => ['categories.*'],
                     'permission' => 'categories.access',
                 ],
-                // Products
-                [
-                    'title' => 'المنتجات',
-                    'icon' => 'far fa-circle',
-                    'route' => 'products.index',
-                    'active_routes' => ['products.index', 'products.show', 'products.store', 'products.update'],
-                    'permission' => 'products.access',
-                ],
+
                 // Sliders
                 [
                     'title' => 'البنرات (Sliders)',
@@ -292,7 +285,16 @@ return [
             'active_routes' => ['inventory.*', 'units.*'],
             'permission' => 'inventory.access',
             'children' => [
-               
+
+                // Products
+                [
+                    'title' => 'المنتجات',
+                    'icon' => 'far fa-circle',
+                    'route' => 'products.index',
+                    'active_routes' => ['products.index', 'products.show', 'products.store', 'products.update'],
+                    'permission' => 'products.access',
+                ],
+
                 // Categories inventory
                 [
                     'title' => 'فئات المخزون',
@@ -399,7 +401,22 @@ return [
                     'active_routes' => ['inventory.suppliers.*'],
                     'permission' => 'inventory.suppliers',
                 ],
+
+                [
+                    'title' => 'فاتورة  مشتريات',
+                    'icon' => 'fas fa-file-invoice',
+                    'route' => 'purchases.index',
+                    'active_routes' => ['purchases.*'],
+                    'permission' => 'inventory.purchase_orders',
+                ],
             ],
+
+
+
+
+
+
+
         ],
 
         // Purchases Module  (new)
