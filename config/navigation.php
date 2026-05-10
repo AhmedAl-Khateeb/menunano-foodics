@@ -401,7 +401,22 @@ return [
                     'active_routes' => ['inventory.suppliers.*'],
                     'permission' => 'inventory.suppliers',
                 ],
+
+                [
+                    'title' => 'فاتورة  مشتريات',
+                    'icon' => 'fas fa-file-invoice',
+                    'route' => 'purchases.index',
+                    'active_routes' => ['purchases.*'],
+                    'permission' => 'inventory.purchase_orders',
+                ],
             ],
+
+
+
+
+
+
+
         ],
 
         // Purchases Module  (new)
