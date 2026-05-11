@@ -12,7 +12,8 @@
                             <i class="fas fa-box-open ml-2"></i>
                             إضافة باقة جديدة
                         </h2>
-                        <p class="mb-0 text-muted text-center">أنشئ باقة جديدة وحدد نوع النشاط والمميزات والصلاحيات الخاصة بها</p>
+                        <p class="mb-0 text-muted text-center">أنشئ باقة جديدة وحدد نوع النشاط والمميزات والصلاحيات الخاصة
+                            بها</p>
                     </div>
                 </div>
 
@@ -48,10 +49,12 @@
 
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">نوع النشاط</label>
-                                        <select name="business_type_id" class="form-control custom-input" required>
+                                        <select name="business_type_id" id="business_type_id"
+                                            class="form-control custom-input" required>
                                             <option value="">اختر نوع النشاط</option>
                                             @foreach ($businessTypes as $businessType)
                                                 <option value="{{ $businessType->id }}"
+                                                    data-slug="{{ $businessType->slug }}"
                                                     {{ old('business_type_id') == $businessType->id ? 'selected' : '' }}>
                                                     {{ $businessType->name }}
                                                 </option>
@@ -123,21 +126,22 @@
                                     @foreach ($availablePermissions as $permission)
                                         <div class="col-lg-4 col-md-6 mb-3">
                                             <label class="permission-wrapper w-100 mb-0">
-                                                <input type="checkbox"
-                                                    name="permissions[]"
-                                                    value="{{ $permission['key'] }}"
-                                                    class="permission-checkbox d-none"
+                                                <input type="checkbox" name="permissions[]"
+                                                    value="{{ $permission['key'] }}" class="permission-checkbox d-none"
+                                                    data-permission-key="{{ $permission['key'] }}"
                                                     {{ in_array($permission['key'], old('permissions', [])) ? 'checked' : '' }}>
-
                                                 <div class="permission-card">
-                                                    <div class="permission-top d-flex align-items-center justify-content-between">
+                                                    <div
+                                                        class="permission-top d-flex align-items-center justify-content-between">
                                                         <div class="d-flex align-items-center">
                                                             <div class="permission-icon">
                                                                 <i class="{{ $permission['icon'] }}"></i>
                                                             </div>
                                                             <div class="mr-2">
-                                                                <div class="permission-label">{{ $permission['label'] }}</div>
-                                                                <small class="text-muted">{{ $permission['group'] }}</small>
+                                                                <div class="permission-label">{{ $permission['label'] }}
+                                                                </div>
+                                                                <small
+                                                                    class="text-muted">{{ $permission['group'] }}</small>
                                                             </div>
                                                         </div>
 
@@ -211,6 +215,32 @@
             }
         });
     </script>
+
+    <script>
+    const permissionDefaults = @json($permissionDefaults ?? []);
+    const businessTypeSelect = document.getElementById('business_type_id');
+
+    function applyDefaultPermissions() {
+        const selectedOption = businessTypeSelect.options[businessTypeSelect.selectedIndex];
+        const slug = selectedOption ? selectedOption.dataset.slug : null;
+
+        const allowedPermissions = permissionDefaults[slug] || [];
+
+        document.querySelectorAll('.permission-checkbox').forEach(function (checkbox) {
+            checkbox.checked = allowedPermissions.includes(checkbox.value);
+        });
+    }
+
+    businessTypeSelect.addEventListener('change', applyDefaultPermissions);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const hasOldPermissions = @json(count(old('permissions', [])) > 0);
+
+        if (businessTypeSelect.value && !hasOldPermissions) {
+            applyDefaultPermissions();
+        }
+    });
+</script>
 
     <style>
         .package-page-header h2 {
@@ -325,13 +355,13 @@
             flex-shrink: 0;
         }
 
-        .permission-checkbox:checked + .permission-card {
+        .permission-checkbox:checked+.permission-card {
             border-color: #0d6efd;
             background: #f4f8ff;
             box-shadow: 0 8px 20px rgba(13, 110, 253, 0.12);
         }
 
-        .permission-checkbox:checked + .permission-card .permission-check {
+        .permission-checkbox:checked+.permission-card .permission-check {
             border-color: #0d6efd;
             background: #0d6efd;
             color: #fff;

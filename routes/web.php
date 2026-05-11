@@ -18,6 +18,7 @@ use App\Http\Controllers\Dashboard\InventoryMovementController;
 use App\Http\Controllers\Dashboard\InvoiceController;
 use App\Http\Controllers\Dashboard\OrderController;
 use App\Http\Controllers\Dashboard\PosPrintController;
+use App\Http\Controllers\Dashboard\ProductBarcodeController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\ProductionOrderController;
 use App\Http\Controllers\Dashboard\PurchaseOrderController;
@@ -126,14 +127,14 @@ Route::get('/inactive', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::get('/clear-cache', function () {
-    Artisan::call('view:clear');
-    Artisan::call('config:clear');
-    Artisan::call('route:clear');
-    Artisan::call('cache:clear');
+// Route::get('/clear-cache', function () {
+//     Artisan::call('view:clear');
+//     Artisan::call('config:clear');
+//     Artisan::call('route:clear');
+//     Artisan::call('cache:clear');
 
-    return 'Cache cleared ✅';
-});
+//     return 'Cache cleared ✅';
+// });
 
 /*
 |--------------------------------------------------------------------------
@@ -191,12 +192,23 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     |--------------------------------------------------------------------------
     */
     // Invoices
-    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
-    Route::get('/invoices/{order}/print', [InvoiceController::class, 'print'])->name('invoices.print');
+    Route::get('/invoices', [InvoiceController::class, 'index'])
+    ->middleware([
+        'package.permission:orders.all',
+        'branch.permissions:orders.all',
+    ])->name('invoices.index');
+    Route::get('/invoices/{order}/print', [InvoiceController::class, 'print'])
+    ->middleware([
+        'package.permission:orders.all',
+        'branch.permissions:orders.all',
+    ])->name('invoices.print');
 
     // Shift closing receipt
     Route::get('/pos/shifts/{shift}/closing-receipt', [ShiftReceiptController::class, 'show'])
-        ->name('pos.shift.closing-reipt');
+    ->middleware([
+        'package.permission:shifts.access',
+        'branch.permissions:shifts.access',
+    ])->name('pos.shift.closing-reipt');
 
     // pos routes print
     Route::get('/pos/orders/{order}/print-two', [PosPrintController::class, 'printTwo'])
@@ -217,7 +229,10 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     ->name('cashier-cash-reports.index');
 
     Route::get('/cashier-cash-reports/{user}', [CashierCashReportController::class, 'show'])
-        ->name('cashier-cash-reports.show');
+    ->middleware([
+        'package.permission:cashier-cash-reports.access',
+        'branch.permissions:cashier-cash-reports.access',
+    ])->name('cashier-cash-reports.show');
 
     /*
     |--------------------------------------------------------------------------
@@ -231,6 +246,10 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     Route::resource('products', ProductController::class)
         ->except(['create', 'edit'])
         ->middleware('package.permission:products.access');
+
+    Route::get('/products/barcodes/print', [ProductBarcodeController::class, 'printAll'])
+    ->middleware(['package.permission:barcodes.access'])
+    ->name('products.barcodes.print');
 
     Route::resource('sliders', SliderController::class)
         ->except(['create', 'edit'])
@@ -250,18 +269,35 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
             ->name('index');
 
         Route::put('/orders/{order}/delivery-return', [OrderController::class, 'returnDeliveryOrder'])
+        ->middleware([
+            'package.permission:orders.delivery',
+            'branch.permissions:orders.delivery',
+        ])
         ->name('deliveryReturn');
 
         Route::put('/orders/{order}/return', [OrderController::class, 'returnOrder'])
-            ->name('return');
+        ->middleware([
+            'package.permission:orders.all',
+            'branch.permissions:orders.all',
+        ])->name('return');
 
         Route::get('/orders/returned', [OrderController::class, 'returned'])
-          ->name('returned');
+        ->middleware([
+            'package.permission:orders.all',
+            'branch.permissions:orders.all',
+        ])->name('returned');
 
         Route::put('/orders/{order}/restore-returned', [OrderController::class, 'restoreReturned'])
-        ->name('restoreReturned');
+          ->middleware([
+              'package.permission:orders.all',
+              'branch.permissions:orders.all',
+          ])->name('restoreReturned');
 
         Route::put('/orders/{order}/source', [OrderController::class, 'updateSource'])
+            ->middleware([
+                'package.permission:orders.all',
+                'branch.permissions:orders.all',
+            ])
             ->name('updateSource');
 
         Route::get('/delivery', [OrderController::class, 'delivery'])

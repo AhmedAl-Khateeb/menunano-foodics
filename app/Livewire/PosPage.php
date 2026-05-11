@@ -532,9 +532,30 @@ class PosPage extends Component
             ->select('id', 'name')
             ->get();
 
+        $term = trim($this->search);
+
         $productsQuery = Product::where('user_id', $storeOwnerId)
-            ->select('id', 'name', 'selling_price', 'Purchase_price', 'price', 'cover', 'category_id', 'created_at')
-            ->where('name', 'like', '%'.$this->search.'%');
+            ->select(
+                'id',
+                'name',
+                'barcode',
+                'selling_price',
+                'Purchase_price',
+                'price',
+                'cover',
+                'category_id',
+                'created_at'
+            );
+
+        if ($term !== '') {
+            $productsQuery->where(function ($q) use ($term) {
+                $q->where('name', 'like', '%'.$term.'%')
+                    ->orWhere('barcode', $term)
+                    ->orWhereHas('sizes', function ($sizeQuery) use ($term) {
+                        $sizeQuery->where('barcode', $term);
+                    });
+            });
+        }
 
         if ($this->activeCategoryId) {
             $productsQuery->where('category_id', $this->activeCategoryId);
@@ -542,7 +563,7 @@ class PosPage extends Component
 
         $products = $productsQuery
             ->with([
-                'sizes:id,product_id,size,price,Purchase_price,selling_price',
+                'sizes:id,product_id,size,barcode,price,Purchase_price,selling_price',
             ])
             ->latest('id')
             ->take(80)
@@ -697,7 +718,7 @@ class PosPage extends Component
             $size = $product->sizes->find($this->modalSelectedSizeId);
 
             if ($size) {
-               $price = $this->getPosSellingPrice($size);
+                $price = $this->getPosSellingPrice($size);
                 $purchasePrice = (float) ($size->Purchase_price ?? $product->Purchase_price ?? 0);
 
                 $name = $product->name;
@@ -1266,5 +1287,42 @@ class PosPage extends Component
         return (float) (($model->selling_price ?? 0) > 0
             ? $model->selling_price
             : ($model->price ?? 0));
+    }
+
+    public function scanBarcode()
+    {
+        $code = trim($this->search);
+
+        if ($code === '') {
+            return;
+        }
+
+        $storeOwnerId = StoreService::getStoreOwnerId();
+
+        $product = Product::where('user_id', $storeOwnerId)
+            ->where('barcode', $code)
+            ->first();
+
+        if ($product) {
+            $this->addToCart($product->id);
+            $this->search = '';
+
+            return;
+        }
+
+        $size = ProductSize::where('barcode', $code)
+            ->whereHas('product', function ($q) use ($storeOwnerId) {
+                $q->where('user_id', $storeOwnerId);
+            })
+            ->first();
+
+        if ($size) {
+            $this->addToCart($size->product_id, $size->id);
+            $this->search = '';
+
+            return;
+        }
+
+        session()->flash('error', 'لم يتم العثور على منتج بهذا الباركود.');
     }
 }

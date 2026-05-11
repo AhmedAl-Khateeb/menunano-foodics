@@ -139,6 +139,12 @@ return [
         'group' => 'المخزن',
     ],
     [
+        'key' => 'barcodes.access',
+        'label' => 'باركود المنتجات',
+        'icon' => 'fas fa-barcode',
+        'group' => 'المنيو الإلكتروني',
+    ],
+    [
         'key' => 'inventory.dashboard',
         'label' => 'لوحة المخزن',
         'icon' => 'fas fa-chart-line',
@@ -267,5 +273,50 @@ return [
         'label' => 'الضرائب والرسوم',
         'icon' => 'fas fa-percentage',
         'group' => 'الإعدادات',
+    ],
+    // الفواتير
+    [
+        'key' => 'invoices.access',
+        'label' => 'الفواتير',
+        'icon' => 'fas fa-file-invoice',
+        'group' => 'المبيعات',
+    ],
+    [
+        'key' => 'invoices.print',
+        'label' => 'طباعة الفواتير',
+        'icon' => 'fas fa-print',
+        'group' => 'المبيعات',
+    ],
+
+    // طباعة نقطة البيع
+    [
+        'key' => 'pos.print',
+        'label' => 'طباعة أوردر نقطة البيع',
+        'icon' => 'fas fa-receipt',
+        'group' => 'المبيعات',
+    ],
+
+    // إيصالات الشيفت
+    [
+        'key' => 'shift_receipts.access',
+        'label' => 'إيصال تقفيل الشيفت',
+        'icon' => 'fas fa-file-invoice-dollar',
+        'group' => 'الإدارة',
+    ],
+
+    // مرتجعات الطلبات
+    [
+        'key' => 'orders.returns',
+        'label' => 'مرتجعات الطلبات',
+        'icon' => 'fas fa-undo-alt',
+        'group' => 'الطلبات',
+    ],
+
+    // تعديل مصدر الطلب
+    [
+        'key' => 'orders.update_source',
+        'label' => 'تعديل مصدر الطلب',
+        'icon' => 'fas fa-exchange-alt',
+        'group' => 'الطلبات',
     ],
 ];

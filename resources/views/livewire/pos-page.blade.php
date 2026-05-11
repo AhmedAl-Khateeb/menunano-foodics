@@ -84,6 +84,7 @@
                     <!-- Search -->
                     <div class="relative w-full">
                         <input type="text" wire:model.live.debounce.300ms="search"
+                            wire:keydown.enter.prevent="scanBarcode"
                             class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-sans text-gray-700 placeholder-gray-400 text-sm"
                             placeholder="بحث عن منتج (الاسم / الباركود)...">
                         <div

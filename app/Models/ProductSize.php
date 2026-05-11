@@ -15,6 +15,7 @@ class ProductSize extends Model
         'product_id',
         'Purchase_price',
         'selling_price',
+        'barcode',
     ];
 
     protected $casts = [
@@ -80,5 +81,32 @@ class ProductSize extends Model
         }
 
         return $min_production ?? 0;
+    }
+
+    // barcode generation logic
+    protected static function booted()
+    {
+        static::created(function ($size) {
+            if (!$size->barcode) {
+                $size->barcode = self::makeEan13Barcode('21', $size->id);
+                $size->saveQuietly();
+            }
+        });
+    }
+
+    private static function makeEan13Barcode($prefix, $id)
+    {
+        $base = $prefix.str_pad($id, 10, '0', STR_PAD_LEFT);
+
+        $sum = 0;
+
+        for ($i = 0; $i < 12; ++$i) {
+            $digit = (int) $base[$i];
+            $sum += ($i % 2 === 0) ? $digit : $digit * 3;
+        }
+
+        $checkDigit = (10 - ($sum % 10)) % 10;
+
+        return $base.$checkDigit;
     }
 }

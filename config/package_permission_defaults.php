@@ -1,0 +1,132 @@
+<?php
+
+return [
+    // مطعم
+    'rest' => [
+        'dashboard.access',
+
+        'emenu.access',
+        'categories.access',
+        'products.access',
+        'sliders.access',
+
+        'orders.access',
+        'orders.all',
+        'orders.delivery',
+        'orders.pickup',
+        'orders.local',
+
+        'pos.access',
+
+        'management.access',
+        'users.access',
+        'roles.access',
+        'branches.access',
+        'branch_creation_request.access',
+        'branch_links.access',
+        'shifts.access',
+        'attendances.access',
+        'cashier-cash-reports.access',
+
+        'inventory.access',
+        'inventory.dashboard',
+        'inventory.suppliers',
+        'inventory.categories',
+        'units.access',
+        'inventory.materials',
+        'inventory.purchase_requests',
+        'inventory.purchase_orders',
+        'inventory.receipts',
+        'inventory.production_orders',
+        'inventory.transfer_requests',
+        'inventory.stock_counts',
+        'inventory.movements',
+
+        'reports.access',
+        'reports.sales',
+        'reports.top_products',
+        'reports.staff_performance',
+
+        'settings.access',
+        'settings.general',
+        'payment_methods.access',
+        'tables_areas.access',
+        'charges.access',
+        'barcodes.access',
+        'invoices.access',
+        'invoices.print',
+        'pos.print',
+        'shift_receipts.access',
+        'orders.returns',
+        'orders.update_source',
+    ],
+
+    // محل
+    'acc' => [
+        'dashboard.access',
+
+        'categories.access',
+        'products.access',
+
+        'orders.access',
+        'orders.all',
+
+        'pos.access',
+
+        'management.access',
+        'users.access',
+        'roles.access',
+        'branches.access',
+        'shifts.access',
+        'attendances.access',
+        'cashier-cash-reports.access',
+
+        'inventory.access',
+        'inventory.dashboard',
+        'inventory.suppliers',
+        'inventory.categories',
+        'units.access',
+        'inventory.materials',
+        'inventory.purchase_requests',
+        'inventory.purchase_orders',
+        'inventory.receipts',
+        'inventory.stock_counts',
+        'inventory.movements',
+
+        'reports.access',
+        'reports.sales',
+        'reports.top_products',
+        'reports.staff_performance',
+
+        'settings.access',
+        'settings.general',
+        'payment_methods.access',
+        'barcodes.access',
+        'invoices.access',
+        'invoices.print',
+        'pos.print',
+        'shift_receipts.access',
+        'orders.returns',
+        'orders.update_source',
+    ],
+
+    // منيو إلكتروني فقط
+    'menu' => [
+        'dashboard.access',
+        'emenu.access',
+        'categories.access',
+        'products.access',
+        'sliders.access',
+        'orders.access',
+        'orders.all',
+        'orders.delivery',
+        'orders.pickup',
+        'barcodes.access',
+        'invoices.access',
+        'invoices.print',
+        'pos.print',
+        'shift_receipts.access',
+        'orders.returns',
+        'orders.update_source',
+    ],
+];

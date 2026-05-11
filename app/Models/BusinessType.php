@@ -20,4 +20,9 @@ class BusinessType extends Model
     {
         return $this->hasMany(Package::class);
     }
+
+    public function permissionDefaults()
+    {
+        return $this->hasMany(BusinessTypePermissionDefault::class);
+    }
 }
