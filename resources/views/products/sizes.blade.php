@@ -16,18 +16,20 @@
                                 <th>#</th>
                                 <th>الحجم</th>
                                 <th style="width:10%;">سعرالشراء</th>
-                                 <th style="width:10%;">سعر بيع</th>
+                                <th style="width:10%;">سعر بيع</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($product->sizes as $size)
-                                <tr class="bg-light">
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td class="fw-bold">{{ $size->size }}</td>
-                                    <td class="fw-bold">{{ number_format($size->Purchase_price, 2) }}</td>
-                                    <td class="fw-bold">{{ number_format($size->selling_price, 2) }}</td>
-                                </tr>
-                            @endforeach
+                            @if ($product->sizes && $product->sizes->count())
+                                @foreach ($product->sizes as $size)
+                                    <tr class="bg-light">
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td class="fw-bold">{{ $size->size }}</td>
+                                        <td class="fw-bold">{{ number_format($size->Purchase_price ?? 0, 2) }}</td>
+                                        <td class="fw-bold">{{ number_format($size->selling_price ?? 0, 2) }}</td>
+                                    </tr>
+                                @endforeach
+                            @endif
                         </tbody>
                     </table>
                 </div>

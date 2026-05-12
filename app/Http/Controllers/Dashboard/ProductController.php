@@ -18,7 +18,6 @@ class ProductController extends Controller
 {
     use UploadImg;   //  use Traits
 
-   
     public function index()
     {
         $categories = Category::where('user_id', Auth::id())
@@ -53,7 +52,7 @@ class ProductController extends Controller
 
             if ($request->has('sizes') && is_array($request->sizes)) {
                 foreach ($request->sizes as $size) {
-                    if (!empty($size['size']) || !empty($size['price'])) {
+                    if (!empty($size['size']) || !empty($size['Purchase_price']) || !empty($size['selling_price'])) {
                         $product->sizes()->create([
                             'size' => $size['size'] ?? null,
                             'Purchase_price' => $size['Purchase_price'] ?? null,
@@ -107,14 +106,14 @@ class ProductController extends Controller
 
             if ($request->has('sizes') && is_array($request->sizes)) {
                 foreach ($request->sizes as $size) {
-                    if (!empty($size['size']) || !empty($size['price'])) {
+                    if (!empty($size['size']) || !empty($size['Purchase_price']) || !empty($size['selling_price'])) {
                         $product->sizes()->create([
                             'size' => $size['size'] ?? null,
                             'Purchase_price' => $size['Purchase_price'] ?? null,
                             'selling_price' => $size['selling_price'] ?? null,
                         ]);
                     }
-                    if (!empty($size['size']) || !empty($size['price'])) {
+                    if (!empty($size['size']) || !empty($size['Purchase_price']) || !empty($size['selling_price'])) {
                         $product->sizes()->create([
                             'size' => $size['size'] ?? null,
                             'Purchase_price' => $size['Purchase_price'] ?? null,
@@ -133,8 +132,12 @@ class ProductController extends Controller
         }
     }
 
-    public function show(Product $product)
+    public function show(int $id)
     {
+        $product = Product::with('sizes')
+        ->where('user_id', Auth::id())
+        ->findOrFail($id);
+
         return view('products.sizes', compact('product'));
     }
 

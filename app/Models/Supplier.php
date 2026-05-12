@@ -17,6 +17,7 @@ class Supplier extends Model
         'phone',
         'email',
         'is_active',
+        'balance',
     ];
 
     protected $casts = [
@@ -26,6 +27,4 @@ class Supplier extends Model
         'credit_limit' => 'decimal:3',
         'is_active' => 'boolean',
     ];
-
-  
 }

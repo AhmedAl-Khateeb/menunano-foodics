@@ -69,7 +69,7 @@
                                 @if(count($searchResults) > 0)
                                     <ul class="list-group list-group-flush">
                                         @foreach($searchResults as $result)
-                                            <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" style="cursor: pointer" wire:click="addItem({{ json_encode($result) }})">
+                                            <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" style="cursor: pointer" wire:click="addItem({{ $result['id'] }})">
                                                 <div>
                                                     <strong class="text-primary">{{ $result['name'] }}</strong>
                                                     <small class="text-muted d-block">سعر الشراء: {{ $result['purchase_price'] }} ج.م / {{ $result['unit'] }}</small>

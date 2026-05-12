@@ -19,19 +19,25 @@
 
     <section class="content">
         <div class="container-fluid">
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle mr-1"></i> {{ session('success') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
+            @if (session('success'))
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'تم بنجاح',
+                            text: @json(session('success')),
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    });
+                </script>
             @endif
 
             <div class="row">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-lg">
-                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                        <div
+                            class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
                             <h3 class="card-title font-weight-bold text-dark">سجل الفواتير</h3>
                             <a href="{{ route('purchases.create') }}" class="btn btn-primary btn-sm ms-auto shadow-sm">
                                 <i class="fas fa-plus mr-1"></i> فاتورة جديدة
@@ -56,29 +62,43 @@
                                         @forelse ($invoices as $invoice)
                                             <tr>
                                                 <td class="pl-4 text-muted">{{ $loop->iteration }}</td>
-                                                <td class="font-weight-bold text-primary">{{ $invoice->invoice_number ?? '-' }}</td>
-                                                <td class="font-weight-bold text-dark">{{ optional($invoice->supplier)->name ?? 'مورد محذوف' }}</td>
-                                                <td class="text-center text-muted" dir="ltr">{{ $invoice->created_at->format('Y-m-d') }}</td>
-                                                <td class="text-center font-weight-bold">{{ number_format($invoice->total_amount, 2) }} ج.م</td>
-                                                <td class="text-center text-success">{{ number_format($invoice->paid_amount, 2) }} ج.م</td>
+                                                <td class="font-weight-bold text-primary">
+                                                    {{ $invoice->invoice_number ?? '-' }}</td>
+                                                <td class="font-weight-bold text-dark">
+                                                    {{ optional($invoice->supplier)->name ?? 'مورد محذوف' }}</td>
+                                                <td class="text-center text-muted" dir="ltr">
+                                                    {{ $invoice->created_at->format('Y-m-d') }}</td>
+                                                <td class="text-center font-weight-bold">
+                                                    {{ number_format($invoice->total_amount, 2) }} ج.م</td>
+                                                <td class="text-center text-success">
+                                                    {{ number_format($invoice->paid_amount, 2) }} ج.م</td>
                                                 <td class="text-center">
-                                                    @if($invoice->status == 'paid')
-                                                        <span class="badge badge-success px-2 py-1 shadow-sm">مدفوعة بالكامل</span>
+                                                    @if ($invoice->status == 'paid')
+                                                        <span class="badge badge-success px-2 py-1 shadow-sm">مدفوعة
+                                                            بالكامل</span>
                                                     @elseif($invoice->status == 'partial')
-                                                        <span class="badge badge-warning px-2 py-1 shadow-sm">مدفوعة جزئياً</span>
+                                                        <span class="badge badge-warning px-2 py-1 shadow-sm">مدفوعة
+                                                            جزئياً</span>
                                                     @else
-                                                        <span class="badge badge-danger px-2 py-1 shadow-sm">غير مدفوعة</span>
+                                                        <span class="badge badge-danger px-2 py-1 shadow-sm">غير
+                                                            مدفوعة</span>
                                                     @endif
                                                 </td>
                                                 <td>
                                                     <div class="d-flex gap-2 justify-content-center">
-                                                        <a href="{{ route('purchases.show', $invoice->id) }}" class="btn btn-light btn-sm text-info shadow-sm hover-bg-info" title="عرض الفاتورة">
+                                                        <a href="{{ route('purchases.show', $invoice->id) }}"
+                                                            class="btn btn-light btn-sm text-info shadow-sm hover-bg-info"
+                                                            title="عرض الفاتورة">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
-                                                        <form action="{{ route('purchases.destroy', $invoice->id) }}" method="POST" style="display:inline-block;" class="m-0">
+                                                        <form action="{{ route('purchases.destroy', $invoice->id) }}"
+                                                            method="POST" style="display:inline-block;" class="m-0">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="btn btn-light btn-sm text-danger shadow-sm hover-bg-danger" onclick="return confirm('هل أنت متأكد من حذف هذه الفاتورة والتراجع عن الحركات المخزنية؟')" title="حذف الفاتورة">
+                                                            <button type="submit"
+                                                                class="btn btn-light btn-sm text-danger shadow-sm hover-bg-danger"
+                                                                onclick="return confirm('هل أنت متأكد من حذف هذه الفاتورة والتراجع عن الحركات المخزنية؟')"
+                                                                title="حذف الفاتورة">
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </button>
                                                         </form>
@@ -88,7 +108,8 @@
                                         @empty
                                             <tr>
                                                 <td colspan="8" class="text-center text-muted py-5">
-                                                    <i class="fas fa-file-invoice-dollar text-light block mb-3" style="font-size: 3rem;"></i><br>
+                                                    <i class="fas fa-file-invoice-dollar text-light block mb-3"
+                                                        style="font-size: 3rem;"></i><br>
                                                     لا توجد فواتير مشتريات مسجلة
                                                 </td>
                                             </tr>
@@ -97,6 +118,22 @@
                                 </table>
                             </div>
                         </div>
+                        <div class="card-footer clearfix">
+                            {{ $invoices->links() }}
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <ol class="float-sm-right mb-0 p-0" style="list-style: none;">
+                            <li>
+                                <a href="{{ route('dashboard') }}" class="btn btn-success"
+                                    style="color: #fff; transition: all 0.2s ease-in-out;"
+                                    onmouseover="this.style.backgroundColor='#007bff'; this.style.borderColor='#007bff'; this.style.color='#fff';"
+                                    onmouseout="this.style.backgroundColor=''; this.style.borderColor=''; this.style.color='#fff';">
+                                    الرئيسية
+                                </a>
+                            </li>
+                        </ol>
                     </div>
                 </div>
             </div>
@@ -104,7 +141,14 @@
     </section>
 
     <style>
-        .hover-bg-info:hover { background-color: #17a2b8 !important; color: white !important; }
-        .hover-bg-danger:hover { background-color: #dc3545 !important; color: white !important; }
+        .hover-bg-info:hover {
+            background-color: #17a2b8 !important;
+            color: white !important;
+        }
+
+        .hover-bg-danger:hover {
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
     </style>
 @endsection

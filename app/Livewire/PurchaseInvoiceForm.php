@@ -2,23 +2,23 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use App\Models\Supplier;
 use App\Models\Inventory;
+use App\Models\InventoryMovement;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceItem;
-use App\Models\InventoryMovement;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class PurchaseInvoiceForm extends Component
 {
     public $suppliers = [];
-    public $supplier_id = null;
+    public $supplier_id;
     public $invoice_number = '';
     public $due_date = '';
     public $notes = '';
     public $paid_amount = 0;
-    
+
     // Search properties
     public $searchQuery = '';
     public $searchResults = [];
@@ -35,64 +35,117 @@ class PurchaseInvoiceForm extends Component
         $this->due_date = now()->format('Y-m-d');
     }
 
+    // public function updatedSearchQuery()
+    // {
+    //     if (strlen($this->searchQuery) < 2) {
+    //         $this->searchResults = [];
+
+    //         return;
+    //     }
+
+    //     $storeId = auth()->id();
+
+    //     // Search inventory items
+    //     $this->searchResults = Inventory::with(['inventoriable', 'unit'])
+    //         ->where('user_id', $storeId)
+    //         ->whereHasMorph('inventoriable', '*', function ($query) {
+    //             $query->where('name', 'like', '%'.$this->searchQuery.'%')
+    //                   ->orWhere('sku', 'like', '%'.$this->searchQuery.'%');
+    //         })
+    //         ->take(10)
+    //         ->get()
+    //         ->map(function ($inventory) {
+    //             return [
+    //                 'id' => $inventory->id,
+    //                 'name' => $inventory->inventoriable->name,
+    //                 'sku' => $inventory->inventoriable->sku ?? '-',
+    //                 'unit' => $inventory->unit->name ?? 'وحدة',
+    //                 'purchase_price' => $inventory->purchase_price ?? 0,
+    //             ];
+    //         })->toArray();
+    // }
+
     public function updatedSearchQuery()
     {
         if (strlen($this->searchQuery) < 2) {
             $this->searchResults = [];
+
             return;
         }
 
         $storeId = auth()->id();
-        
-        // Search inventory items
-        $this->searchResults = Inventory::with(['inventoriable', 'unit'])
+        $inventories = Inventory::with(['inventoriable', 'unit'])
             ->where('user_id', $storeId)
-            ->whereHasMorph('inventoriable', '*', function ($query) {
-                $query->where('name', 'like', '%' . $this->searchQuery . '%')
-                      ->orWhere('sku', 'like', '%' . $this->searchQuery . '%');
-            })
+            ->whereHasMorph(
+                'inventoriable',
+                '*',
+                function ($query) {
+                    $query->where('name', 'like', '%'.$this->searchQuery.'%');
+                }
+            )
+
             ->take(10)
-            ->get()
-            ->map(function ($inventory) {
-                return [
-                    'id' => $inventory->id,
-                    'name' => $inventory->inventoriable->name,
-                    'sku' => $inventory->inventoriable->sku ?? '-',
-                    'unit' => $inventory->unit->name ?? 'وحدة',
-                    'purchase_price' => $inventory->purchase_price ?? 0,
-                ];
-            })->toArray();
+            ->get();
+
+        $this->searchResults = $inventories->map(function ($inventory) {
+            if (!$inventory->inventoriable) {
+                return null;
+            }
+
+            return [
+                'id' => $inventory->id,
+                'name' => $inventory->inventoriable->name,
+                'type' => class_basename($inventory->inventoriable_type),
+                'unit' => $inventory->unit->name ?? 'وحدة',
+                'purchase_price' => $inventory->purchase_price
+                    ?? $inventory->inventoriable->Purchase_price
+                    ?? $inventory->inventoriable->price
+                    ?? 0,
+                'selling_price' => $inventory->inventoriable->selling_price ?? 0,
+            ];
+        })->filter()
+          ->values()
+          ->toArray();
     }
 
-    public function addItem($inventoryData)
+    public function addItem(int $inventoryId)
     {
-        // Check if already exists, then just increment quantity by 1
-        $exists = false;
+        $inventory = Inventory::with(['inventoriable', 'unit'])
+            ->find($inventoryId);
+
+        if (!$inventory) {
+            return;
+        }
+
+        // لو المنتج موجود بالفعل زود الكمية
         foreach ($this->items as $index => $item) {
-            if ($item['inventory_id'] == $inventoryData['id']) {
-                $this->items[$index]['quantity']++;
+            if ($item['inventory_id'] == $inventory->id) {
+                ++$this->items[$index]['quantity'];
+
                 $this->calculateItemTotal($index);
-                $exists = true;
-                break;
+
+                $this->searchQuery = '';
+                $this->searchResults = [];
+
+                return;
             }
         }
 
-        if (!$exists) {
-            $this->items[] = [
-                'inventory_id' => $inventoryData['id'],
-                'name' => $inventoryData['name'],
-                'unit' => $inventoryData['unit'],
-                'quantity' => 1,
-                'unit_price' => $inventoryData['purchase_price'],
-                'total' => $inventoryData['purchase_price'] * 1,
-            ];
-        }
+        // إضافة منتج جديد
+        $this->items[] = [
+            'inventory_id' => $inventory->id,
+            'name' => $inventory->inventoriable->name,
+            'unit' => $inventory->unit->name ?? 'وحدة',
+            'quantity' => 1,
+            'unit_price' => $inventory->purchase_price ?? 0,
+            'total' => $inventory->purchase_price ?? 0,
+        ];
 
         $this->searchQuery = '';
         $this->searchResults = [];
     }
 
-    public function calculateItemTotal($index)
+    public function calculateItemTotal(string $index)
     {
         $qty = floatval($this->items[$index]['quantity']);
         $price = floatval($this->items[$index]['unit_price']);
@@ -100,7 +153,7 @@ class PurchaseInvoiceForm extends Component
         $this->calculateInvoiceTotal();
     }
 
-    public function updatedItems($value, $key)
+    public function updatedItems($value,string $key)
     {
         // $key looks like "1.quantity" or "1.unit_price"
         $parts = explode('.', $key);
@@ -110,7 +163,7 @@ class PurchaseInvoiceForm extends Component
         }
     }
 
-    public function removeItem($index)
+    public function removeItem(int $index)
     {
         unset($this->items[$index]);
         $this->items = array_values($this->items);
@@ -132,8 +185,13 @@ class PurchaseInvoiceForm extends Component
         $total = $this->invoiceTotal;
         $paid = floatval($this->paid_amount);
 
-        if ($total == 0 || $paid == 0) return 'unpaid';
-        if ($paid >= $total) return 'paid';
+        if ($total == 0 || $paid == 0) {
+            return 'unpaid';
+        }
+        if ($paid >= $total) {
+            return 'paid';
+        }
+
         return 'partial';
     }
 
@@ -153,11 +211,12 @@ class PurchaseInvoiceForm extends Component
         try {
             DB::transaction(function () {
                 $storeId = auth()->id();
-                
+
                 // 1. Create Purchase Invoice
                 $invoice = PurchaseInvoice::create([
                     'user_id' => $storeId,
                     'supplier_id' => $this->supplier_id,
+                    'branch_id' => auth()->user()->branch_id ?? null,
                     'invoice_number' => $this->invoice_number,
                     'total_amount' => $this->invoiceTotal,
                     'paid_amount' => $this->paid_amount,
@@ -188,29 +247,31 @@ class PurchaseInvoiceForm extends Component
                     $oldStock = $inventory->current_quantity;
                     $inventory->current_quantity += $item['quantity'];
                     // Update avg purchase price? Optional, keeping it simple for now or update it directly
-                    $inventory->purchase_price = $item['unit_price']; 
+                    $inventory->purchase_price = $item['unit_price'];
                     $inventory->save();
 
                     // Log Movement
                     InventoryMovement::create([
                         'inventory_id' => $inventory->id,
-                        'type' => 'in', // IN movement
+                        'user_id' => $storeId,
+                        'branch_id' => auth()->user()->branch_id ?? null,
+                        'type' => InventoryMovement::TYPE_PURCHASE, // IN movement
                         'quantity' => $item['quantity'],
-                        'previous_quantity' => $oldStock,
-                        'new_quantity' => $inventory->current_quantity,
+                        'balance_before' => $oldStock,
+                        'balance_after' => $inventory->current_quantity,
                         'reference_type' => PurchaseInvoice::class,
                         'reference_id' => $invoice->id,
-                        'notes' => 'شراء فاتورة مستلمة بمورد: ' . $supplier->name,
-                        'created_by' => $storeId,
+                        'notes' => 'شراء فاتورة مستلمة بمورد: '.$supplier->name,
+                        // 'created_by' => $storeId,
                     ]);
                 }
             });
 
             session()->flash('success', 'تم حفظ فاتورة المشتريات وتحديث المخزون بنجاح.');
-            return redirect()->route('purchases.index');
 
+            return redirect()->route('purchases.index');
         } catch (\Exception $e) {
-            session()->flash('error', 'حدث خطأ أثناء الحفظ: ' . $e->getMessage());
+            session()->flash('error', 'حدث خطأ أثناء الحفظ: '.$e->getMessage());
         }
     }
 
