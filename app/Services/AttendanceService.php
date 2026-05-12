@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Attendance;
 use App\Models\Shift;
 use App\Models\User;
+use App\Models\staff;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 
@@ -36,6 +37,12 @@ class AttendanceService
     public function getUsers()
     {
         return User::orderBy('name')->get();
+    }
+
+
+    public function getstaffs()
+    {
+        return staff::orderBy('Name')->get();
     }
 
     public function getShifts()
