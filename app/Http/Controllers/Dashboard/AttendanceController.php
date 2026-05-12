@@ -25,14 +25,16 @@ class AttendanceController extends Controller
         ]);
 
         $attendances = $this->attendanceService->getPaginated($filters);
-        $users = $this->attendanceService->getUsers();
+        $users = $this->attendanceService->getstaffs();
+
+        //dd($users);
 
         return view('attendances.index', compact('attendances', 'users'));
     }
 
     public function create()
     {
-        $users = $this->attendanceService->getUsers();
+        $users = $this->attendanceService->getstaffs();
         $shifts = $this->attendanceService->getShifts();
 
         return view('attendances.create', compact('users', 'shifts'));
@@ -49,10 +51,10 @@ class AttendanceController extends Controller
 
     public function edit(Attendance $attendance)
     {
-        $users = $this->attendanceService->getUsers();
+        $users = $this->attendanceService->getstaffs();
         $shifts = $this->attendanceService->getShifts();
 
-        return view('dashboard.attendances.edit', compact('attendance', 'users', 'shifts'));
+        return view('attendances.edit', compact('attendance', 'users', 'shifts'));
     }
 
     public function update(UpdateAttendanceRequest $request, Attendance $attendance)
