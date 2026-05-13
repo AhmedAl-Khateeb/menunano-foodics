@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Branch;
 use App\Models\Customer;
+use App\Models\DeliveryMan;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductSize;
@@ -98,6 +99,14 @@ class PosPage extends Component
 
     public $kitchenNote = '';
 
+    // حالات المودال
+    public $showAddDeliveryManModal = false;
+
+    // بيانات المندوب الجديد
+    public $newDeliveryManName;
+    public $newDeliveryManPhone;
+    public $newDeliveryManCommission = 0;
+
     // Computed Property to fetch product safely
     public function getSelectedProductForSizeProperty()
     {
@@ -177,9 +186,13 @@ class PosPage extends Component
         $this->loadBusinessType($storeId);
         $this->normalizeOrderType();
 
-        $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', true)
-            ->where('created_by', $storeId)
-            ->get();
+        $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', 1)
+    ->where(function ($q) use ($storeId) {
+        $q->where('created_by', $storeId)
+          ->orWhereNull('created_by');
+    })
+    ->orderBy('id')
+    ->get();
 
         // Fetch Tables with active orders
         $this->tables = \App\Models\Table::with(['diningArea', 'orders' => function ($q) {
@@ -189,18 +202,6 @@ class PosPage extends Component
             ->where('is_active', true)
             ->get();
 
-        // Fetch Delivery Men
-        $this->deliveryMen = \App\Models\DeliveryMan::where('user_id', $storeId)
-            ->where('is_active', true)
-            ->get();
-
-        // Default payment method
-        /* @var \App\Models\PaymentMethod $firstPaymentMethod */
-        // $firstPaymentMethod = $this->paymentMethods->first();
-
-        // if ($firstPaymentMethod) {
-        //     $this->paymentMethod = $firstPaymentMethod->id;
-        // }
         $this->paymentMethod = 'cash';
         // فحص هل يوجد شيفت مفتوح أم لا
         $this->checkActiveShift();
@@ -554,6 +555,9 @@ class PosPage extends Component
             ->select('id', 'name')
             ->get();
 
+        $this->deliveryMen = DeliveryMan::where('is_active', 1)
+          ->get();
+
         $term = trim($this->search);
 
         $productsQuery = Product::where('user_id', $storeOwnerId)
@@ -595,6 +599,7 @@ class PosPage extends Component
             'products' => $products,
             'categories' => $categories,
             'cartProductIds' => collect($this->cart)->pluck('id')->toArray(),
+            'deliveryMen' => $this->deliveryMen,
         ]);
     }
 
@@ -1135,9 +1140,9 @@ class PosPage extends Component
         });
 
         if (!$isDraft) {
+            $this->dispatch('print-order', url: route('pos.orders.print-two', $savedOrderId));
             $this->clearCart();
-
-            return redirect()->route('pos.orders.print-two', $savedOrderId);
+            session()->flash('success', 'تمت عملية البيع بنجاح');
         }
 
         $this->showSuccessModal = true;
@@ -1374,5 +1379,39 @@ class PosPage extends Component
 
         // 🔥 مهم جدًا
         session()->forget('cart');
+    }
+
+    // فنكشن لائقاف المودال
+    public function addDeliveryMan()
+    {
+        $this->validate([
+            'newDeliveryManName' => 'required|string|max:255',
+            'newDeliveryManPhone' => 'nullable|string|max:20',
+            'newDeliveryManCommission' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $storeOwnerId = StoreService::getStoreOwnerId();
+
+        $man = DeliveryMan::create([
+            'user_id' => $storeOwnerId,
+            'name' => $this->newDeliveryManName,
+            'phone' => $this->newDeliveryManPhone,
+            'commission_percent' => $this->newDeliveryManCommission ?? 0,
+            'is_active' => 1,
+        ]);
+
+        // إضافة مباشرة للقائمة الحالية
+        $this->deliveryMen->push($man);
+
+        // تحديد المندوب الجديد تلقائيًا
+        $this->selectedDeliveryManId = $man->id;
+
+        // مسح الفورم وإغلاق المودال
+        $this->newDeliveryManName = '';
+        $this->newDeliveryManPhone = '';
+        $this->newDeliveryManCommission = 0;
+        $this->showAddDeliveryManModal = false;
+
+        session()->flash('success', 'تم إضافة مندوب جديد بنجاح');
     }
 }

@@ -31,68 +31,85 @@ class PaymentMethodController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255|unique:payment_methods,name',
+            'name' => 'required|string|max:255|unique:payment_methods,name',
             'description' => 'nullable|string',
-            'phone'       => 'required|string|max:50',
-            'is_active'   => 'nullable|boolean',
+            'phone' => 'required|string|max:50',
+            'is_active' => 'nullable|boolean',
         ]);
 
         PaymentMethod::create([
-            'name'        => $request->name,
+            'name' => $request->name,
             'description' => $request->description,
-            'phone'       => $request->phone,
-            'is_active'   => $request->has('is_active') ? 1 : 0,
-            'created_by'  => auth()->user()->role === 'super_admin' ? null : auth()->id(),
+            'phone' => $request->phone,
+            'is_active' => $request->has('is_active') ? 1 : 0,
+            'created_by' => auth()->user()->role === 'super_admin' ? null : auth()->id(),
         ]);
 
         return redirect()
-            ->route('super.payment-methods.index')
+            ->route('payment-methods.index')
             ->with('success', 'تمت إضافة وسيلة الدفع بنجاح');
     }
 
     public function edit(PaymentMethod $payment_method)
     {
+        $this->authorizeMethod($payment_method);
+
         return view('super_admin.payment_methods.edit', ['method' => $payment_method]);
     }
 
     public function update(Request $request, PaymentMethod $payment_method)
     {
+        $this->authorizeMethod($payment_method);
+
         $request->validate([
-            'name'        => 'required|string|max:255|unique:payment_methods,name,' . $payment_method->id,
+            'name' => 'required|string|max:255|unique:payment_methods,name,'.$payment_method->id,
             'description' => 'nullable|string',
-            'phone'       => 'required|string|max:50',
-            'is_active'   => 'nullable|boolean',
+            'phone' => 'required|string|max:50',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $payment_method->update([
-            'name'        => $request->name,
+            'name' => $request->name,
             'description' => $request->description,
-            'phone'       => $request->phone,
-            'is_active'   => $request->has('is_active') ? 1 : 0,
+            'phone' => $request->phone,
+            'is_active' => $request->has('is_active') ? 1 : 0,
         ]);
 
         return redirect()
-            ->route('super.payment-methods.index')
+            ->route('payment-methods.index')
             ->with('success', 'تم تعديل وسيلة الدفع بنجاح');
     }
 
     public function destroy(PaymentMethod $payment_method)
     {
+        $this->authorizeMethod($payment_method);
         $payment_method->delete();
 
         return redirect()
-            ->route('super.payment-methods.index')
+            ->route('payment-methods.index')
             ->with('success', 'تم حذف وسيلة الدفع بنجاح');
     }
 
     public function toggle($id)
     {
         $method = PaymentMethod::findOrFail($id);
+        $this->authorizeMethod($method);
+
         $method->is_active = !$method->is_active;
         $method->save();
 
         return redirect()
-            ->route('super.payment-methods.index')
+            ->route('payment-methods.index')
             ->with('success', 'تم تحديث الحالة');
+    }
+
+    private function authorizeMethod(PaymentMethod $paymentMethod)
+    {
+        if (
+            auth()->user()->role !== 'super_admin'
+            && $paymentMethod->created_by !== auth()->id()
+        ) {
+            abort(403);
+        }
     }
 }

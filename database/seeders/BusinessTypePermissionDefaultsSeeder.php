@@ -65,6 +65,7 @@ class BusinessTypePermissionDefaultsSeeder extends Seeder
                 'charges.access',
 
                 'barcodes.access',
+                'payment_methods.access'
             ],
 
             // محل
@@ -108,6 +109,7 @@ class BusinessTypePermissionDefaultsSeeder extends Seeder
                 'settings.general',
                 'payment_methods.access',
                 'barcodes.access',
+                'payment_methods.access'
             ],
 
             // منيو إلكتروني فقط
@@ -127,6 +129,7 @@ class BusinessTypePermissionDefaultsSeeder extends Seeder
                 'settings.access',
                 'settings.general',
                 'barcodes.access',
+                'payment_methods.access'
             ],
         ];
 

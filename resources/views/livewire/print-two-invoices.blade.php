@@ -11,6 +11,23 @@
             margin: 0;
         }
 
+        body * {
+            visibility: hidden;
+        }
+
+        .receipt,
+        .receipt * {
+            visibility: visible;
+        }
+
+        .receipt {
+            position: relative;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -240,6 +257,13 @@
             }
         }
     </style>
+    <script>
+        if (sessionStorage.getItem('printed') === '1') {
+            window.stop();
+        }
+
+        sessionStorage.setItem('printed', '1');
+    </script>
 </head>
 
 <body>
@@ -514,18 +538,18 @@
     </div>
 
     <script>
+    if (!window.__printed__) {
+        window.__printed__ = true;
+
         window.addEventListener('load', function() {
-            setTimeout(function() {
-                window.print();
-            }, 500);
+            window.print();
         });
 
-        window.addEventListener('afterprint', function() {
-            setTimeout(function() {
-                window.location.href = "{{ route('pos.index') }}";
-            }, 800);
-        });
-    </script>
+        window.onafterprint = function() {
+            window.location.replace("{{ route('pos.index') }}");
+        };
+    }
+</script>
 
 </body>
 

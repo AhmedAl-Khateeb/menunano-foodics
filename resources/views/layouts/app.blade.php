@@ -420,7 +420,7 @@
             </div>
 
             <!-- Sidebar Links -->
-            <div class="flex-1 overflow-y-auto  py-4 space-y-2 text-right">   <!-- no-scrollbar -->
+            <div class="flex-1 overflow-y-auto  py-4 space-y-2 text-right"> <!-- no-scrollbar -->
                 @php
                     $role = auth()->user()->role;
                     $menuItems = config('navigation.' . $role, []);
@@ -660,6 +660,19 @@
             if (endingInput) {
                 endingInput.addEventListener('input', updateLogoutDifference);
             }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('livewire:init', () => {
+            window.addEventListener('open-print', (event) => {
+                const printWindow = window.open(event.detail.url, '_blank');
+
+                printWindow.onload = function() {
+                    printWindow.focus();
+                    printWindow.print();
+                };
+            });
         });
     </script>
 

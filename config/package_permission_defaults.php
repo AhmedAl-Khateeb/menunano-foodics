@@ -59,6 +59,7 @@ return [
         'shift_receipts.access',
         'orders.returns',
         'orders.update_source',
+        'payment_methods.access'
     ],
 
     // محل
@@ -108,6 +109,7 @@ return [
         'shift_receipts.access',
         'orders.returns',
         'orders.update_source',
+        'payment_methods.access'
     ],
 
     // منيو إلكتروني فقط
@@ -128,5 +130,6 @@ return [
         'shift_receipts.access',
         'orders.returns',
         'orders.update_source',
+        'payment_methods.access'
     ],
 ];
