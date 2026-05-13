@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Branch;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductSize;
@@ -109,20 +110,41 @@ class PosPage extends Component
 
     public function updatedCustomerPhone()
     {
+        $storeOwnerId = StoreService::getStoreOwnerId();
+
+        $phone = trim($this->customerPhone);
+
+        // reset دائم
         $this->selectedCustomerId = null;
-        // Search by phone
-        if (strlen($this->customerPhone) > 3) {
-            $storeOwnerId = StoreService::getStoreOwnerId();
-            $customer = \App\Models\Customer::where('user_id', $storeOwnerId)
-                        ->where('phone', 'like', '%'.$this->customerPhone.'%')
-                        ->first();
+        $this->customerName = '';
+
+        if ($phone === '') {
+            return;
+        }
+
+        // 1) لو الرقم كامل (11 رقم مصر)
+        if (strlen($phone) >= 11) {
+            $customer = Customer::where('user_id', $storeOwnerId)
+                ->where('phone', $phone)
+                ->first();
 
             if ($customer) {
                 $this->selectedCustomerId = $customer->id;
                 $this->customerName = $customer->name;
-            } else {
-                $this->customerName = ''; // Reset name for new entry
             }
+
+            return;
+        }
+
+        // 2) اقتراح فقط (بدون override للاسم النهائي)
+        $suggest = Customer::where('user_id', $storeOwnerId)
+            ->where('phone', 'like', $phone.'%')
+            ->orderBy('id')
+            ->first();
+
+        // ⚠️ مهم: ما تعتبرش ده اسم نهائي
+        if ($suggest) {
+            $this->customerName = $suggest->name;
         }
     }
 
@@ -639,6 +661,7 @@ class PosPage extends Component
             ]);
 
             $this->lastOrderId = $order->id;
+            $this->clearCart();
             $this->closeOpenOrdersModal();
             $this->showSuccessModal = true;
         }
@@ -985,6 +1008,12 @@ class PosPage extends Component
             return;
         }
 
+        if ($this->orderType === 'delivery' && !$this->selectedDeliveryManId) {
+            session()->flash('error', 'يرجى اختيار المندوب!');
+
+            return;
+        }
+
         $isDraft = in_array($this->orderType, ['table', 'free_seating']) && floatval($this->paidAmount) == 0;
 
         if (!$isDraft && $this->paymentMethod === 'cash' && $this->paidAmount < $this->total) {
@@ -1016,7 +1045,7 @@ class PosPage extends Component
             $finalCustomerId = $this->selectedCustomerId;
 
             if (!$finalCustomerId && !empty($this->customerPhone) && !empty($this->customerName)) {
-                $customer = \App\Models\Customer::create([
+                $customer = Customer::create([
                     'user_id' => $storeOwnerId,
                     'name' => $this->customerName,
                     'phone' => $this->customerPhone,
@@ -1106,6 +1135,8 @@ class PosPage extends Component
         });
 
         if (!$isDraft) {
+            $this->clearCart();
+
             return redirect()->route('pos.orders.print-two', $savedOrderId);
         }
 
@@ -1324,5 +1355,24 @@ class PosPage extends Component
         }
 
         session()->flash('error', 'لم يتم العثور على منتج بهذا الباركود.');
+    }
+
+    public function clearCart()
+    {
+        $this->cart = [];
+        $this->total = 0;
+        $this->paidAmount = 0;
+        $this->changeAmount = 0;
+
+        $this->customerPhone = '';
+        $this->customerName = '';
+        $this->selectedCustomerId = null;
+
+        $this->selectedTableId = null;
+        $this->selectedDeliveryManId = null;
+        $this->kitchenNote = '';
+
+        // 🔥 مهم جدًا
+        session()->forget('cart');
     }
 }

@@ -377,7 +377,6 @@
                             </div>
 
                             <!-- Order Type Selector -->
-                            <!-- Order Type Selector -->
                             <div class="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
                                 <label class="text-xs font-bold text-gray-500 mb-2 block px-1">نوع الطلب</label>
 
@@ -510,31 +509,41 @@
                             <!-- Delivery Details (If order type is delivery) -->
                             @if ($orderType === 'delivery')
                                 <div class="mb-4 bg-orange-50 p-3 rounded-xl border border-orange-100 animate-fade-in">
-                                    <label class="text-xs font-bold text-orange-800 mb-2 block px-1">بيانات
-                                        التوصيل</label>
+                                    <label class="text-xs font-bold text-orange-800 mb-2 block px-1">
+                                        بيانات التوصيل
+                                    </label>
+
                                     <div class="grid grid-cols-2 gap-3 mb-3">
+
+                                        <!-- المندوب -->
                                         <div>
-                                            <label class="text-[10px] text-orange-600 font-bold mb-1 block">اختر
-                                                المندوب</label>
+                                            <label class="font-bold text-sm">المندوب</label>
+
                                             <select wire:model="selectedDeliveryManId"
-                                                class="w-full bg-white border border-orange-200 rounded-lg px-2 py-2 text-xs font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none">
-                                                <option value="">-- بدون مندوب / لاحقاً --</option>
+                                                class="w-full border rounded-lg p-2 text-sm">
+                                                <option value="">اختر المندوب</option>
+
                                                 @foreach ($deliveryMen as $man)
-                                                    <option value="{{ $man->id }}">{{ $man->name }}
-                                                        ({{ number_format($man->commission_percent, 2) }}%)
+                                                    <option value="{{ $man->id }}">
+                                                        {{ $man->name }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                         </div>
+
+                                        <!-- رسوم التوصيل -->
                                         <div>
-                                            <label class="text-[10px] text-orange-600 font-bold mb-1 block">رسوم
-                                                التوصيل
-                                                <span class="text-gray-400 text-[9px]">(مضافة للصافي)</span></label>
+                                            <label class="text-[10px] text-orange-600 font-bold mb-1 block">
+                                                رسوم التوصيل
+                                                <span class="text-gray-400 text-[9px]">(مضافة للصافي)</span>
+                                            </label>
+
                                             <input type="number" step="0.5"
                                                 wire:model.live.debounce.500ms="deliveryFee"
                                                 class="w-full bg-white border border-orange-200 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none"
                                                 placeholder="0.00">
                                         </div>
+
                                     </div>
                                 </div>
                             @endif
@@ -552,7 +561,7 @@
                                         <label class="text-[10px] text-gray-400 font-bold mb-1 block">رقم
                                             الهاتف</label>
                                         <div class="relative">
-                                            <input type="text" wire:model.live.debounce.500ms="customerPhone"
+                                            <input type="text" wire:model.live.debounce.800ms="customerPhone"
                                                 class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                                 placeholder="01xxxxxxxxx" x-on:input="showNameInput = false">
                                             <!-- Reset input view on phone change -->
@@ -612,109 +621,100 @@
                                     placeholder="مثال: بدون سكر، زيادة ثلج، تجهيز سريع..."></textarea>
                             </div>
 
-                            <!-- Payment & Action -->
-                            <div class="flex flex-col gap-3">
-                                <!-- Payment Methods Selector -->
-                                <!-- Payment Methods Selector -->
-                                <div>
-                                    <label class="text-xs font-bold text-gray-400 mb-2 block px-1">طريقة الدفع</label>
+                           <div> {{-- Root element واحد فقط لكل Livewire component --}}
 
-                                    <div class="flex flex-wrap gap-2">
+    <!-- Payment & Action -->
+    <div class="flex flex-col gap-3">
 
-                                        <!-- Cash Option -->
-                                        <button type="button"
-                                            class="flex-1 py-2 rounded-xl font-bold text-sm transition-all flex flex-col items-center justify-center gap-1 border h-16 {{ $paymentMethod === 'cash' ? 'bg-green-600 text-white border-green-600 shadow-lg ring-2 ring-green-100' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' }}"
-                                            wire:click="selectCashPayment">
+        <!-- Payment Methods Selector -->
+        <div>
+            <label class="text-xs font-bold text-gray-400 mb-2 block px-1">طريقة الدفع</label>
 
-                                            <div class="flex items-center gap-2">
-                                                <i class="fas fa-money-bill-wave"></i>
-                                                نقدي
-                                            </div>
+            <div class="flex flex-wrap gap-2">
 
-                                            <span
-                                                class="text-[10px] {{ $paymentMethod === 'cash' ? 'bg-white/20' : 'bg-gray-100 text-gray-500' }} px-2 rounded-full">
-                                                المطلوب: {{ number_format($total, 2) }}
-                                            </span>
-                                        </button>
+                <!-- Cash -->
+                <button type="button"
+                    wire:click="$set('paymentMethod','cash')"
+                    class="flex-1 py-2 rounded-xl font-bold text-sm flex flex-col items-center justify-center gap-1 h-16 border transition-all
+                        {{ $paymentMethod === 'cash' ? 'bg-green-600 text-white border-green-600 shadow-lg ring-2 ring-green-100' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' }}">
+                    <i class="fas fa-money-bill-wave"></i>
+                    نقدي
+                </button>
 
-                                        <!-- Dynamic Payment Methods -->
-                                        @foreach ($paymentMethods as $method)
-                                            <button type="button"
-                                                class="flex-1 py-2 rounded-xl font-bold text-sm transition-all flex flex-col items-center justify-center gap-0.5 border h-16 {{ $paymentMethod == $method->id ? 'bg-blue-600 text-white border-blue-600 shadow-lg ring-2 ring-blue-100' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' }}"
-                                                wire:click="selectPaymentMethod({{ $method->id }})">
+                <!-- InstaPay -->
+                <button type="button"
+                    wire:click="$set('paymentMethod','instapay')"
+                    class="flex-1 py-2 rounded-xl font-bold text-sm flex flex-col items-center justify-center gap-1 h-16 border transition-all
+                        {{ $paymentMethod === 'instapay' ? 'bg-blue-600 text-white border-blue-600 shadow-lg ring-2 ring-blue-100' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' }}">
+                    <i class="fas fa-mobile-alt"></i>
+                    إنستاباي
+                </button>
 
-                                                <div class="flex items-center gap-2">
-                                                    <i class="fas fa-wallet"></i>
-                                                    {{ $method->name }}
-                                                </div>
+                <!-- Vodafone Cash -->
+                <button type="button"
+                    wire:click="$set('paymentMethod','vodafone_cash')"
+                    class="flex-1 py-2 rounded-xl font-bold text-sm flex flex-col items-center justify-center gap-1 h-16 border transition-all
+                        {{ $paymentMethod === 'vodafone_cash' ? 'bg-red-600 text-white border-red-600 shadow-lg ring-2 ring-red-100' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' }}">
+                    <i class="fas fa-wallet"></i>
+                    فودافون كاش
+                </button>
 
-                                                @if ($method->phone)
-                                                    <span class="text-[10px] opacity-80 font-mono tracking-wider">
-                                                        {{ $method->phone }}
-                                                    </span>
-                                                @endif
-                                            </button>
-                                        @endforeach
+            </div>
+        </div>
 
-                                    </div>
-                                </div>
+        <!-- Cash Calculations (تظهر فقط إذا اخترت النقدي) -->
+        <div class="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100"
+            x-show="$wire.paymentMethod === 'cash'" x-transition>
+            <div class="col-span-2 flex justify-between items-center mb-1 text-xs font-bold text-gray-500 px-1">
+                <span>حاسبة النقدية</span>
+                <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded">الإجمالي: {{ number_format($total, 2) }}</span>
+            </div>
 
-                                <!-- Cash Calculations -->
-                                <div class="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100"
-                                    x-show="$wire.paymentMethod === 'cash'" x-transition>
-                                    <div
-                                        class="col-span-2 flex justify-between items-center mb-1 text-xs font-bold text-gray-500 px-1">
-                                        <span>حاسبة النقدية</span>
-                                        <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded">الإجمالي:
-                                            {{ number_format($total, 2) }}</span>
-                                    </div>
-                                    <div>
-                                        <label class="text-xs font-bold text-gray-500 mb-1 block">المبلغ الذي دخل
-                                            الدرج</label>
-                                        <div class="relative">
-                                            <input type="number" step="0.5"
-                                                wire:model.live.debounce.300ms="paidAmount"
-                                                class="w-full bg-white border border-gray-300 rounded-xl pl-2 pr-4 py-2.5 font-bold text-lg text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none shadow-sm"
-                                                placeholder="0.00">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="text-xs font-bold text-gray-500 mb-1 block">المتبقي
-                                            للعميل</label>
-                                        <div
-                                            class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 font-bold text-lg flex items-center justify-between {{ $changeAmount < 0 ? 'text-red-500 bg-red-50 border-red-100' : 'text-green-600' }}">
-                                            <span>{{ number_format(abs($changeAmount), 2) }}</span>
-                                            <span
-                                                class="text-xs text-gray-400 font-normal">{{ $changeAmount < 0 ? 'عليك' : 'إرجاع' }}</span>
-                                        </div>
-                                    </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 mb-1 block">المبلغ الذي دخل الدرج</label>
+                <div class="relative">
+                    <input type="number" step="0.5"
+                        wire:model.live.debounce.300ms="paidAmount"
+                        class="w-full bg-white border border-gray-300 rounded-xl pl-2 pr-4 py-2.5 font-bold text-lg text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none shadow-sm"
+                        placeholder="0.00">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-gray-500 mb-1 block">المتبقي للعميل</label>
+                <div class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 font-bold text-lg flex items-center justify-between {{ $changeAmount < 0 ? 'text-red-500 bg-red-50 border-red-100' : 'text-green-600' }}">
+                    <span>{{ number_format(abs($changeAmount), 2) }}</span>
+                    <span class="text-xs text-gray-400 font-normal">{{ $changeAmount < 0 ? 'عليك' : 'إرجاع' }}</span>
+                </div>
+            </div>
+        </div>
+
+        @php
+            $isDraft = in_array($orderType, ['table', 'free_seating']) && floatval($paidAmount) == 0;
+            $btnDisabled = !$isDraft && $paymentMethod === 'cash' && $paidAmount < $total ? 'disabled' : '';
+        @endphp
+
+        <!-- Checkout Button -->
+        <button
+            class="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-transform transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg mt-2"
+            wire:click="checkout" wire:loading.attr="disabled" {{ $btnDisabled }}>
+            <span wire:loading.remove>
+                @if ($isDraft)
+                    <i class="fas fa-clipboard-list mr-2"></i> تعليق الطلب (للمطبخ)
+                @else
+                    <i class="fas fa-check-circle mr-2"></i> إتمام عملية البيع
+                @endif
+            </span>
+            <span wire:loading><i class="fas fa-spinner fa-spin mr-2"></i> جاري المعالجة...</span>
+        </button>
+
+    </div>
+</div>
 
 
-                                </div>
 
 
-                                @php
-                                    $isDraft =
-                                        in_array($orderType, ['table', 'free_seating']) && floatval($paidAmount) == 0;
-                                    $btnDisabled =
-                                        !$isDraft && $paymentMethod === 'cash' && $paidAmount < $total
-                                            ? 'disabled'
-                                            : '';
-                                @endphp
-                                <button
-                                    class="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-transform transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg mt-2"
-                                    wire:click="checkout" wire:loading.attr="disabled" {{ $btnDisabled }}>
-                                    <span wire:loading.remove>
-                                        @if ($isDraft)
-                                            <i class="fas fa-clipboard-list mr-2"></i> تعليق الطلب (للمطبخ)
-                                        @else
-                                            <i class="fas fa-check-circle mr-2"></i> إتمام عملية البيع
-                                        @endif
-                                    </span>
-                                    <span wire:loading><i class="fas fa-spinner fa-spin mr-2"></i> جاري
-                                        المعالجة...</span>
-                                </button>
-                            </div>
+
                         </div>
                     @endif
                 </div>

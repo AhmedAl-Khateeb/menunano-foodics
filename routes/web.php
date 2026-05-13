@@ -248,7 +248,6 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         ->middleware('package.permission:products.access');
 
     Route::get('/products/barcodes/print', [ProductBarcodeController::class, 'printAll'])
-    ->middleware(['package.permission:barcodes.access'])
     ->name('products.barcodes.print');
 
     Route::resource('sliders', SliderController::class)

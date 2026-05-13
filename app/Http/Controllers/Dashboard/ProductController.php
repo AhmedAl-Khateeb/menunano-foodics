@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Facades\FileHandler;
 use App\Http\Controllers\Controller;
 // use App\Http\Requests\ProductStoreRequest;
-// use App\Http\Requests\ProductUpdateRequest;
+use App\Http\Requests\ProductUpdateRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Traits\UploadImg;
@@ -74,63 +74,43 @@ class ProductController extends Controller
         }
     }
 
-    public function update(Request $request, Product $product)
+
+
+    public function update(ProductUpdateRequest $request, Product $product)
     {
-        if ($product->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
-        }
+        abort_if($product->user_id !== Auth::id(), 403);
+
         try {
-            $data = $request->only(['name', 'description', 'Purchase_price', 'selling_price']);
-
-            // if ($request->hasFile('cover')) {
-            //     // لو فيه صورة قديمة نحذفها
-            //     if ($product->cover && Storage::disk('public')->exists($product->cover)) {
-            //         Storage::disk('public')->delete($product->cover);
-            //     }
-
-            // $data['cover'] = $request->file('cover')->store('products', 'public');
-
-            // }
+            $cover = $product->cover;
 
             if ($request->hasFile('cover')) {
-                @$CoverNAME = $this->saveImage($request->cover, 'Attachfile/products');
-            } else {
-                @$CoverNAME = $product->cover;
+                $cover = $this->saveImage($request->file('cover'), 'Attachfile/products');
             }
 
-            $product->update($data + ['category_id' => $request->category_id,
-                'cover' => $CoverNAME]);
+            $product->update([
+                'name' => $request->name,
+                'description' => $request->description,
+                'Purchase_price' => $request->Purchase_price,
+                'selling_price' => $request->selling_price,
+                'category_id' => $request->category_id,
+                'cover' => $cover,
+            ]);
 
-            // Delete old sizes
             $product->sizes()->delete();
 
-            if ($request->has('sizes') && is_array($request->sizes)) {
+            if (is_array($request->sizes)) {
                 foreach ($request->sizes as $size) {
                     if (!empty($size['size']) || !empty($size['Purchase_price']) || !empty($size['selling_price'])) {
-                        $product->sizes()->create([
-                            'size' => $size['size'] ?? null,
-                            'Purchase_price' => $size['Purchase_price'] ?? null,
-                            'selling_price' => $size['selling_price'] ?? null,
-                        ]);
-                    }
-                    if (!empty($size['size']) || !empty($size['Purchase_price']) || !empty($size['selling_price'])) {
-                        $product->sizes()->create([
-                            'size' => $size['size'] ?? null,
-                            'Purchase_price' => $size['Purchase_price'] ?? null,
-                            'selling_price' => $size['selling_price'] ?? null,
-                        ]);
+                        $product->sizes()->create($size);
                     }
                 }
             }
-            Alert::success('success', 'Product updated successfully');
-
-            return redirect()->route('products.index');
-        } catch (\Exception $exception) {
-            Alert::error('error', 'Product not updated');
-
-            return redirect()->back();
+            return redirect()->route('products.index')->with('success', 'Product updated successfully');
+        } catch (\Throwable $e) {
+            dd($e->getMessage(), $e->getFile(), $e->getLine());
         }
     }
+
 
     public function show(int $id)
     {
@@ -141,9 +121,7 @@ class ProductController extends Controller
         return view('products.sizes', compact('product'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(Product $product)
     {
         if ($product->user_id !== Auth::id()) {

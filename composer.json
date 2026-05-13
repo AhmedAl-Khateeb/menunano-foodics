@@ -12,6 +12,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^4.1",
+        "picqer/php-barcode-generator": "^3.2",
         "realrashid/sweet-alert": "^7.3",
         "spatie/laravel-permission": "^6.24"
     },
