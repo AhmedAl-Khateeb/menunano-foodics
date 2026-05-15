@@ -107,6 +107,24 @@ class PosPage extends Component
     public $newDeliveryManPhone;
     public $newDeliveryManCommission = 0;
 
+    public $deliveryOrders = [];
+
+    public $order_note;
+    public $payment_method;
+
+    public $selectedOrder;
+
+    protected $listeners = [
+        'echo:orders,new-order' => 'handleNewOrder',
+    ];
+
+    public function handleNewOrder($data)
+    {
+        $this->loadDeliveryOrders();
+
+        $this->dispatch('playSound'); // optional JS event
+    }
+
     // Computed Property to fetch product safely
     public function getSelectedProductForSizeProperty()
     {
@@ -179,22 +197,115 @@ class PosPage extends Component
         $this->closeResetModal();
     }
 
+    // public function selectDeliveryOrder($orderId)
+    // {
+    //     $order = Order::with('items.product', 'paymentMethodRelation')
+    //         ->find($orderId);
+
+    //     if (!$order) {
+    //         return;
+    //     }
+
+    //     // فتح الفاتورة (ده أهم سطر)
+    //     $this->activeTab = 'cart';
+
+    //     $this->orderType = 'delivery';
+
+    //     $this->selectedOrder = $order;
+
+    //     $this->customerName = $order->name;
+    //     $this->customerPhone = $order->phone;
+    //     $this->paymentMethod = $order->payment_method;
+
+    //     $this->cart = [];
+
+    //     foreach ($order->items as $item) {
+    //         $this->cart[] = [
+    //             'id' => $item->id,
+    //             'name' => $item->product->name ?? '',
+    //             'price' => $item->pivot->price,
+    //             'quantity' => $item->pivot->quantity,
+    //         ];
+    //     }
+
+    //     $this->calculateTotal();
+
+    //     $order->status = 'served';
+    //     $order->save();
+
+    //     $this->loadDeliveryOrders();
+
+    //     $this->dispatch('stopSound');
+    // }
+
+    public function openDeliveryOrder($orderId)
+{
+    $order = Order::with(['items.product', 'customer'])->find($orderId);
+
+    if (!$order) return;
+
+    // 1. افتح السلة مباشرة
+    $this->activeTab = 'cart';
+
+    // 2. بيانات الطلب
+    $this->selectedOrderId = $order->id;
+    $this->selectedCustomerId = $order->customer?->id;
+    $this->customerName = $order->customer?->name;
+    $this->customerPhone = $order->customer?->phone;
+    $this->paymentMethod = $order->payment_method ?? 'cash';
+    $this->orderType = $order->type ?? 'delivery';
+
+    // 3. امسح السلة
+    $this->cart = [];
+
+    foreach ($order->items as $item) {
+        $this->cart[] = [
+            'cart_item_id' => uniqid(),
+            'name' => $item->product?->name ?? '',
+            'price' => (float) $item->price,
+            'quantity' => (int) $item->quantity,
+        ];
+    }
+
+    // 4. إجمالي
+    $this->calculateTotal();
+
+    // 5. اقفل الإشعار + الصوت
+    $this->dispatch('close-dropdown');
+    $this->dispatch('stopSound');
+
+    // 6. أهم خطوة 👇
+    $this->loadDeliveryOrders();
+}
+
+    public function loadDeliveryOrders()
+    {
+        $this->deliveryOrders = Order::with('paymentMethodRelation')
+            ->where('type', 'delivery')
+            ->where('status', 'pending')
+            ->latest()
+            ->take(5)
+            ->get();
+    }
+
     public function mount()
     {
-        // Fetch dynamic payment methods
+        $this->activeTab = request()->get('tab', 'products');
+
         $storeId = StoreService::getStoreOwnerId();
+
+        // 1. تحميل البيانات الأساسية أولاً
         $this->loadBusinessType($storeId);
         $this->normalizeOrderType();
 
         $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', 1)
-    ->where(function ($q) use ($storeId) {
-        $q->where('created_by', $storeId)
-          ->orWhereNull('created_by');
-    })
-    ->orderBy('id')
-    ->get();
+            ->where(function ($q) use ($storeId) {
+                $q->where('created_by', $storeId)
+                  ->orWhereNull('created_by');
+            })
+            ->orderBy('id')
+            ->get();
 
-        // Fetch Tables with active orders
         $this->tables = \App\Models\Table::with(['diningArea', 'orders' => function ($q) {
             $q->where('status', 'pending');
         }])
@@ -203,18 +314,24 @@ class PosPage extends Component
             ->get();
 
         $this->paymentMethod = 'cash';
-        // فحص هل يوجد شيفت مفتوح أم لا
-        $this->checkActiveShift();
 
-        // تحميل مبلغ بداية الشيفت المقترح من آخر شيفت مغلق
+        $this->checkActiveShift();
         $this->loadSuggestedStartingCash();
 
-        // فتح مودال نهاية الشيفت لو جاي من رابط logout أو زر خارجي
-        if (request()->has('showEndShift') && request()->get('showEndShift') == 'true') {
+        // 2. تحميل الإشعارات
+        $this->loadDeliveryOrders();
+
+        // 3. فتح الطلب بعد كل حاجة
+        if ($orderId = request()->get('order_id')) {
+            $this->openDeliveryOrder($orderId);
+        }
+
+        // 4. مودال الإغلاق
+        if (request()->boolean('showEndShift')) {
             $this->openEndShiftModal();
         }
 
-        // Fix: Recalculate total if cart has items persisted in session
+        // 5. إعادة الحساب
         if (!empty($this->cart)) {
             $this->calculateTotal();
         }
@@ -1140,9 +1257,16 @@ class PosPage extends Component
         });
 
         if (!$isDraft) {
-            $this->dispatch('print-order', url: route('pos.orders.print-two', $savedOrderId));
+            $this->dispatch(
+                'print-order',
+                url: route('pos.orders.print-two', $savedOrderId)
+            );
+
             $this->clearCart();
+
             session()->flash('success', 'تمت عملية البيع بنجاح');
+
+            return; // 👈 مهم جدًا: يمنع أي كود بعده (زي المودال)
         }
 
         $this->showSuccessModal = true;

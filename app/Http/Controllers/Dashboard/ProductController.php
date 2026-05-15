@@ -11,7 +11,6 @@ use App\Models\Product;
 use App\Traits\UploadImg;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class ProductController extends Controller
@@ -36,45 +35,39 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         try {
-            $data = $request->only(['name', 'description', 'Purchase_price', 'selling_price']);
-            // if ($request->hasFile('cover')) {
-            //     // نخزنها في مجلد products داخل public
-            //     $data['cover'] = $request->file('cover')->store('products', 'public');
-            // }
+            $CoverNAME = null;
 
             if ($request->hasFile('cover')) {
-                @$CoverNAME = $this->saveImage($request->cover, 'Attachfile/products');
+                $CoverNAME = $this->saveImage($request->cover, 'Attachfile/products');
             }
 
-            $data['user_id'] = Auth::id();
-            $product = Product::create($data + ['user_id' => Auth::id(),
-                'category_id' => $request->category_id, 'cover' => $CoverNAME]);
+            $product = Product::create([
+                'name' => $request->name,
+                'description' => $request->description,
+                'Purchase_price' => $request->Purchase_price,
+                'selling_price' => $request->selling_price,
+                'category_id' => $request->category_id,
+                'user_id' => Auth::id(),
+                'cover' => $CoverNAME,
+            ]);
 
-            if ($request->has('sizes') && is_array($request->sizes)) {
+            if ($request->sizes) {
                 foreach ($request->sizes as $size) {
-                    if (!empty($size['size']) || !empty($size['Purchase_price']) || !empty($size['selling_price'])) {
-                        $product->sizes()->create([
-                            'size' => $size['size'] ?? null,
-                            'Purchase_price' => $size['Purchase_price'] ?? null,
-                            'selling_price' => $size['selling_price'] ?? null,
-                            'Purchase_price' => $size['Purchase_price'] ?? null,
-                            'selling_price' => $size['selling_price'] ?? null,
-                        ]);
-                    }
+                    $product->sizes()->create([
+                        'size' => $size['size'] ?? null,
+                        'Purchase_price' => $size['Purchase_price'] ?? null,
+                        'selling_price' => $size['selling_price'] ?? null,
+                    ]);
                 }
             }
 
             Alert::success('success', 'product created successfully');
 
             return redirect()->route('products.index');
-        } catch (\Exception $exception) {
-            Alert::error('error', 'product not created');
-
-            return redirect()->back();
+        } catch (\Exception $e) {
+            dd($e->getMessage(), $e->getLine());
         }
     }
-
-
 
     public function update(ProductUpdateRequest $request, Product $product)
     {
@@ -105,12 +98,16 @@ class ProductController extends Controller
                     }
                 }
             }
-            return redirect()->route('products.index')->with('success', 'Product updated successfully');
+
+            Alert::success('تم التحديث', 'تم تحديث المنتج بنجاح');
+
+            return redirect()->route('products.index');
         } catch (\Throwable $e) {
-            dd($e->getMessage(), $e->getFile(), $e->getLine());
+            Alert::error('خطأ', 'حدث خطأ أثناء التحديث');
+
+            return redirect()->back();
         }
     }
-
 
     public function show(int $id)
     {
@@ -121,7 +118,6 @@ class ProductController extends Controller
         return view('products.sizes', compact('product'));
     }
 
-    
     public function destroy(Product $product)
     {
         if ($product->user_id !== Auth::id()) {

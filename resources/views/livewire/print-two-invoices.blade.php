@@ -257,13 +257,7 @@
             }
         }
     </style>
-    <script>
-        if (sessionStorage.getItem('printed') === '1') {
-            window.stop();
-        }
-
-        sessionStorage.setItem('printed', '1');
-    </script>
+    
 </head>
 
 <body>
@@ -537,18 +531,14 @@
         <a href="#" onclick="window.print(); return false;" class="btn">طباعة مرة أخرى</a>
     </div>
 
-    <script>
-    if (!window.__printed__) {
-        window.__printed__ = true;
+   <script>
+    window.addEventListener('load', function() {
+        window.print();
+    });
 
-        window.addEventListener('load', function() {
-            window.print();
-        });
-
-        window.onafterprint = function() {
-            window.location.replace("{{ route('pos.index') }}");
-        };
-    }
+    window.onafterprint = function() {
+        window.location.replace("{{ route('pos.index') }}");
+    };
 </script>
 
 </body>

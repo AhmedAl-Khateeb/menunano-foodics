@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewOrderCreated;
 use App\Facades\ApiResponse;
 use App\Http\Requests\OrderStoreRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
-use Illuminate\Support\Facades\DB;
 use App\Traits\StoreHelper;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -52,7 +53,7 @@ class OrderController extends Controller
                 'total_price' => $totalPrice,
                 'payment_method' => $request->payment_method,
                 'payment_proof' => $paymentProofPath,
-                'status' => 'pending'
+                'status' => 'pending',
             ]);
 
             foreach ($cartItems as $item) {
@@ -62,6 +63,9 @@ class OrderController extends Controller
                 ]);
             }
 
+            event(new NewOrderCreated($order));
+            $this->dispatch('refreshOrders'); // Livewire update
+            $this->dispatch('playSound');
             // Clear the cart
             $customer->cartItems()->delete();
 
@@ -70,6 +74,7 @@ class OrderController extends Controller
             return ApiResponse::created(new OrderResource($order));
         } catch (\Exception $e) {
             DB::rollBack();
+
             return ApiResponse::serverError($e->getMessage());
         }
     }

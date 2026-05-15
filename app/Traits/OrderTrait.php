@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\DeliveryMan;
+use App\Models\PaymentMethod;
 use App\Models\ProductSize;
 use App\Models\Shift;
 use App\Models\Table;
@@ -52,5 +53,10 @@ trait OrderTrait
     public function cashier()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function paymentMethodRelation()
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
     }
 }

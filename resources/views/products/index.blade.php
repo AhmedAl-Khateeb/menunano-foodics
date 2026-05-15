@@ -17,7 +17,7 @@
 
                 <form action="{{ route('products.index') }}" method="GET"
                     class="d-flex gap-2 align-items-center flex-wrap">
-                    <select name="category" class="form-control form-select-lg shadow-sm" required
+                    <select name="category_id" class="form-control form-select-lg shadow-sm" required
                         style="min-width: 180px;">
                         <option value="" disabled selected>اختر فئة</option>
                         @foreach ($categories as $category)
@@ -75,7 +75,6 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                    {{-- <div class="col-md-6 mb-3">
 
 
                                     <div class="col-md-6 mb-3">
@@ -156,525 +155,500 @@
             </div>
 
             {{-- جدول المنتجات --}}
-                                    <div class="card-body p-4">
-                                        <div class="table-responsive">
-                                            <table class="table table-hover text-center align-middle mb-0">
-                                                <thead class="thead-light">
-                                                    <tr>
-                                                        <th style="width: 5%;">#</th>
-                                                        <th style="width: 18%;">الاسم</th>
-                                                        <th style="width: 10%;">الباركود</th>
-                                                        <th style="width: 22%;">الوصف</th>
-                                                        <th style="width: 13%;">الفئة</th>
-                                                        <th style="width:10%;">سعرالشراء</th>
-                                                        <th style="width:10%;">سعر بيع</th>
-                                                        <th style="width: 14%;">الصورة</th>
-                                                        <th style="width: 20%;">الإجراءات</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @forelse ($products as $product)
-                                                        <tr class="bg-white shadow-sm rounded-lg">
-                                                            <td>{{ $loop->iteration }}</td>
-                                                            <td class="font-weight-bold text-primary">{{ $product->name }}
-                                                                {{-- {{ $product->barcode }} --}}
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover text-center align-middle mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width: 5%;">#</th>
+                                <th style="width: 18%;">الاسم</th>
+                                <th style="width: 10%;">الباركود</th>
+                                <th style="width: 22%;">الوصف</th>
+                                <th style="width: 13%;">الفئة</th>
+                                <th style="width:10%;">سعرالشراء</th>
+                                <th style="width:10%;">سعر بيع</th>
+                                <th style="width: 14%;">الصورة</th>
+                                <th style="width: 20%;">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($products as $product)
+                                <tr class="bg-white shadow-sm rounded-lg">
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td class="font-weight-bold text-primary">{{ $product->name }}
+                                        {{-- {{ $product->barcode }} --}}
 
-                                                            </td>
-                                                            <td>
-                                                                @if ($product->barcode)
-                                                                    <div class="mt-1">
-                                                                        <svg class="barcode-preview"
-                                                                            data-barcode="{{ $product->barcode }}">
-                                                                        </svg>
-                                                                    </div>
-                                                                @endif
-                                                            </td>
-                                                            <td>{{ Str::limit($product->description, 50) ?? '—' }}</td>
-                                                            <td>
-                                                                @if ($product->category)
-                                                                    <span
-                                                                        class="badge badge-info">{{ $product->category->name }}</span>
-                                                                @else
-                                                                    —
-                                                                @endif
-                                                            </td>
-                                                            <td>
-                                                                {{ $product->Purchase_price !== null ? number_format($product->Purchase_price, 2) . '' : '—' }}
-                                                            </td>
+                                    </td>
+                                    <td>
+                                        @if ($product->barcode)
+                                            <div class="mt-1">
+                                                <svg class="barcode-preview" data-barcode="{{ $product->barcode }}">
+                                                </svg>
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td>{{ Str::limit($product->description, 50) ?? '—' }}</td>
+                                    <td>
+                                        @if ($product->category)
+                                            <span class="badge badge-info">{{ $product->category->name }}</span>
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td>
+                                        {{ $product->Purchase_price !== null ? number_format($product->Purchase_price, 2) . '' : '—' }}
+                                    </td>
 
-                                                            <td>
-                                                                {{ $product->selling_price !== null ? number_format($product->selling_price, 2) . '' : '—' }}
-                                                            </td>
+                                    <td>
+                                        {{ $product->selling_price !== null ? number_format($product->selling_price, 2) . '' : '—' }}
+                                    </td>
 
-                                                            <td>
-                                                                @if ($product->cover)
-                                                                    <img src="{{ asset('Attachfile/products/' . $product->cover) }}"
-                                                                        alt="Cover Image" class="img-thumbnail rounded"
-                                                                        style="width: 80px; height: 80px; object-fit: cover;">
-                                                                @else
-                                                                    <span class="text-muted">—</span>
-                                                                @endif
-                                                            </td>
-                                                            <td class="product-actions-cell">
+                                    <td>
+                                        @if ($product->cover)
+                                            <img src="{{ asset('Attachfile/products/' . $product->cover) }}"
+                                                alt="Cover Image" class="img-thumbnail rounded"
+                                                style="width: 80px; height: 80px; object-fit: cover;">
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="product-actions-cell">
 
-                                                                <div class="actions-box">
-                                                                    <form action="{{ route('products.barcodes.print') }}"
-                                                                        method="GET" target="_blank"
-                                                                        class="barcode-print-form">
+                                        <div class="actions-box">
+                                            <form action="{{ route('products.barcodes.print') }}" method="GET"
+                                                target="_blank" class="barcode-print-form">
 
-                                                                        <input type="hidden" name="product_id"
-                                                                            value="{{ $product->id }}">
+                                                <input type="hidden" name="product_id" value="{{ $product->id }}">
 
-                                                                        {{-- اختيار المقاس --}}
-                                                                        @if ($product->sizes->isNotEmpty())
-                                                                            <select name="size_id"
-                                                                                class="form-control form-control-sm barcode-size mb-2">
+                                                {{-- اختيار المقاس --}}
+                                                @if ($product->sizes->isNotEmpty())
+                                                    <select name="size_id"
+                                                        class="form-control form-control-sm barcode-size mb-2">
 
-                                                                                <option value="">كل الأحجام</option>
+                                                        <option value="">كل الأحجام</option>
 
-                                                                                @foreach ($product->sizes as $size)
-                                                                                    <option value="{{ $size->id }}">
-                                                                                        {{ $size->size }}
-                                                                                    </option>
-                                                                                @endforeach
+                                                        @foreach ($product->sizes as $size)
+                                                            <option value="{{ $size->id }}">
+                                                                {{ $size->size }}
+                                                            </option>
+                                                        @endforeach
 
-                                                                            </select>
-                                                                        @endif
+                                                    </select>
+                                                @endif
 
-                                                                        {{-- اختيار إظهار السعر --}}
-                                                                        <select name="show_price"
-                                                                            class="form-control form-control-sm mb-2">
+                                                {{-- اختيار إظهار السعر --}}
+                                                <select name="show_price" class="form-control form-control-sm mb-2">
 
-                                                                            <option value="1">
-                                                                                طباعة بالسعر
-                                                                            </option>
+                                                    <option value="1">
+                                                        طباعة بالسعر
+                                                    </option>
 
-                                                                            <option value="0">
-                                                                                طباعة بدون سعر
-                                                                            </option>
+                                                    <option value="0">
+                                                        طباعة بدون سعر
+                                                    </option>
 
-                                                                        </select>
+                                                </select>
 
-                                                                        <div class="print-row">
+                                                <div class="print-row">
 
-                                                                            {{-- عدد النسخ --}}
-                                                                            <input type="number" name="qty"
-                                                                                value="1" min="1"
-                                                                                max="200"
-                                                                                class="form-control form-control-sm text-center barcode-qty">
+                                                    {{-- عدد النسخ --}}
+                                                    <input type="number" name="qty" value="1" min="1"
+                                                        max="200"
+                                                        class="form-control form-control-sm text-center barcode-qty">
 
-                                                                            {{-- زر الطباعة --}}
-                                                                            <button type="submit"
-                                                                                class="btn btn-dark btn-sm barcode-print-btn">
+                                                    {{-- زر الطباعة --}}
+                                                    <button type="submit" class="btn btn-dark btn-sm barcode-print-btn">
 
-                                                                                <i class="fa fa-barcode"></i>
-                                                                                طباعة
+                                                        <i class="fa fa-barcode"></i>
+                                                        طباعة
 
-                                                                            </button>
+                                                    </button>
 
-                                                                        </div>
+                                                </div>
 
-                                                                    </form>
+                                            </form>
 
-                                                                    <div class="main-actions-row">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-success btn-sm action-btn"
-                                                                            data-toggle="modal"
-                                                                            data-target="#edit{{ $product->id }}">
-                                                                            <i class="fa fa-edit"></i> تعديل
-                                                                        </button>
+                                            <div class="main-actions-row">
+                                                <button type="button" class="btn btn-outline-success btn-sm action-btn"
+                                                    data-toggle="modal" data-target="#edit{{ $product->id }}">
+                                                    <i class="fa fa-edit"></i> تعديل
+                                                </button>
 
-                                                                        <x-model name="delete-{{ $product->id }}"
-                                                                            status="danger" icon="fa fa-trash"
-                                                                            title="حذف"
-                                                                            message="هل أنت متأكد من حذف {{ $product->name }}؟">
-                                                                            <form
-                                                                                action="{{ route('products.destroy', $product->id) }}"
-                                                                                method="POST">
-                                                                                @csrf
-                                                                                @method('DELETE')
-                                                                                <button type="submit"
-                                                                                    class="btn btn-danger btn-sm px-3">نعم،
-                                                                                    احذف</button>
-                                                                            </form>
-                                                                        </x-model>
+                                                <x-model name="delete-{{ $product->id }}" status="danger"
+                                                    icon="fa fa-trash" title="حذف"
+                                                    message="هل أنت متأكد من حذف {{ $product->name }}؟">
+                                                    <form action="{{ route('products.destroy', $product->id) }}"
+                                                        method="POST">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm px-3">نعم،
+                                                            احذف</button>
+                                                    </form>
+                                                </x-model>
 
-                                                                        <a href="{{ route('products.show', $product->id) }}"
-                                                                            class="btn btn-outline-info btn-sm action-btn">
-                                                                            <i class="fa fa-eye"></i> عرض
-                                                                        </a>
-                                                                    </div>
+                                                <a href="{{ route('products.show', $product->id) }}"
+                                                    class="btn btn-outline-info btn-sm action-btn">
+                                                    <i class="fa fa-eye"></i> عرض
+                                                </a>
+                                            </div>
 
-                                                                </div>
-
-                                                                {{-- مودال التعديل خليه بعد actions-box عادي --}}
-                                                                <div class="modal fade" id="edit{{ $product->id }}"
-                                                                    tabindex="-1">
-                                                                    <div class="modal-dialog modal-lg">
-                                                                        <div class="modal-content">
-
-                                                                            <form
-                                                                                action="{{ route('products.update', $product->id) }}"
-                                                                                method="POST"
-                                                                                enctype="multipart/form-data">
-                                                                                @csrf
-                                                                                @method('PUT')
-
-                                                                                <div class="modal-header">
-                                                                                    <h5 class="modal-title">تعديل المنتج
-                                                                                    </h5>
-                                                                                </div>
-
-                                                                                <div class="modal-body">
-
-                                                                                    <div class="row">
-
-                                                                                        <div class="col-md-6">
-                                                                                            <label>الاسم</label>
-                                                                                            <input type="text"
-                                                                                                name="name"
-                                                                                                value="{{ $product->name }}"
-                                                                                                class="form-control">
-                                                                                        </div>
-
-                                                                                        <div class="col-md-6">
-                                                                                            <label>الوصف</label>
-                                                                                            <input type="text"
-                                                                                                name="description"
-                                                                                                value="{{ $product->description }}"
-                                                                                                class="form-control">
-                                                                                        </div>
-
-                                                                                        <div class="col-md-6 mt-2">
-                                                                                            <label>الفئة</label>
-                                                                                            <select name="category_id"
-                                                                                                class="form-control">
-                                                                                                @foreach ($categories as $category)
-                                                                                                    <option
-                                                                                                        value="{{ $category->id }}"
-                                                                                                        {{ $product->category_id == $category->id ? 'selected' : '' }}>
-                                                                                                        {{ $category->name }}
-                                                                                                    </option>
-                                                                                                @endforeach
-                                                                                            </select>
-                                                                                        </div>
-
-                                                                                        <div class="col-md-6 mt-2">
-                                                                                            <label>سعر الشراء</label>
-                                                                                            <input type="number"
-                                                                                                name="Purchase_price"
-                                                                                                value="{{ $product->Purchase_price }}"
-                                                                                                class="form-control">
-                                                                                        </div>
-
-                                                                                        <div class="col-md-6 mt-2">
-                                                                                            <label>سعر البيع</label>
-                                                                                            <input type="number"
-                                                                                                name="selling_price"
-                                                                                                value="{{ $product->selling_price }}"
-                                                                                                class="form-control">
-                                                                                        </div>
-
-                                                                                        <div class="col-md-6 mt-2">
-                                                                                            <label>الصورة</label>
-                                                                                            <input type="file"
-                                                                                                name="cover"
-                                                                                                class="form-control">
-                                                                                            @if ($product->cover)
-                                                                                                <img src="{{ asset('Attachfile/products/' . $product->cover) }}"
-                                                                                                    style="width:60px;height:60px;margin-top:5px;">
-                                                                                            @endif
-                                                                                        </div>
-
-                                                                                    </div>
-
-                                                                                    <hr>
-
-                                                                                    <h6>الأحجام</h6>
-
-                                                                                    <div
-                                                                                        id="sizes-wrapper-edit-{{ $product->id }}">
-                                                                                        @foreach ($product->sizes as $index => $size)
-                                                                                            <div
-                                                                                                class="row size-item mb-2">
-                                                                                                <div class="col-md-4">
-                                                                                                    <input type="text"
-                                                                                                        name="sizes[{{ $index }}][size]"
-                                                                                                        value="{{ $size->size }}"
-                                                                                                        class="form-control">
-                                                                                                </div>
-
-                                                                                                <div class="col-md-3">
-                                                                                                    <input type="number"
-                                                                                                        name="sizes[{{ $index }}][Purchase_price]"
-                                                                                                        value="{{ $size->Purchase_price }}"
-                                                                                                        class="form-control">
-                                                                                                </div>
-
-                                                                                                <div class="col-md-3">
-                                                                                                    <input type="number"
-                                                                                                        name="sizes[{{ $index }}][selling_price]"
-                                                                                                        value="{{ $size->selling_price }}"
-                                                                                                        class="form-control">
-                                                                                                </div>
-
-                                                                                                <div class="col-md-2">
-                                                                                                    <button type="button"
-                                                                                                        class="btn btn-danger btn-sm remove-size">&times;</button>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        @endforeach
-                                                                                    </div>
-
-                                                                                    <button type="button"
-                                                                                        class="btn btn-secondary btn-sm add-size-btn"
-                                                                                        data-target="#sizes-wrapper-edit-{{ $product->id }}">
-                                                                                        + إضافة حجم
-                                                                                    </button>
-
-                                                                                </div>
-
-                                                                                <div class="modal-footer">
-                                                                                    <button type="submit"
-                                                                                        class="btn btn-success">حفظ</button>
-                                                                                </div>
-
-                                                                            </form>
-
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                            </td>
-                                                        </tr>
-                                                    @empty
-                                                        <tr>
-                                                            <td colspan="6" class="text-center text-muted py-4">لا توجد
-                                                                منتجات لعرضها.</td>
-                                                        </tr>
-                                                    @endforelse
-                                                </tbody>
-                                            </table>
                                         </div>
+
+                                        {{-- مودال التعديل خليه بعد actions-box عادي --}}
+                                        <div class="modal fade" id="edit{{ $product->id }}" tabindex="-1">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+
+                                                    <form action="{{ route('products.update', $product->id) }}"
+                                                        method="POST" enctype="multipart/form-data">
+                                                        @csrf
+                                                        @method('PUT')
+
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">تعديل المنتج
+                                                            </h5>
+                                                        </div>
+
+                                                        <div class="modal-body">
+
+                                                            <div class="row">
+
+                                                                <div class="col-md-6">
+                                                                    <label>الاسم</label>
+                                                                    <input type="text" name="name"
+                                                                        value="{{ $product->name }}"
+                                                                        class="form-control">
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <label>الوصف</label>
+                                                                    <input type="text" name="description"
+                                                                        value="{{ $product->description }}"
+                                                                        class="form-control">
+                                                                </div>
+
+                                                                <div class="col-md-6 mt-2">
+                                                                    <label>الفئة</label>
+                                                                    <select name="category_id" class="form-control">
+                                                                        @foreach ($categories as $category)
+                                                                            <option value="{{ $category->id }}"
+                                                                                {{ $product->category_id == $category->id ? 'selected' : '' }}>
+                                                                                {{ $category->name }}
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </div>
+
+                                                                <div class="col-md-6 mt-2">
+                                                                    <label>سعر الشراء</label>
+                                                                    <input type="number" name="Purchase_price"
+                                                                        value="{{ $product->Purchase_price }}"
+                                                                        class="form-control">
+                                                                </div>
+
+                                                                <div class="col-md-6 mt-2">
+                                                                    <label>سعر البيع</label>
+                                                                    <input type="number" name="selling_price"
+                                                                        value="{{ $product->selling_price }}"
+                                                                        class="form-control">
+                                                                </div>
+
+                                                                <div class="col-md-6 mt-2">
+                                                                    <label>الصورة</label>
+                                                                    <input type="file" name="cover"
+                                                                        class="form-control">
+                                                                    @if ($product->cover)
+                                                                        <img src="{{ asset('Attachfile/products/' . $product->cover) }}"
+                                                                            style="width:60px;height:60px;margin-top:5px;">
+                                                                    @endif
+                                                                </div>
+
+                                                            </div>
+
+                                                            <hr>
+
+                                                            <h6>الأحجام</h6>
+
+                                                            <div id="sizes-wrapper-edit-{{ $product->id }}">
+                                                                @foreach ($product->sizes as $index => $size)
+                                                                    <div class="row size-item mb-2">
+                                                                        <div class="col-md-4">
+                                                                            <input type="text"
+                                                                                name="sizes[{{ $index }}][size]"
+                                                                                value="{{ $size->size }}"
+                                                                                class="form-control">
+                                                                        </div>
+
+                                                                        <div class="col-md-3">
+                                                                            <input type="number"
+                                                                                name="sizes[{{ $index }}][Purchase_price]"
+                                                                                value="{{ $size->Purchase_price }}"
+                                                                                class="form-control">
+                                                                        </div>
+
+                                                                        <div class="col-md-3">
+                                                                            <input type="number"
+                                                                                name="sizes[{{ $index }}][selling_price]"
+                                                                                value="{{ $size->selling_price }}"
+                                                                                class="form-control">
+                                                                        </div>
+
+                                                                        <div class="col-md-2">
+                                                                            <button type="button"
+                                                                                class="btn btn-danger btn-sm remove-size">&times;</button>
+                                                                        </div>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+
+                                                            <button type="button"
+                                                                class="btn btn-secondary btn-sm add-size-btn"
+                                                                data-target="#sizes-wrapper-edit-{{ $product->id }}">
+                                                                + إضافة حجم
+                                                            </button>
+
+                                                        </div>
+
+                                                        <div class="modal-footer">
+                                                            <button type="submit" class="btn btn-success">حفظ</button>
+                                                        </div>
+
+                                                    </form>
+
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">لا توجد
+                                        منتجات لعرضها.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-footer d-flex justify-content-center">
+                {{ $products->links() }}
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @if (session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <style>
+        .bg-gradient-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+        }
+
+        .table-hover tbody tr:hover {
+            background: #e9f0ff !important;
+            transition: background-color 0.3s ease;
+        }
+
+        .shadow-sm {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-outline-success:hover {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .btn-outline-info:hover {
+            background-color: #17a2b8;
+            color: #fff;
+        }
+
+        .btn-danger {
+            border-radius: 25px;
+            padding: 5px 15px;
+            font-weight: 600;
+        }
+
+        .btn-light {
+            border-radius: 25px;
+            padding: 5px 15px;
+            font-weight: 600;
+        }
+
+        .card {
+            border-radius: 15px;
+        }
+
+        .card-header {
+            border-radius: 15px 15px 0 0;
+        }
+
+        .product-actions-cell {
+            width: 270px;
+            min-width: 270px;
+            vertical-align: middle !important;
+        }
+
+        .actions-box {
+            width: 230px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            align-items: stretch;
+        }
+
+        .barcode-print-form {
+            width: 100%;
+            margin: 0;
+        }
+
+        .barcode-size {
+            width: 100%;
+            height: 32px;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .print-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .barcode-qty {
+            width: 65px !important;
+            height: 34px;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 3px;
+        }
+
+        .barcode-print-btn {
+            flex: 1;
+            height: 34px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 0 !important;
+        }
+
+        .main-actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .main-actions-row .btn,
+        .main-actions-row button,
+        .main-actions-row a {
+            width: 70px;
+            height: 32px;
+            padding: 4px 6px !important;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin: 0 !important;
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        let sizeIndex = 1;
+
+        // إضافة حجم جديد في مودال الإضافة
+        $('#add-size').click(function() {
+            $('#sizes-wrapper').append(`
+                               <div class="row size-item mb-2">
+
+                              <div class="col-md-4">
+                             <input type="text" name="sizes[${sizeIndex}][size]" class="form-control" placeholder="الحجم" required>
+                             </div>
+
+                              <div class="col-md-3">
+                             <input type="number" name="sizes[${sizeIndex}][Purchase_price]" class="form-control"  placeholder="سعر الشراء" required>
+                              </div>
+
+
+                              <div class="col-md-3">
+                              <input type="number" name="sizes[${sizeIndex}][selling_price]" class="form-control" placeholder="سعر البيع" required>
+                              </div>
+
+
+                               <div class="col-md-1 d-flex align-items-center">
+                               <button type="button" class="btn btn-danger btn-sm remove-size">&times;</button>
+                                </div>
+                                 </div>
+                                `);
+            sizeIndex++;
+        });
+
+        // إزالة حجم عند الضغط على زر الحذف (في الإضافة والتعديل)
+        $(document).on('click', '.remove-size', function() {
+            $(this).closest('.size-item').remove();
+        });
+
+        // إضافة حجم جديد في مودالات التعديل
+        $('.add-size-btn').click(function() {
+            const targetId = $(this).data('target');
+            const wrapper = $(targetId);
+            let newIndex = wrapper.find('.size-item').length;
+
+            wrapper.append(`
+                                  <div class="row size-item mb-2">
+                                   <div class="col-md-4">
+                                    <input type="text" name="sizes[${newIndex}][size]" class="form-control" placeholder="الحجم" required>
                                     </div>
 
-                                    <div class="card-footer d-flex justify-content-center">
-                                        {{ $products->links() }}
-                                    </div>
-                                </div>
-                            </div>
-                            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-                            @if (session('success'))
-                                <div class="alert alert-success">
-                                    {{ session('success') }}
-                                </div>
-                            @endif
 
-                            <style>
-                                .bg-gradient-primary {
-                                    background: linear-gradient(45deg, #007bff, #0056b3);
-                                }
-
-                                .table-hover tbody tr:hover {
-                                    background: #e9f0ff !important;
-                                    transition: background-color 0.3s ease;
-                                }
-
-                                .shadow-sm {
-                                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                                }
-
-                                .btn-outline-success:hover {
-                                    background-color: #28a745;
-                                    color: #fff;
-                                }
-
-                                .btn-outline-info:hover {
-                                    background-color: #17a2b8;
-                                    color: #fff;
-                                }
-
-                                .btn-danger {
-                                    border-radius: 25px;
-                                    padding: 5px 15px;
-                                    font-weight: 600;
-                                }
-
-                                .btn-light {
-                                    border-radius: 25px;
-                                    padding: 5px 15px;
-                                    font-weight: 600;
-                                }
-
-                                .card {
-                                    border-radius: 15px;
-                                }
-
-                                .card-header {
-                                    border-radius: 15px 15px 0 0;
-                                }
-
-                                .product-actions-cell {
-                                    width: 270px;
-                                    min-width: 270px;
-                                    vertical-align: middle !important;
-                                }
-
-                                .actions-box {
-                                    width: 230px;
-                                    margin: 0 auto;
-                                    display: flex;
-                                    flex-direction: column;
-                                    gap: 7px;
-                                    align-items: stretch;
-                                }
-
-                                .barcode-print-form {
-                                    width: 100%;
-                                    margin: 0;
-                                }
-
-                                .barcode-size {
-                                    width: 100%;
-                                    height: 32px;
-                                    font-size: 12px;
-                                    margin-bottom: 6px;
-                                }
-
-                                .print-row {
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 6px;
-                                    width: 100%;
-                                }
-
-                                .barcode-qty {
-                                    width: 65px !important;
-                                    height: 34px;
-                                    font-size: 13px;
-                                    font-weight: 700;
-                                    padding: 3px;
-                                }
-
-                                .barcode-print-btn {
-                                    flex: 1;
-                                    height: 34px;
-                                    font-size: 12px;
-                                    font-weight: 700;
-                                    display: inline-flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 5px;
-                                    margin: 0 !important;
-                                }
-
-                                .main-actions-row {
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 6px;
-                                    width: 100%;
-                                }
-
-                                .main-actions-row .btn,
-                                .main-actions-row button,
-                                .main-actions-row a {
-                                    width: 70px;
-                                    height: 32px;
-                                    padding: 4px 6px !important;
-                                    font-size: 12px;
-                                    font-weight: 700;
-                                    display: inline-flex !important;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 4px;
-                                    margin: 0 !important;
-                                    border-radius: 5px;
-                                    white-space: nowrap;
-                                }
-                            </style>
-
-                            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-                            <script>
-                                let sizeIndex = 1;
-
-                                // إضافة حجم جديد في مودال الإضافة
-                                $('#add-size').click(function() {
-                                    $('#sizes-wrapper').append(`
-<div class="row size-item mb-2">
-
-<div class="col-md-4">
-<input type="text" name="sizes[${sizeIndex}][size]" class="form-control" placeholder="الحجم" required>
-</div>
-
-<div class="col-md-3">
-<input type="number" name="sizes[${sizeIndex}][Purchase_price]" class="form-control"  placeholder="سعر الشراء" required>
-</div>
+                                  <div class="col-md-3">
+                                  <input type="number" name="sizes[${newIndex}][Purchase_price]" class="form-control" placeholder="سعر الشراء" required>
+                                     </div>
 
 
-<div class="col-md-3">
-<input type="number" name="sizes[${sizeIndex}][selling_price]" class="form-control" placeholder="سعر البيع" required>
-</div>
+                                   <div class="col-md-3">
+                                   <input type="number" name="sizes[${newIndex}][selling_price]" class="form-control" placeholder="سعر البيع" required>
+                                  </div>
 
 
-<div class="col-md-1 d-flex align-items-center">
-<button type="button" class="btn btn-danger btn-sm remove-size">&times;</button>
-</div>
-</div>
-`);
-                                    sizeIndex++;
-                                });
+                                   <div class="col-md-1 d-flex align-items-center">
+                                    <button type="button" class="btn btn-danger btn-sm remove-size">&times;</button>
+                                   </div>
+                                   </div>
+                                     `);
+        });
+    </script>
+@endsection
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
-                                // إزالة حجم عند الضغط على زر الحذف (في الإضافة والتعديل)
-                                $(document).on('click', '.remove-size', function() {
-                                    $(this).closest('.size-item').remove();
-                                });
-
-                                // إضافة حجم جديد في مودالات التعديل
-                                $('.add-size-btn').click(function() {
-                                    const targetId = $(this).data('target');
-                                    const wrapper = $(targetId);
-                                    let newIndex = wrapper.find('.size-item').length;
-
-                                    wrapper.append(`
-<div class="row size-item mb-2">
-<div class="col-md-4">
-<input type="text" name="sizes[${newIndex}][size]" class="form-control" placeholder="الحجم" required>
-</div>
-
-
-<div class="col-md-3">
-<input type="number" name="sizes[${newIndex}][Purchase_price]" class="form-control" placeholder="سعر الشراء" required>
-</div>
-
-
-<div class="col-md-3">
-<input type="number" name="sizes[${newIndex}][selling_price]" class="form-control" placeholder="سعر البيع" required>
-</div>
-
-
-<div class="col-md-1 d-flex align-items-center">
-<button type="button" class="btn btn-danger btn-sm remove-size">&times;</button>
-</div>
-</div>
-`);
-                                });
-                            </script>
-                        @endsection
-                        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                document.querySelectorAll('.barcode-preview').forEach(function(barcode) {
-                                    JsBarcode(barcode, barcode.dataset.barcode, {
-                                        format: "CODE128",
-                                        width: 1,
-                                        height: 25,
-                                        displayValue: true,
-                                        fontSize: 9,
-                                        margin: 0
-                                    });
-                                });
-                            });
-                        </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.barcode-preview').forEach(function(barcode) {
+            JsBarcode(barcode, barcode.dataset.barcode, {
+                format: "CODE128",
+                width: 1,
+                height: 25,
+                displayValue: true,
+                fontSize: 9,
+                margin: 0
+            });
+        });
+    });
+</script>

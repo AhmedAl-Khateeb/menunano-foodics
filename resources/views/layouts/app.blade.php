@@ -664,17 +664,24 @@
     </script>
 
     <script>
-        document.addEventListener('livewire:init', () => {
-            window.addEventListener('open-print', (event) => {
-                const printWindow = window.open(event.detail.url, '_blank');
+document.addEventListener('livewire:init', () => {
 
-                printWindow.onload = function() {
-                    printWindow.focus();
-                    printWindow.print();
-                };
-            });
-        });
-    </script>
+    Livewire.on('print-order', (event) => {
+
+        const frame = document.createElement('iframe');
+
+        frame.style.position = 'fixed';
+        frame.style.width = '1px';
+        frame.style.height = '1px';
+        frame.style.border = '0';
+
+        frame.src = event.url;
+
+        document.body.appendChild(frame);
+    });
+
+});
+</script>
 
 
     @stack('scripts')

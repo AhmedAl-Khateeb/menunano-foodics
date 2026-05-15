@@ -12,6 +12,8 @@
 
 
 
+
+
     <!-- Start Shift Overlay Modal (Blocks everything if no active shift) -->
     @if ($requiresShiftStart)
         <div class="start-shift-overlay" dir="rtl">
@@ -79,61 +81,104 @@
                 class="{{ $activeTab === 'products' ? 'flex' : 'hidden md:flex' }} md:col-span-2 flex-col gap-3 animate-fade-in pl-1">
 
                 <!-- Header: Search & Categories -->
-                <div
-                    class="bg-white p-3 rounded-xl shadow-sm flex flex-col gap-3 shrink-0 sticky top-[58px] z-10 border border-gray-100">
-                    <!-- Search -->
-                    <div class="relative w-full">
-                        <input type="text" wire:model.live.debounce.300ms="search"
-                            wire:keydown.enter.prevent="scanBarcode"
-                            class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-sans text-gray-700 placeholder-gray-400 text-sm"
-                            placeholder="بحث عن منتج (الاسم / الباركود)...">
-                        <div
-                            class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
-                            <i class="fas fa-search text-sm"></i>
-                        </div>
-                    </div>
+                <div>
 
-                    <!-- Categories -->
-                    <div x-data="{
-                        scrollContent() {
-                                const container = this.$refs.container;
-                            },
-                            scrollLeft() {
-                                this.$refs.container.scrollBy({ left: 200, behavior: 'smooth' });
-                            },
-                            scrollRight() {
-                                this.$refs.container.scrollBy({ left: -200, behavior: 'smooth' });
-                            }
-                    }" class="relative w-full group">
+                    <div
+                        class="bg-white p-3 rounded-xl shadow-sm flex flex-col gap-3 shrink-0 sticky top-[58px] z-10 border border-gray-100">
 
-                        <!-- Right Arrow (Desktop) -->
-                        <button @click="scrollRight()"
-                            class="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur shadow-md border border-gray-100 w-7 h-7 rounded-full items-center justify-center text-gray-600 hover:text-blue-600 hover:scale-110 transition-all opacity-0 group-hover:opacity-100">
-                            <i class="fas fa-chevron-right text-xs"></i>
-                        </button>
+                        <!-- Search -->
+                        <div class="flex items-center gap-3 mb-3">
 
-                        <!-- Scroll Container -->
-                        <div x-ref="container"
-                            class="w-full overflow-x-auto pb-1 scrollbar-none scroll-smooth flex gap-2 px-1 no-scrollbar">
-                            <button
-                                class="shrink-0 px-4 py-2 rounded-lg font-bold text-xs transition-all duration-200 border {{ is_null($activeCategoryId) ? 'bg-gray-800 text-white border-gray-800 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50' }}"
-                                wire:click="setCategory(null)">
-                                <i class="fas fa-th-large ml-1"></i> الكل
-                            </button>
-                            @foreach ($categories as $cat)
-                                <button
-                                    class="shrink-0 px-4 py-2 rounded-lg font-bold text-xs transition-all duration-200 border {{ $activeCategoryId === $cat->id ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50' }}"
-                                    wire:click="setCategory({{ $cat->id }})">
-                                    {{ $cat->name }}
+                            <!-- 🔍 البحث -->
+                            <div class="relative flex-1">
+                                <input type="text" wire:model.live.debounce.300ms="search"
+                                    wire:keydown.enter.prevent="scanBarcode"
+                                    class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-sans text-gray-700 placeholder-gray-400 text-sm"
+                                    placeholder="بحث عن منتج (الاسم / الباركود)...">
+
+                                <div
+                                    class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                                    <i class="fas fa-search text-sm"></i>
+                                </div>
+                            </div>
+                            <audio id="pendingSound" src="{{ asset('new-order.mp3') }}" preload="auto" loop></audio>
+
+                            <!-- 🔊 الصوت -->
+                            <div id="clickReminder"
+                                class="audio-reminder w-[50px] h-[50px] flex items-center justify-center cursor-pointer relative group">
+
+                                <!-- الأيقونة فقط -->
+                                <div class="audio-reminder-icon text-xl">
+                                    <i class="fas fa-bell-slash"></i>
+                                </div>
+
+                                <!-- Tooltip -->
+                                <div
+                                    class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max bg-black text-white text-xs px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+
+                                    <strong class="block" id="reminderTitle">صوت الطلبات يعمل</strong>
+                                    <span id="reminderText">اضغط لإيقاف جرس الإشعارات</span>
+                                </div>
+
+                            </div>
+
+                            <!-- 🔔 الجرس -->
+
+                            <div class="relative" x-data="{ open: false }" x-on:close-dropdown.window="open = false"
+                                wire:ignore.self> <button @click="open = !open"
+                                    class="relative w-11 h-11 flex items-center justify-center rounded-xl bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition">
+
+                                    <i class="fas fa-bell text-lg"></i>
+
+                                    @if (count($deliveryOrders) > 0)
+                                        <span
+                                            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 rounded-full">
+                                            {{ count($deliveryOrders) }}
+                                        </span>
+                                    @endif
                                 </button>
-                            @endforeach
-                        </div>
 
-                        <!-- Left Arrow (Desktop) -->
-                        <button @click="scrollLeft()"
-                            class="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur shadow-md border border-gray-100 w-7 h-7 rounded-full items-center justify-center text-gray-600 hover:text-blue-600 hover:scale-110 transition-all opacity-0 group-hover:opacity-100">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                        </button>
+
+                                <!-- Dropdown -->
+                                <div x-show="open" @click.outside="open = false"
+                                    class="absolute right-0 mt-2 w-96 sm:w-[420px] bg-white rounded-2xl shadow-2xl z-50 max-h-[420px] overflow-y-auto border border-gray-100">
+
+                                    <div class="p-3 font-bold border-b text-gray-700 text-base text-center">
+                                        طلبات الدليفري
+                                    </div>
+
+                                    @forelse($deliveryOrders as $order)
+                                        <div wire:click="openDeliveryOrder({{ $order->id }})"
+                                            class="p-3 border-b cursor-pointer hover:bg-gray-50 transition text-sm">
+
+                                            <div class="flex justify-between items-center">
+                                                <span class="font-semibold text-gray-900 text-base">
+                                                    {{ $order->name }}
+                                                </span>
+
+                                                <span class="text-xs text-blue-500 font-medium">
+                                                    #{{ $order->id }}
+                                                </span>
+                                            </div>
+
+                                            <div class="flex justify-between text-sm text-gray-600 mt-1">
+                                                <span>{{ $order->phone }}</span>
+                                                <span class="font-medium">
+                                                    {{ $order->paymentMethodRelation->name ?? 'غير محدد' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="p-3 text-center text-gray-400">
+                                            لا يوجد طلبات
+                                        </div>
+                                    @endforelse
+
+                                </div>
+
+                            </div>
+
+                        </div>
                     </div>
                 </div>
 
@@ -663,7 +708,6 @@
                                 <label class="text-xs font-bold text-yellow-800 mb-2 block px-1">
                                     ملاحظة للمطبخ
                                 </label>
-
                                 <textarea wire:model.defer="kitchenNote" rows="2"
                                     class="w-full bg-white border border-yellow-300 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-yellow-500 focus:outline-none"
                                     placeholder="مثال: بدون سكر، زيادة ثلج، تجهيز سريع..."></textarea>
@@ -684,7 +728,7 @@
                                                 <button type="button"
                                                     wire:click="$set('paymentMethod', {{ $method->id }})"
                                                     class="flex-1 py-2 rounded-xl font-bold text-sm border flex flex-col items-center justify-center gap-1 h-16
-            {{ $paymentMethod == $method->id ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200' }}">
+                                                      {{ $paymentMethod == $method->id ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200' }}">
 
                                                     <div class="flex items-center gap-2">
                                                         <i class="fas fa-wallet"></i>
@@ -1778,34 +1822,45 @@
         .btn-cancel-transfer:hover {
             background: #e5e7eb;
         }
+
+        @keyframes bellShake {
+            0% {
+                transform: rotate(0);
+            }
+
+            25% {
+                transform: rotate(10deg);
+            }
+
+            50% {
+                transform: rotate(-10deg);
+            }
+
+            75% {
+                transform: rotate(10deg);
+            }
+
+            100% {
+                transform: rotate(0);
+            }
+        }
+
+        .bell-ring {
+            animation: bellShake 0.5s infinite;
+        }
     </style>
 
+    <script>
+        document.addEventListener('livewire:init', () => {
 
-<script>
-document.addEventListener('livewire:init', () => {
+            Livewire.on('stopSound', () => {
+                const audio = document.getElementById('pendingSound');
+                if (audio) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+            });
 
-    Livewire.on('print-order', (event) => {
-
-        const frame = document.createElement('iframe');
-
-        frame.style.position = 'fixed';
-        frame.style.width = '0';
-        frame.style.height = '0';
-        frame.style.border = '0';
-
-        frame.src = event.url;
-
-        document.body.appendChild(frame);
-
-        frame.onload = () => {
-            setTimeout(() => {
-                frame.contentWindow.focus();
-                frame.contentWindow.print();
-            }, 300);
-        };
-    });
-
-});
-</script>
-
+        });
+    </script>
 </div>
