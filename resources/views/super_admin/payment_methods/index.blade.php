@@ -37,6 +37,8 @@
                                         @csrf
                                         @method('PATCH')
 
+                                        @if ($m->id != 1)
+                                            
                                         @if ($m->is_active)
                                             <span class="badge bg-success">مفعّل</span>
                                             <button class="btn btn-sm btn-outline-warning ms-2" title="تعطيل">
@@ -48,23 +50,32 @@
                                                 <i class="fas fa-toggle-on"></i>
                                             </button>
                                         @endif
+                                        @else
+                                            <span class="badge bg-secondary">افتراضية</span>
+                                        @endif
                                     </form>
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a class="btn btn-outline-primary btn-sm"
-                                            href="{{ route('payment-methods.edit', $m->id) }}">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
 
-                                        <form action="{{ route('payment-methods.destroy', $m->id) }}" method="POST"
-                                            class="d-inline" onsubmit="return confirm('حذف؟');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="btn btn-outline-danger btn-sm">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </form>
+                                        @if ($m->id != 1)
+                                            <a class="btn btn-outline-primary btn-sm"
+                                                href="{{ route('payment-methods.edit', $m->id) }}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+
+                                            <form action="{{ route('payment-methods.destroy', $m->id) }}" method="POST"
+                                                class="d-inline" onsubmit="return confirm('حذف؟');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="badge bg-secondary">افتراضية</span>
+                                        @endif
+
                                     </div>
                                 </td>
                             </tr>

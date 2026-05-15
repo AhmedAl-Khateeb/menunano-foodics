@@ -238,53 +238,117 @@ class PosPage extends Component
     //     $this->dispatch('stopSound');
     // }
 
-    public function openDeliveryOrder($orderId)
+    public function approveAndOpenOrder($orderId)
 {
-    $order = Order::with(['items.product', 'customer'])->find($orderId);
+    $order = Order::with(['items.product', 'customer', 'paymentMethodRelation'])
+        ->findOrFail($orderId);
 
-    if (!$order) return;
+    // ✅ تثبيت البيانات قبل الفتح
+    $order->update([
+        'status' => 'served',
+    ]);
 
-    // 1. افتح السلة مباشرة
-    $this->activeTab = 'cart';
+    // تحديث الإشعارات
+    $this->loadDeliveryOrders();
 
-    // 2. بيانات الطلب
-    $this->selectedOrderId = $order->id;
+    // ⬇️ تحميل القيم للكاشير مباشرة (مهم جداً)
     $this->selectedCustomerId = $order->customer?->id;
     $this->customerName = $order->customer?->name;
     $this->customerPhone = $order->customer?->phone;
-    $this->paymentMethod = $order->payment_method ?? 'cash';
+
+    $this->kitchenNote = $order->kitchen_note;
+
+    $this->paymentMethod = $order->payment_method;
+
+    $this->paidAmount = $order->paid_amount ?? $order->total_price;
+    $this->changeAmount = $order->change_amount ?? 0;
+
     $this->orderType = $order->type ?? 'delivery';
 
-    // 3. امسح السلة
+    // ⬇️ فتح الفاتورة مباشرة
+    $this->openDeliveryOrder($orderId);
+
+    // UI events
+    $this->dispatch('close-dropdown');
+    $this->dispatch('stopSound');
+}
+
+    public function fillOrderToPos($order)
+    {
+        $this->activeTab = 'cart';
+
+        $this->selectedOrderId = $order->id;
+
+        $this->selectedCustomerId = $order->customer?->id;
+        $this->customerName = $order->customer?->name;
+        $this->customerPhone = $order->customer?->phone;
+
+        $this->paymentMethod = $order->payment_method ?? 'cash';
+        $this->orderType = $order->type ?? 'delivery';
+
+        $this->cart = [];
+
+        foreach ($order->items as $item) {
+            $this->cart[] = [
+                'cart_item_id' => uniqid(),
+                'name' => $item->product?->name ?? '',
+                'price' => $item->price,
+                'quantity' => $item->quantity,
+            ];
+        }
+
+        $this->calculateTotal();
+    }
+
+    public function openDeliveryOrder($orderId)
+{
+    $order = Order::with(['items.product', 'customer'])
+        ->findOrFail($orderId);
+
+    $this->activeTab = 'cart';
+
+    // بيانات العميل (لا تعيد كتابة payment هنا)
+    $this->selectedCustomerId = $order->customer?->id;
+    $this->customerName = $order->customer?->name;
+    $this->customerPhone = $order->customer?->phone;
+
+    $this->kitchenNote = $order->kitchen_note;
+
+    // ⚠️ مهم: خليه من الداتا مباشرة بدون relation
+    $this->paymentMethod = $order->payment_method;
+
+    $this->paidAmount = $order->paid_amount ?? 0;
+    $this->changeAmount = $order->change_amount ?? 0;
+
+    $this->orderType = $order->type ?? 'delivery';
+
     $this->cart = [];
 
     foreach ($order->items as $item) {
         $this->cart[] = [
+            'id' => $item->product_size_id ?? $item->id,
             'cart_item_id' => uniqid(),
             'name' => $item->product?->name ?? '',
-            'price' => (float) $item->price,
-            'quantity' => (int) $item->quantity,
+            'price' => $item->pivot->price ?? $item->price,
+            'quantity' => $item->pivot->quantity ?? 1,
         ];
     }
 
-    // 4. إجمالي
     $this->calculateTotal();
 
-    // 5. اقفل الإشعار + الصوت
+    $this->loadDeliveryOrders();
+
     $this->dispatch('close-dropdown');
     $this->dispatch('stopSound');
-
-    // 6. أهم خطوة 👇
-    $this->loadDeliveryOrders();
 }
 
     public function loadDeliveryOrders()
     {
-        $this->deliveryOrders = Order::with('paymentMethodRelation')
+        $this->deliveryOrders = Order::with(['paymentMethodRelation', 'customer'])
             ->where('type', 'delivery')
             ->where('status', 'pending')
             ->latest()
-            ->take(5)
+            ->take(10)
             ->get();
     }
 
@@ -294,10 +358,11 @@ class PosPage extends Component
 
         $storeId = StoreService::getStoreOwnerId();
 
-        // 1. تحميل البيانات الأساسية أولاً
+        // تحميل الأساسيات
         $this->loadBusinessType($storeId);
         $this->normalizeOrderType();
 
+        // طرق الدفع ✅
         $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', 1)
             ->where(function ($q) use ($storeId) {
                 $q->where('created_by', $storeId)
@@ -306,6 +371,7 @@ class PosPage extends Component
             ->orderBy('id')
             ->get();
 
+        // الطاولات
         $this->tables = \App\Models\Table::with(['diningArea', 'orders' => function ($q) {
             $q->where('status', 'pending');
         }])
@@ -315,27 +381,77 @@ class PosPage extends Component
 
         $this->paymentMethod = 'cash';
 
+        // الشيفت
         $this->checkActiveShift();
         $this->loadSuggestedStartingCash();
 
-        // 2. تحميل الإشعارات
+        // الإشعارات
         $this->loadDeliveryOrders();
 
-        // 3. فتح الطلب بعد كل حاجة
+        // فتح الطلب (مهم يكون بعد كل حاجة)
         if ($orderId = request()->get('order_id')) {
             $this->openDeliveryOrder($orderId);
         }
 
-        // 4. مودال الإغلاق
+        // مودال الإغلاق
         if (request()->boolean('showEndShift')) {
             $this->openEndShiftModal();
         }
 
-        // 5. إعادة الحساب
+        // إعادة الحساب
         if (!empty($this->cart)) {
             $this->calculateTotal();
         }
     }
+
+    //   public function mount()
+    // {
+    //     $this->activeTab = request()->get('tab', 'products');
+
+    //     $storeId = StoreService::getStoreOwnerId();
+
+    //     // 1. تحميل البيانات الأساسية أولاً
+    //     $this->loadBusinessType($storeId);
+    //     $this->normalizeOrderType();
+
+    //     $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', 1)
+    //         ->where(function ($q) use ($storeId) {
+    //             $q->where('created_by', $storeId)
+    //               ->orWhereNull('created_by');
+    //         })
+    //         ->orderBy('id')
+    //         ->get();
+
+    //     $this->tables = \App\Models\Table::with(['diningArea', 'orders' => function ($q) {
+    //         $q->where('status', 'pending');
+    //     }])
+    //         ->where('user_id', $storeId)
+    //         ->where('is_active', true)
+    //         ->get();
+
+    //     $this->paymentMethod = 'cash';
+
+    //     $this->checkActiveShift();
+    //     $this->loadSuggestedStartingCash();
+
+    //     // 2. تحميل الإشعارات
+    //     $this->loadDeliveryOrders();
+
+    //     // 3. فتح الطلب بعد كل حاجة
+    //     if ($orderId = request()->get('order_id')) {
+    //         $this->openDeliveryOrder($orderId);
+    //     }
+
+    //     // 4. مودال الإغلاق
+    //     if (request()->boolean('showEndShift')) {
+    //         $this->openEndShiftModal();
+    //     }
+
+    //     // 5. إعادة الحساب
+    //     if (!empty($this->cart)) {
+    //         $this->calculateTotal();
+    //     }
+    // }
 
     public function checkActiveShift()
     {
@@ -1111,166 +1227,157 @@ class PosPage extends Component
     // ... (existing methods)
 
     public function checkout()
-    {
-        if (empty($this->cart)) {
-            session()->flash('error', 'السلة فارغة!');
-
-            return;
-        }
-
-        if ($this->orderType === 'table' && empty($this->selectedTableId)) {
-            session()->flash('error', 'يرجى تحديد الطاولة!');
-
-            return;
-        }
-
-        if ($this->orderType === 'delivery' && (empty($this->customerPhone) || empty($this->customerName))) {
-            session()->flash('error', 'يرجى إدخال بيانات العميل (الهاتف والاسم) للتوصيل!');
-
-            return;
-        }
-
-        if ($this->orderType === 'delivery' && !$this->selectedDeliveryManId) {
-            session()->flash('error', 'يرجى اختيار المندوب!');
-
-            return;
-        }
-
-        $isDraft = in_array($this->orderType, ['table', 'free_seating']) && floatval($this->paidAmount) == 0;
-
-        if (!$isDraft && $this->paymentMethod === 'cash' && $this->paidAmount < $this->total) {
-            session()->flash('error', 'المبلغ المدفوع أقل من الإجمالي!');
-
-            return;
-        }
-
-        $activeShift = Shift::where('user_id', auth()->id())
-            ->where('status', 'active')
-            ->latest()
-            ->first();
-
-        if (!$activeShift) {
-            session()->flash('error', 'لا يوجد شيفت مفتوح لهذا المستخدم.');
-
-            return;
-        }
-
-        $savedOrderId = null;
-
-        DB::transaction(function () use ($isDraft, $activeShift, &$savedOrderId) {
-            $userId = auth()->id();
-
-            $storeOwnerId = auth()->user()->role === 'super_admin'
-                ? $userId
-                : (auth()->user()->created_by ?? $userId);
-
-            $finalCustomerId = $this->selectedCustomerId;
-
-            if (!$finalCustomerId && !empty($this->customerPhone) && !empty($this->customerName)) {
-                $customer = Customer::create([
-                    'user_id' => $storeOwnerId,
-                    'name' => $this->customerName,
-                    'phone' => $this->customerPhone,
-                ]);
-
-                $finalCustomerId = $customer->id;
-            }
-
-            $order = null;
-
-            if ($this->orderType === 'table' && $this->selectedTableId) {
-                $order = Order::where('table_id', $this->selectedTableId)
-                    ->where('status', 'pending')
-                    ->where('user_id', $storeOwnerId)
-                    ->first();
-            }
-
-            $orderStatus = $isDraft ? 'pending' : 'served';
-
-            if ($order) {
-                $order->update([
-                    'shift_id' => $order->shift_id ?? $activeShift->id,
-                    'customer_id' => $finalCustomerId ?? $order->customer_id,
-                    'total_price' => $this->total,
-                    'status' => $orderStatus,
-                    'payment_method' => $isDraft ? $order->payment_method : $this->paymentMethod,
-                    'paid_amount' => $isDraft ? $order->paid_amount : $this->paidAmount,
-                    'change_amount' => $isDraft ? $order->change_amount : $this->changeAmount,
-                    'delivery_fee' => $this->orderType === 'delivery' ? $this->deliveryFee : 0,
-                    'delivery_man_id' => $this->orderType === 'delivery' ? $this->selectedDeliveryManId : null,
-                    'kitchen_note' => !empty($this->kitchenNote) ? $this->kitchenNote : $order->kitchen_note,
-                ]);
-
-                DB::table('order_product_sizes')
-                    ->where('order_id', $order->id)
-                    ->delete();
-            } else {
-                $order = Order::create([
-                    'user_id' => $storeOwnerId,
-                    'shift_id' => $activeShift->id,
-                    'customer_id' => $finalCustomerId,
-                    'status' => $orderStatus,
-                    'type' => $this->orderType,
-                    'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
-                    'total_price' => $this->total,
-                    'payment_method' => $isDraft ? null : $this->paymentMethod,
-                    'source' => 'pos',
-                    'paid_amount' => $isDraft ? 0 : $this->paidAmount,
-                    'change_amount' => $isDraft ? 0 : $this->changeAmount,
-                    'delivery_fee' => $this->orderType === 'delivery' ? $this->deliveryFee : 0,
-                    'delivery_man_id' => $this->orderType === 'delivery' ? $this->selectedDeliveryManId : null,
-                    'kitchen_note' => !empty($this->kitchenNote) ? $this->kitchenNote : null,
-                ]);
-            }
-
-            foreach ($this->cart as $item) {
-                $productSizeId = $item['size_id'] ?? null;
-
-                if (!$productSizeId) {
-                    $productSize = ProductSize::where('product_id', $item['id'])->first();
-
-                    if (!$productSize) {
-                        $productSize = ProductSize::create([
-                            'product_id' => $item['id'],
-                            'size' => 'Standard',
-                            'price' => $item['selling_price'] ?? $item['price'],
-                            'selling_price' => $item['selling_price'] ?? $item['price'],
-                            'Purchase_price' => $item['purchase_price'] ?? 0,
-                        ]);
-                    }
-
-                    $productSizeId = $productSize->id;
-                }
-
-                DB::table('order_product_sizes')->insert([
-                    'order_id' => $order->id,
-                    'product_size_id' => $productSizeId,
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $savedOrderId = $order->id;
-            $this->lastOrderId = $order->id;
-        });
-
-        if (!$isDraft) {
-            $this->dispatch(
-                'print-order',
-                url: route('pos.orders.print-two', $savedOrderId)
-            );
-
-            $this->clearCart();
-
-            session()->flash('success', 'تمت عملية البيع بنجاح');
-
-            return; // 👈 مهم جدًا: يمنع أي كود بعده (زي المودال)
-        }
-
-        $this->showSuccessModal = true;
+{
+    if (empty($this->cart)) {
+        session()->flash('error', 'السلة فارغة!');
+        return;
     }
+
+    if ($this->orderType === 'table' && empty($this->selectedTableId)) {
+        session()->flash('error', 'يرجى تحديد الطاولة!');
+        return;
+    }
+
+    if ($this->orderType === 'delivery' && (empty($this->customerPhone) || empty($this->customerName))) {
+        session()->flash('error', 'يرجى إدخال بيانات العميل!');
+        return;
+    }
+
+    if ($this->orderType === 'delivery' && !$this->selectedDeliveryManId) {
+        session()->flash('error', 'يرجى اختيار المندوب!');
+        return;
+    }
+
+    $activeShift = Shift::where('user_id', auth()->id())
+        ->where('status', 'active')
+        ->latest()
+        ->first();
+
+    if (!$activeShift) {
+        session()->flash('error', 'لا يوجد شيفت مفتوح.');
+        return;
+    }
+
+    // ======================
+    // حساب الدفعة بشكل صحيح
+    // ======================
+    $paidAmount = (float) $this->paidAmount;
+    $total = (float) $this->total;
+
+    $isDraft = in_array($this->orderType, ['table', 'free_seating'])
+        && $paidAmount == 0;
+
+    // delivery = مدفوع كامل
+    if ($this->orderType === 'delivery') {
+        $paidAmount = $total;
+        $this->changeAmount = 0;
+    } else {
+        $this->changeAmount = max(0, $paidAmount - $total);
+    }
+
+    if (!$isDraft && $paidAmount < $total) {
+        session()->flash('error', 'المبلغ المدفوع أقل من الإجمالي!');
+        return;
+    }
+
+    $savedOrderId = null;
+
+    DB::transaction(function () use ($activeShift, $isDraft, &$savedOrderId, $paidAmount) {
+
+        $userId = auth()->id();
+
+        $storeOwnerId = auth()->user()->role === 'super_admin'
+            ? $userId
+            : (auth()->user()->created_by ?? $userId);
+
+        $finalCustomerId = $this->selectedCustomerId;
+
+        if (!$finalCustomerId && $this->customerPhone && $this->customerName) {
+            $customer = Customer::create([
+                'user_id' => $storeOwnerId,
+                'name' => $this->customerName,
+                'phone' => $this->customerPhone,
+            ]);
+
+            $finalCustomerId = $customer->id;
+        }
+
+        $order = null;
+
+        if ($this->orderType === 'table' && $this->selectedTableId) {
+            $order = Order::where('table_id', $this->selectedTableId)
+                ->where('status', 'pending')
+                ->first();
+        }
+
+        $status = $isDraft ? 'pending' : 'served';
+
+        if ($order) {
+            $order->update([
+                'shift_id' => $activeShift->id,
+                'customer_id' => $finalCustomerId,
+                'total_price' => $this->total,
+                'status' => $status,
+                'payment_method' => $this->paymentMethod,
+
+                // ✅ هنا الإصلاح الأساسي
+                'paid_amount' => $paidAmount,
+                'change_amount' => $this->changeAmount,
+
+                'delivery_fee' => $this->deliveryFee,
+                'delivery_man_id' => $this->selectedDeliveryManId,
+                'kitchen_note' => $this->kitchenNote,
+            ]);
+        } else {
+            $order = Order::create([
+                'user_id' => $storeOwnerId,
+                'shift_id' => $activeShift->id,
+                'customer_id' => $finalCustomerId,
+                'status' => $status,
+                'type' => $this->orderType,
+                'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
+                'total_price' => $this->total,
+                'payment_method' => $this->paymentMethod,
+
+                // ✅ هنا الإصلاح الأساسي
+                'paid_amount' => $paidAmount,
+                'change_amount' => $this->changeAmount,
+
+                'delivery_fee' => $this->deliveryFee,
+                'delivery_man_id' => $this->selectedDeliveryManId,
+                'kitchen_note' => $this->kitchenNote,
+                'source' => 'pos',
+            ]);
+        }
+
+        foreach ($this->cart as $item) {
+            if (!isset($item['id'])) continue;
+
+            DB::table('order_product_sizes')->insert([
+                'order_id' => $order->id,
+                'product_size_id' => $item['id'],
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $savedOrderId = $order->id;
+        $this->lastOrderId = $order->id;
+    });
+
+    if ($savedOrderId && !$isDraft) {
+        $this->dispatch('print-order', url: route('pos.orders.print-two', $savedOrderId));
+
+        $this->clearCart();
+
+        session()->flash('success', 'تمت العملية بنجاح');
+        return;
+    }
+
+    $this->showSuccessModal = true;
+}
 
     // Merge Tables Functionality
     public $showMergeModal = false;

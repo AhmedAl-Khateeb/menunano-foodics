@@ -59,6 +59,10 @@ class PaymentMethodController extends Controller
 
     public function update(Request $request, PaymentMethod $payment_method)
     {
+        if ($payment_method->id == 1) {
+            return back()->with('error', 'لا يمكن تعديل وسيلة الدفع الافتراضية (Cash)');
+        }
+
         $this->authorizeMethod($payment_method);
 
         $request->validate([
@@ -82,6 +86,9 @@ class PaymentMethodController extends Controller
 
     public function destroy(PaymentMethod $payment_method)
     {
+        if ($payment_method->id == 1) {
+            return back()->with('error', 'لا يمكن حذف وسيلة الدفع الافتراضية (Cash)');
+        }
         $this->authorizeMethod($payment_method);
         $payment_method->delete();
 
@@ -90,9 +97,12 @@ class PaymentMethodController extends Controller
             ->with('success', 'تم حذف وسيلة الدفع بنجاح');
     }
 
-    public function toggle($id)
+    public function toggle(int $id)
     {
         $method = PaymentMethod::findOrFail($id);
+        if ($method->id == 1) {
+            return back()->with('error', 'لا يمكن تعطيل وسيلة الدفع الافتراضية (Cash)');
+        }
         $this->authorizeMethod($method);
 
         $method->is_active = !$method->is_active;

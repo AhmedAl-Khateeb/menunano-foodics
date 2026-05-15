@@ -108,9 +108,9 @@
                                 class="audio-reminder w-[50px] h-[50px] flex items-center justify-center cursor-pointer relative group">
 
                                 <!-- الأيقونة فقط -->
-                                <div class="audio-reminder-icon text-xl">
+                                {{-- <div class="audio-reminder-icon text-xl">
                                     <i class="fas fa-bell-slash"></i>
-                                </div>
+                                </div> --}}
 
                                 <!-- Tooltip -->
                                 <div
@@ -124,10 +124,12 @@
 
                             <!-- 🔔 الجرس -->
 
-                            <div class="relative" x-data="{ open: false }" x-on:close-dropdown.window="open = false"
-                                wire:ignore.self> <button @click="open = !open"
-                                    class="relative w-11 h-11 flex items-center justify-center rounded-xl bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition">
+                            <div class="relative" x-data="{ open: false }" wire:ignore.self>
 
+                                <!-- 👇 POLLING هنا فقط -->
+                                <div wire:poll.3s="loadDeliveryOrders"></div>
+
+                                <button @click="open = !open" class="relative">
                                     <i class="fas fa-bell text-lg"></i>
 
                                     @if (count($deliveryOrders) > 0)
@@ -139,34 +141,78 @@
                                 </button>
 
 
+
                                 <!-- Dropdown -->
                                 <div x-show="open" @click.outside="open = false"
-                                    class="absolute right-0 mt-2 w-96 sm:w-[420px] bg-white rounded-2xl shadow-2xl z-50 max-h-[420px] overflow-y-auto border border-gray-100">
+                                    class="absolute right-0 mt-2 w-[95vw] sm:w-[500px] md:w-[600px] lg:w-[650px]
+                                         bg-white rounded-2xl shadow-2xl z-50
+                                       max-h-[80vh] overflow-y-auto border border-gray-100">
 
                                     <div class="p-3 font-bold border-b text-gray-700 text-base text-center">
                                         طلبات الدليفري
                                     </div>
 
                                     @forelse($deliveryOrders as $order)
-                                        <div wire:click="openDeliveryOrder({{ $order->id }})"
-                                            class="p-3 border-b cursor-pointer hover:bg-gray-50 transition text-sm">
+                                        <div class="p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition flex flex-col gap-3"
+                                            wire:click="openDeliveryOrder({{ $order->id }})">
 
-                                            <div class="flex justify-between items-center">
-                                                <span class="font-semibold text-gray-900 text-base">
-                                                    {{ $order->name }}
-                                                </span>
+                                            <!-- Top Row: Customer Info -->
+                                            <div class="flex justify-between items-start gap-4">
 
-                                                <span class="text-xs text-blue-500 font-medium">
-                                                    #{{ $order->id }}
-                                                </span>
+                                                <div class="flex flex-col gap-1">
+                                                    <div class="text-lg font-bold text-gray-900">
+                                                        {{ $order->customer?->name ?? $order->name }}
+                                                    </div>
+
+                                                    <div class="text-sm text-gray-600">
+                                                        📞 {{ $order->customer?->phone ?? $order->phone }}
+                                                    </div>
+
+                                                    <div class="text-xs text-gray-500">
+                                                        🧾 الطلب #{{ $order->id }}
+                                                    </div>
+                                                </div>
+
+                                                <div class="text-sm font-bold text-gray-800 whitespace-nowrap">
+                                                    💳
+                                                    {{ $order->paymentMethodRelation?->name ?? $order->payment_method }}
+                                                </div>
+
+                                                @if ($order->kitchen_note)
+                                                    <div
+                                                        class="text-xs text-yellow-700 bg-yellow-100 p-2 rounded-lg mt-2">
+                                                        📝 {{ $order->kitchen_note }}
+                                                    </div>
+                                                @endif
                                             </div>
 
-                                            <div class="flex justify-between text-sm text-gray-600 mt-1">
-                                                <span>{{ $order->phone }}</span>
-                                                <span class="font-medium">
-                                                    {{ $order->paymentMethodRelation->name ?? 'غير محدد' }}
-                                                </span>
+                                            <!-- Products Row (Wide Horizontal Scroll if many) -->
+                                            <div class="flex gap-2 overflow-x-auto pb-1">
+
+                                                @foreach ($order->items as $item)
+                                                    <div class="min-w-[220px] bg-gray-100 p-2 rounded-lg text-sm">
+                                                        <div class="font-bold text-gray-800">
+                                                            🛒 {{ $item->product?->name ?? 'منتج' }}
+                                                        </div>
+
+                                                        <div class="text-xs text-gray-600 mt-1">
+                                                            الحجم: {{ $item->size_name ?? '-' }}
+                                                        </div>
+
+                                                        <div class="text-xs text-gray-600">
+                                                            العدد: {{ $item->pivot->quantity }} ×
+                                                            {{ $item->pivot->price }}
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+
                                             </div>
+                                            <!-- زر الموافقة -->
+                                            <button wire:click.stop="approveAndOpenOrder({{ $order->id }})"
+                                                class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded-lg">
+
+                                                موافقة
+                                            </button>
                                         </div>
                                     @empty
                                         <div class="p-3 text-center text-gray-400">
@@ -643,7 +689,8 @@
 
                             <!-- Customer Info (Search by Phone / Link) -->
                             <div class="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
-                                <label class="text-xs font-bold text-gray-500 mb-2 block px-1">ربط عميل (بحث / إضافة)
+                                <label class="text-xs font-bold text-gray-500 mb-2 block px-1">ربط عميل (بحث /
+                                    إضافة)
                                     @if ($orderType === 'delivery')
                                         <span class="text-red-500">*</span>
                                     @endif
@@ -749,7 +796,7 @@
 
                                     <!-- Cash Calculations (تظهر فقط إذا اخترت النقدي) -->
                                     <div class="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100"
-                                        x-show="$wire.paymentMethod === 'cash'" x-transition>
+                                        x-show="$wire.paymentMethod === 1" x-transition>
                                         <div
                                             class="col-span-2 flex justify-between items-center mb-1 text-xs font-bold text-gray-500 px-1">
                                             <span>حاسبة النقدية</span>
@@ -758,7 +805,8 @@
                                         </div>
 
                                         <div>
-                                            <label class="text-xs font-bold text-gray-500 mb-1 block">المبلغ الذي دخل
+                                            <label class="text-xs font-bold text-gray-500 mb-1 block">المبلغ الذي
+                                                دخل
                                                 الدرج</label>
                                             <div class="relative">
                                                 <input type="number" step="0.5"
@@ -926,8 +974,8 @@
                         <div
                             class="flex items-center justify-between mb-4 px-2 border-t border-dashed border-gray-200 pt-4">
                             <span class="text-gray-500 font-bold">الإجمالي المبدئي</span>
-                            <span class="text-2xl font-black text-gray-900">{{ number_format($totalPrice, 2) }} <span
-                                    class="text-sm font-normal text-gray-400">ج.م</span></span>
+                            <span class="text-2xl font-black text-gray-900">{{ number_format($totalPrice, 2) }}
+                                <span class="text-sm font-normal text-gray-400">ج.م</span></span>
                         </div>
 
                         <div class="flex gap-3">
@@ -965,7 +1013,8 @@
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
                         <h3 class="text-xl font-bold text-gray-900 mb-2">تأكيد تصفير السلة</h3>
-                        <p class="text-gray-500 mb-6">هل أنت متأكد من حذف جميع المنتجات من السلة؟ لا يمكن التراجع عن
+                        <p class="text-gray-500 mb-6">هل أنت متأكد من حذف جميع المنتجات من السلة؟ لا يمكن التراجع
+                            عن
                             هذا
                             الإجراء.</p>
 
@@ -1058,7 +1107,8 @@
                                     </h3>
                                     <div class="mt-2">
                                         <p class="text-sm text-gray-500">
-                                            هل أنت متأكد من رغبتك في حذف جميع العناصر من الفاتورة؟ لا يمكن التراجع عن
+                                            هل أنت متأكد من رغبتك في حذف جميع العناصر من الفاتورة؟ لا يمكن التراجع
+                                            عن
                                             هذا
                                             الإجراء.
                                         </p>
@@ -1091,7 +1141,8 @@
                     class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden transform scale-100 flex flex-col max-h-[90vh]">
                     <div class="bg-gray-900 p-4 text-white flex justify-between items-center shrink-0">
                         <h3 class="font-bold text-lg flex items-center gap-2"><i
-                                class="fas fa-clipboard-list text-blue-400"></i> الطلبات المعلقة (طاولات / صالة)</h3>
+                                class="fas fa-clipboard-list text-blue-400"></i> الطلبات المعلقة (طاولات / صالة)
+                        </h3>
                         <button wire:click="closeOpenOrdersModal"
                             class="text-gray-400 hover:text-white transition-colors">
                             <i class="fas fa-times text-xl"></i>
@@ -1155,7 +1206,8 @@
                                             <div class="flex justify-between items-center mt-2">
                                                 <div
                                                     class="text-xs font-bold text-gray-600 bg-white/50 px-2 py-1 rounded border border-blue-100">
-                                                    دفع: {{ $paymentMethod === 'cash' ? 'نقدي' : 'بنكي' }} (كما محدد
+                                                    دفع: {{ $paymentMethod === 'cash' ? 'نقدي' : 'بنكي' }} (كما
+                                                    محدد
                                                     بالسلة)
                                                 </div>
                                                 <button wire:click="payOpenOrder"
@@ -1188,7 +1240,8 @@
                             <div class="flex flex-col items-center justify-center py-10 text-gray-400">
                                 <i class="fas fa-clipboard-check text-6xl mb-4 opacity-50 text-blue-100"></i>
                                 <h4 class="text-xl font-bold text-gray-600">لا توجد طلبات معلقة</h4>
-                                <p class="mt-2 text-sm text-center max-w-xs text-gray-400">جميع طاولات الصالة وطلبات
+                                <p class="mt-2 text-sm text-center max-w-xs text-gray-400">جميع طاولات الصالة
+                                    وطلبات
                                     الجلوس
                                     الحر تم دفعها أو لا يوجد طلبات حالياً.</p>
                             </div>
@@ -1518,7 +1571,8 @@
                     @endif
 
                     <div class="mb-6">
-                        <label class="block text-sm font-bold text-gray-700 mb-2">اختر الطاولة الهدف (التي سيدمج إليها)
+                        <label class="block text-sm font-bold text-gray-700 mb-2">اختر الطاولة الهدف (التي سيدمج
+                            إليها)
                             <span class="text-red-500">*</span></label>
                         <select wire:model="mergeTargetTableId"
                             class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
