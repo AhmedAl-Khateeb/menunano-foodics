@@ -55,8 +55,13 @@ trait OrderTrait
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    // public function paymentMethodRelation()
+    // {
+    //     return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
+    // }
+
     public function paymentMethodRelation()
-    {
-        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
-    }
+{
+    return $this->belongsTo(PaymentMethod::class, 'payment_method');
+}
 }

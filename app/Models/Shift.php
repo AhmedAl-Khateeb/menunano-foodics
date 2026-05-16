@@ -24,6 +24,7 @@ class Shift extends Model
         'expenses_total',
         'sent_to_manager',
         'carryover_to_next_shift',
+        'payments_breakdown',
     ];
 
     protected $casts = [
@@ -36,6 +37,7 @@ class Shift extends Model
         'expenses_total' => 'decimal:2',
         'sent_to_manager' => 'decimal:2',
         'carryover_to_next_shift' => 'decimal:2',
+        'payments_breakdown' => 'array',
     ];
 
     public function isActive(): bool

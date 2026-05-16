@@ -155,26 +155,15 @@ class ShiftService
 
     protected function getCashPaymentValues(): array
     {
-        $values = ['cash', 'كاش', 'نقدي'];
-
-        if (class_exists(PaymentMethod::class)) {
-            $paymentMethodIds = PaymentMethod::query()
-                ->where(function ($query) {
-                    $query->where('name', 'like', '%cash%')
-                        ->orWhere('name', 'like', '%كاش%')
-                        ->orWhere('name', 'like', '%نقد%');
-                })
-                ->pluck('id')
-                ->map(fn ($id) => (string) $id)
-                ->toArray();
-
-            $values = array_merge($values, $paymentMethodIds);
-        }
-
-        return array_unique($values);
+        return PaymentMethod::query()
+            ->where(function ($query) {
+                $query->where('name', 'cash')
+                    ->orWhere('name', 'كاش')
+                    ->orWhere('name', 'نقدي');
+            })
+            ->pluck('id')
+            ->toArray();
     }
-
-   
 
     public function calculateCashSalesForShift(Shift $shift): float
     {
@@ -201,11 +190,12 @@ class ShiftService
 
     public function calculateExpectedCashForShift(Shift $shift): float
     {
+        $startingCash = (float) $shift->starting_cash;
         $cashSales = $this->calculateCashSalesForShift($shift);
         $expenses = $this->calculateExpensesForShift($shift);
         $transfersToManager = $this->calculateTransfersToManagerForShift($shift);
 
-        return (float) $shift->starting_cash
+        return (float) $startingCash
             + (float) $cashSales
             - (float) $expenses
             - (float) $transfersToManager;
@@ -273,6 +263,9 @@ class ShiftService
             'expected_cash' => $expectedCash,
             'ending_cash' => $endingCash,
             'cash_difference' => $endingCash - $expectedCash,
+            'payments_breakdown' => json_encode(
+                $this->getPaymentsBreakdownForShift($shift)
+            ),
 
             'end_time' => now(),
             'status' => 'closed',
@@ -308,5 +301,17 @@ class ShiftService
         }
 
         return $shift->fresh();
+    }
+
+    public function getPaymentsBreakdownForShift(Shift $shift): array
+    {
+        return Order::with('paymentMethodRelation')
+            ->where('shift_id', $shift->id)
+            ->get()
+            ->groupBy(fn ($order) => $order->paymentMethodRelation?->name ?? 'غير معروف')
+            ->map(fn ($orders) => $orders->sum(fn ($order) => (float) $order->paid_amount - (float) $order->change_amount
+            )
+            )
+            ->toArray();
     }
 }

@@ -190,6 +190,15 @@
             <strong>{{ number_format($ordersTotal, 2) }}</strong>
         </div>
 
+        <div class="section-title">تفصيل طرق الدفع</div>
+
+        @foreach ($paymentsBreakdown as $item)
+            <div class="row">
+                <span>{{ $item['name'] }}</span>
+                <strong>{{ number_format($item['total'], 2) }} ج.م</strong>
+            </div>
+        @endforeach
+
         <div class="row">
             <span>المبيعات النقدية</span>
             <strong>{{ number_format($cashSales, 2) }}</strong>

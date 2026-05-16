@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Order;
 use App\Models\Shift;
 use App\Models\User;
 
@@ -56,6 +57,22 @@ class ShiftReceiptController extends Controller
                 ->sum('amount');
         }
 
+        $paymentsBreakdown = Order::with('paymentMethodRelation')
+    ->where('shift_id', $shift->id)
+    ->get()
+    ->groupBy('payment_method')
+    ->map(function ($orders) {
+
+        $method = $orders->first()->paymentMethodRelation;
+
+        return [
+            'name' => $method?->name ?? 'غير معروف',
+            'total' => $orders->sum(fn ($o) =>
+                (float) $o->paid_amount - (float) $o->change_amount
+            ),
+        ];
+    });
+
         // الإيداع = رصيد بداية الشيفت
         $deposit = (float) $shift->starting_cash;
 
@@ -93,7 +110,8 @@ class ShiftReceiptController extends Controller
             'transfers',
             'expectedCash',
             'endingCash',
-            'difference'
+            'difference',
+            'paymentsBreakdown'
         ));
     }
 }

@@ -796,7 +796,7 @@
 
                                     <!-- Cash Calculations (تظهر فقط إذا اخترت النقدي) -->
                                     <div class="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100"
-                                        x-show="$wire.paymentMethod === 1" x-transition>
+                                        x-show="$wire.paymentMethod == 1" x-transition>
                                         <div
                                             class="col-span-2 flex justify-between items-center mb-1 text-xs font-bold text-gray-500 px-1">
                                             <span>حاسبة النقدية</span>
@@ -832,10 +832,9 @@
                                         $isDraft =
                                             in_array($orderType, ['table', 'free_seating']) &&
                                             floatval($paidAmount) == 0;
-                                        $btnDisabled =
-                                            !$isDraft && $paymentMethod === 'cash' && $paidAmount < $total
-                                                ? 'disabled'
-                                                : '';
+                                        $isCash = $paymentMethod == 1;
+
+                                        $btnDisabled = !$isDraft && $isCash && $paidAmount < $total ? 'disabled' : '';
                                     @endphp
 
                                     <!-- Checkout Button -->
@@ -855,10 +854,6 @@
 
                                 </div>
                             </div>
-
-
-
-
 
                         </div>
                     @endif
@@ -1204,11 +1199,13 @@
                                                 <span class="text-xs text-blue-600 font-bold shrink-0">ج.م</span>
                                             </div>
                                             <div class="flex justify-between items-center mt-2">
+                                                @php
+                                                    $isCash = (int) $paymentMethod === 1;
+                                                @endphp
+
                                                 <div
                                                     class="text-xs font-bold text-gray-600 bg-white/50 px-2 py-1 rounded border border-blue-100">
-                                                    دفع: {{ $paymentMethod === 'cash' ? 'نقدي' : 'بنكي' }} (كما
-                                                    محدد
-                                                    بالسلة)
+                                                    دفع: {{ $isCash ? 'نقدي' : 'بنكي' }} (كما محدد بالسلة)
                                                 </div>
                                                 <button wire:click="payOpenOrder"
                                                     class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors shadow-md flex items-center"
@@ -1433,6 +1430,17 @@
                             <strong class="text-green-700">
                                 {{ number_format((float) $shiftCashSalesPreview, 2) }} ج.م
                             </strong>
+                        </div>
+
+                        <div class="py-2 border-b text-sm">
+                            @foreach ($shiftPaymentsBreakdown as $method => $amount)
+                                @if (strtolower($method) !== 'cash')
+                                    <div class="flex justify-between">
+                                        <span>{{ $method }}</span>
+                                        <strong>{{ number_format($amount, 2) }} ج.م</strong>
+                                    </div>
+                                @endif
+                            @endforeach
                         </div>
 
                         <div class="flex justify-between items-center py-1.5 border-b border-blue-100 text-sm">
