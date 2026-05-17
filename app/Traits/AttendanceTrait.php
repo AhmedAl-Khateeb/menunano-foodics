@@ -4,13 +4,13 @@ namespace App\Traits;
 
 use App\Models\Branch;
 use App\Models\Shift;
-use App\Models\User;
+use App\Models\staff;
 
 trait AttendanceTrait
 {
-    public function user()
+    public function staff()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(staff::class);
     }
 
     public function shift()
