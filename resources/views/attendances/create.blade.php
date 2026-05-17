@@ -46,7 +46,7 @@
 
                                 <div class="form-group">
                                     <label for="user_id">الموظف</label>
-                                    <select name="user_id" id="user_id" class="form-control" required>
+                                    <select name="staff_id" id="staff_id" class="form-control" required>
                                         <option value="">اختر الموظف</option>
                                         @foreach ($users as $user)
                                             <option value="{{ $user->id }}"
@@ -57,7 +57,7 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group">
+                                {{-- <div class="form-group">
                                     <label for="shift_id">الشيفت</label>
                                     <select name="shift_id" id="shift_id" class="form-control">
                                         <option value="">بدون شيفت</option>
@@ -69,7 +69,7 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                </div>
+                                </div> --}}
 
                                 <div class="form-group">
                                     <label for="attendance_date">التاريخ</label>
