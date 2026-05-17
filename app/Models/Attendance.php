@@ -10,7 +10,7 @@ class Attendance extends Model
     use AttendanceTrait;
 
     protected $fillable = [
-        'user_id',
+        'staff_id',
         'shift_id',
         'attendance_date',
         'check_in',
