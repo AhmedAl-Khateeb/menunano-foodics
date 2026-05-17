@@ -90,7 +90,7 @@
             color: #2980b9;
         }
 
-        /* @media  (min-width:1200px)
+      @media  (min-width:1200px)
 {
         .login-page, .register-page {
     -ms-flex-align: center;
@@ -103,27 +103,14 @@
     height: 100vh;
     -ms-flex-pack: center;
     justify-content: center;
-} */
+}
+}
 
-        body.login-page {
-            min-height: 100vh;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: url('../images/MenuNano.png') no-repeat center center fixed;
-            background-size: cover;
-
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-        }
-
-        .login-box {
-            margin: 0 auto !important;
-        }
+        
     </style>
 </head>
 
-<body class="hold-transition login-page">
+<body class="hold-transition login-page" style="background: url(../images/MenuNano.png) no-repeat center center fixed; background-size: cover;     margin-left: 20px; ">
     <div class="login-box">
         <div class="login-logo" style="align-content: flex-start;">
             <b>{{ \App\Models\Setting::where('key', 'name')->first()->value }}</b>
