@@ -43,21 +43,30 @@
 
 
                         <div class="form-group mb-3 text-right">
-
-                            <label for="BirthDay">تاريخ الميلاد <span class="text-danger">*</span></label>
-                            <input type="date" name="BirthDay" step="0.01" min="0" max="100"
-                                class="form-control  text-right" id="name" placeholder="أدخل اسم الموظف"
-                                value="{{ $staff->BirthDay }}" required="">
+                            <label for="name">رقم موبيل  موظف <span class="text-danger">*</span></label>
+                            <input type="text" name="mobile" class="form-control " id="name"
+                                placeholder="رقم موبيل الموظف" value="{{ $staff->mobile }}" required="">
                         </div>
 
 
                         <div class="form-group mb-3 text-right">
 
-                            <label for="Academic_qualification"> المؤهلات الدراسية <span
-                                    class="text-danger">*</span></label>
-                            <textarea type="text" name="Academic_qualification" class="form-control " id="name"
-                                placeholder="أدخل اسم الموهل الدراسي" value="" required="">  {{ $staff->Academic_qualification }} </textarea>
+                            <label for="Number_of_days"> عدد أيام العمل  <span class="text-danger">*</span></label>
+                            <input type="number" value="{{ $staff->Number_of_days }}" name="Number_of_days" step="0.01" min="0" max="100"
+                                class="form-control      text-right" id="عدد أيام العمل " placeholder="أدخل عدد أيام العمل " value=""
+                                required="">
                         </div>
+
+
+                        <div class="form-group mb-3 text-right">
+
+                            <label for="Number_of_hours">عدد ساعات العمل <span class="text-danger">*</span></label>
+                            <input type="number" name="Number_of_hours" step="0.01" min="0" max="100"
+                                class="form-control  text-right" id="name" placeholder="أدخل اسم الموظف"
+                                value="{{ $staff->Number_of_hours }}" required="">
+                        </div>
+
+
 
                         <div class="form-group mb-3 text-right">
 
