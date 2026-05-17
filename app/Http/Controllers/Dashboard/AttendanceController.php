@@ -42,7 +42,9 @@ class AttendanceController extends Controller
 
     public function store(StoreAttendanceRequest $request)
     {
+
         $this->attendanceService->create($request->validated());
+
 
         return redirect()
             ->route('attendances.index')
