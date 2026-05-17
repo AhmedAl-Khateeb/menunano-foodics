@@ -79,7 +79,7 @@ class AttendanceService
 
     protected function ensureUniqueAttendance(int $userId, string $attendanceDate, ?int $ignoreId = null): void
     {
-        $query = Attendance::where('user_id', $userId)
+        $query = Attendance::where('staff_id', $userId)
             ->whereDate('attendance_date', $attendanceDate);
 
         if ($ignoreId) {
