@@ -46,7 +46,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\PurchaseInvoiceController;
 use App\Http\Controllers\Salary_mcontroller;
-use App\Http\Controllers\stuffcontroller;
+use App\Http\Controllers\StuffController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\Web\RoleController;
@@ -487,7 +487,7 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         'branch.permissions:shifts.access',
     ])->name('shifts.pause');
 
-    Route::resource('staff', stuffcontroller::class);
+    Route::resource('staff', StuffController::class);
     Route::resource('salary_m', Salary_mcontroller::class);
     Route::resource('expenses', ExpenseController::class);
 
