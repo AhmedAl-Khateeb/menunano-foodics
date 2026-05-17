@@ -13,10 +13,10 @@ class AttendanceService
 {
     public function getPaginated(array $filters = []): LengthAwarePaginator
     {
-        $query = Attendance::with(['user', 'shift'])->latest();
+        $query = Attendance::with(['staff', 'shift'])->latest();
 
-        if (!empty($filters['user_id'])) {
-            $query->where('user_id', $filters['user_id']);
+        if (!empty($filters['staff_id'])) {
+            $query->where('staff_id', $filters['staff_id']);
         }
 
         if (!empty($filters['date_from'])) {
@@ -52,15 +52,17 @@ class AttendanceService
 
     public function create(array $data): Attendance
     {
-        $this->ensureUniqueAttendance($data['user_id'], $data['attendance_date']);
+        $this->ensureUniqueAttendance($data['staff_id'], $data['attendance_date']);
 
         return Attendance::create($data);
+
+
     }
 
     public function update(Attendance $attendance, array $data): Attendance
     {
         $this->ensureUniqueAttendance(
-            $data['user_id'],
+            $data['staff_id'],
             $data['attendance_date'],
             $attendance->id
         );
