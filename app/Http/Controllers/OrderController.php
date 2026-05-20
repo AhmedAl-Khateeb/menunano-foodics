@@ -54,6 +54,7 @@ class OrderController extends Controller
                 'payment_method' => $request->payment_method,
                 'payment_proof' => $paymentProofPath,
                 'status' => 'pending',
+                'branch_id' => $request->branch_id,
             ]);
 
             foreach ($cartItems as $item) {

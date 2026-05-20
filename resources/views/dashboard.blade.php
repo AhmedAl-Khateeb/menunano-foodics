@@ -28,9 +28,9 @@
 
                             <div class="dashboard-tabs {{ $subscriptionExpired ? 'disabled-dashboard-links' : '' }}">
                                 <a href="javascript:void(0)" class="active">عام</a>
-                                <a href="javascript:void(0)">الفروع</a>
-                                <a href="javascript:void(0)">المخزون</a>
-                                <a href="javascript:void(0)">مركز الاتصال</a>
+                                <a href="{{ route('branches.index') }}">الفروع</a>
+                                <a href="{{ route('inventory.dashboard') }}">المخزون</a>
+                                <a href="{{ route('settings.index') }}">مركز الاتصال</a>
                             </div>
                         </div>
 
@@ -54,13 +54,14 @@
                             </div>
 
                             <input type="date" class="form-control date-filter"
-                                value="{{ request('date', now()->toDateString()) }}">
+                                value="{{ request('date', now()->toDateString()) }}"
+                                onchange="window.location.href='?filter={{ request('filter', 'day') }}&date=' + this.value">
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-{{-- 
+        {{-- 
         @if (session('subscription_expired') || $subscriptionExpired)
             <div class="expired-message-bar">
                 <i class="fas fa-exclamation-triangle ml-2"></i>
@@ -86,6 +87,104 @@
                 </div>
             @endforeach
         </div>
+        {{-- رسم المبيعات --}}
+        <div class="row mt-4">
+
+            <div class="col-12 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+
+                        <h5 class="mb-4 text-center">المبيعات لكل ساعة</h5>
+
+                        <div style="height:350px">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        {{-- الكروت السفلية --}}
+        <div class="row">
+
+            {{-- طرق الدفع --}}
+            <div class="col-lg-4 mb-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+
+                        <h5 class="mb-4 text-center">طرق الدفع الأكثر استخدامًا</h5>
+
+                        @foreach ($topPayments as $payment)
+                            <div class="d-flex justify-content-between mb-3">
+
+                                <span>
+                                    {{ $payment->paymentMethodRelation->name ?? ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
+                                </span>
+
+                                <strong>{{ $payment->total }}</strong>
+
+                            </div>
+                        @endforeach
+
+                    </div>
+                </div>
+            </div>
+
+            {{-- أعلى الفروع --}}
+            <div class="col-lg-4 mb-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+
+                        <h5 class="mb-4 text-center">أعلى الفروع مبيعًا</h5>
+
+                        @foreach ($topBranches as $branch)
+                            <div class="d-flex justify-content-between mb-3">
+
+                                <span>
+                                    {{ $branch->branch->name ?? 'بدون فرع' }}
+                                </span>
+
+                                <strong>
+                                    {{ number_format($branch->total_sales, 2) }} ج
+                                </strong>
+
+                            </div>
+                        @endforeach
+
+                    </div>
+                </div>
+            </div>
+
+            {{-- أعلى المنتجات --}}
+            <div class="col-lg-4 mb-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+
+                        <h5 class="mb-4 text-center">أعلى المنتجات مبيعًا</h5>
+
+                        @foreach ($topProducts as $product)
+                            <div class="d-flex justify-content-between mb-3">
+
+                                <span>{{ $product->name }}</span>
+
+                                <strong>
+                                    {{ number_format($product->total_sales, 2) }} ج
+                                </strong>
+
+                            </div>
+                        @endforeach
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
     </div>
 
     <style>
@@ -383,53 +482,105 @@
     </script>
 
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-@if (session('subscription_expired'))
     <script>
-        Swal.fire({
-            icon: 'warning',
-            title: 'تنبيه',
-            text: @json(session('subscription_expired')),
-            confirmButtonText: 'حسنًا',
-            confirmButtonColor: '#f59e0b'
-        });
-    </script>
-@endif
+      const salesCtx = document.getElementById('salesChart');
 
-@if (session('permission_denied'))
-    <script>
-        Swal.fire({
-            icon: 'warning',
-            title: 'غير متاح',
-            text: @json(session('permission_denied')),
-            confirmButtonText: 'حسنًا',
-            confirmButtonColor: '#f59e0b'
-        });
-    </script>
-@endif
+if (salesCtx) {
 
-@if (session('success'))
-    <script>
-        Swal.fire({
-            icon: 'success',
-            title: 'تم بنجاح',
-            text: @json(session('success')),
-            timer: 3000,
-            showConfirmButton: false
-        });
-    </script>
-@endif
+    new Chart(salesCtx, {
+        type: 'line', // 👈 هنا التغيير الأساسي
+        data: {
+            labels: @json($salesLabels),
+            datasets: [{
+                label: 'المبيعات',
+                data: @json($salesData),
 
-@if (session('error'))
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'خطأ',
-            text: @json(session('error')),
-            timer: 3000,
-            showConfirmButton: false
-        });
+                fill: true, // 👈 يخلي تحت الخط متلوّن زي الكروت
+                tension: 0.4, // 👈 يخلي الخط ناعم
+                borderColor: '#7E6AA8',
+                backgroundColor: 'rgba(126, 106, 168, 0.20)',
+                pointBackgroundColor: '#7E6AA8',
+                pointRadius: 4,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#eee'
+                    }
+                }
+            }
+        }
+    });
+
+}
     </script>
-@endif
+
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    @if (session('subscription_expired'))
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: 'تنبيه',
+                text: @json(session('subscription_expired')),
+                confirmButtonText: 'حسنًا',
+                confirmButtonColor: '#f59e0b'
+            });
+        </script>
+    @endif
+
+    @if (session('permission_denied'))
+        <script>
+            Swal.fire({
+                icon: 'warning',
+                title: 'غير متاح',
+                text: @json(session('permission_denied')),
+                confirmButtonText: 'حسنًا',
+                confirmButtonColor: '#f59e0b'
+            });
+        </script>
+    @endif
+
+    @if (session('success'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'تم بنجاح',
+                text: @json(session('success')),
+                timer: 3000,
+                showConfirmButton: false
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: @json(session('error')),
+                timer: 3000,
+                showConfirmButton: false
+            });
+        </script>
+    @endif
 @stop

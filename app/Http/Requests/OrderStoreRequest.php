@@ -25,6 +25,7 @@ class OrderStoreRequest extends FormRequest
             'address' => 'required|string|max:500',
             'payment_method' => 'required|string',
             'payment_proof' => 'nullable|image|max:2048', // Max 2MB if image
+            'branch_id' => 'required|exists:branches,id',
         ];
     }
 }
