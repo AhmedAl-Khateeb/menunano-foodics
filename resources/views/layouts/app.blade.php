@@ -208,7 +208,7 @@
 
     <!-- Navbar -->
     <nav
-        class="bg-gray-900 text-white shadow-md h-[50px] flex items-center px-4 justify-between shrink-0 sticky top-0 z-[60]">
+        class="bg-White text-Black shadow-md h-[50px] flex items-center px-4 justify-between shrink-0 sticky top-0 z-[60]">
         <!-- Left: Brand & Sidebar Toggle -->
         <div class="flex items-center gap-3">
             <button @click="sidebarOpen = !sidebarOpen"
@@ -312,100 +312,51 @@
         <div id="logoutShiftModal" class="logout-shift-overlay" style="display: none;" dir="rtl">
             <div class="logout-shift-card">
 
-                <!-- ICON -->
                 <div class="logout-icon">
                     <i class="fas fa-door-closed"></i>
                 </div>
 
                 <h3 class="logout-title">إنهاء الشفت وتسجيل الخروج</h3>
 
-                <!-- NO SHIFT -->
                 <div id="logoutNoShiftBox" class="alert alert-info text-right" style="display: none;">
                     لا يوجد شفت مفتوح حاليًا، سيتم تسجيل الخروج مباشرة.
                 </div>
 
-                <!-- SHIFT DETAILS -->
                 <div id="logoutShiftDetails" style="display: none;">
-
                     <p class="logout-subtitle">
                         راجع المبلغ المتوقع في الدرج، ثم أكد رصيد نهاية الشفت.
                     </p>
 
-                    <!-- SUMMARY CARD -->
-                    <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-4 text-right space-y-2">
-
-                        <!-- Start Cash -->
-                        <div class="flex justify-between text-sm border-b border-blue-100 pb-2">
-                            <span class="text-gray-700 font-bold">رصيد بداية الشفت</span>
-                            <strong class="text-gray-800">
-                                <span id="logoutStartingCash">0.00</span> ج.م
-                            </strong>
+                    <div class="logout-summary">
+                        <div class="logout-row">
+                            <span>رصيد بداية الشفت</span>
+                            <strong><span id="logoutStartingCash">0.00</span> ج.م</strong>
                         </div>
 
-                        <!-- Cash Sales -->
-                        <div class="flex justify-between text-sm border-b border-blue-100 pb-2">
-                            <span class="text-gray-700 font-bold">مبيعات الكاش</span>
-                            <strong class="text-green-700">
-                                <span id="logoutCashSales">0.00</span> ج.م
-                            </strong>
+                        <div class="logout-row">
+                            <span>مبيعات الكاش</span>
+                            <strong><span id="logoutCashSales">0.00</span> ج.م</strong>
                         </div>
 
-                        <!-- Payment Methods -->
-                        <div id="paymentMethodsBox" class="space-y-2 border-b border-blue-100 pb-2">
-
-                            {{-- هيتملأ بالـ JS --}}
-                            {{-- مثال شكل:
-            <div class="flex justify-between text-sm">
-                <span>InstaPay</span>
-                <strong>100.00 ج.م</strong>
-            </div>
-            --}}
-                        </div>
-
-                        <!-- Expenses -->
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-700 font-bold">مصروفات الدرج</span>
-                            <strong class="text-red-600">
-                                - 0.00 ج.م
-                            </strong>
-                        </div>
-
-                        <!-- Transfers -->
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-700 font-bold">المسلم للمدير</span>
-                            <strong class="text-red-600">
-                                - 0.00 ج.م
-                            </strong>
-                        </div>
-
-                        <!-- Expected Cash BIG -->
-                        <div class="pt-3 border-t border-blue-200 flex justify-between items-center">
-                            <span class="text-blue-700 font-black text-base">
-                                المبلغ المتوقع في الدرج
-                            </span>
-
-                            <strong class="text-blue-700 font-black text-2xl">
-                                <span id="logoutExpectedCashText">0.00</span> ج.م
-                            </strong>
+                        <div class="logout-row total">
+                            <span>المبلغ المتوقع في الدرج</span>
+                            <strong><span id="logoutExpectedCashText">0.00</span> ج.م</strong>
                         </div>
                     </div>
 
-                    <!-- INPUT -->
                     <div class="form-group text-right">
                         <label class="font-weight-bold">
                             رصيد نهاية الدرج الفعلي <span class="text-danger">*</span>
                         </label>
 
-                        <input type="number" step="0.5" min="0" name="ending_cash"
-                            id="logoutEndingCash" class="form-control form-control-lg text-right" placeholder="0.00">
+                        <input type="number" step="0.5" min="0" name="ending_cash" id="logoutEndingCash"
+                            class="form-control form-control-lg text-right" placeholder="0.00">
                     </div>
 
-                    <!-- DIFFERENCE -->
                     <div id="logoutDifferenceBox" class="logout-difference success">
                         الدرج مضبوط ولا يوجد فرق.
                     </div>
 
-                    <!-- NOTE -->
                     <div id="logoutNoteBox" class="form-group text-right mt-3" style="display: none;">
                         <label class="font-weight-bold">
                             سبب الفرق <span class="text-danger">*</span>
@@ -414,12 +365,9 @@
                         <textarea name="notes" id="logoutShiftNote" rows="2" class="form-control text-right"
                             placeholder="اكتب سبب العجز أو الزيادة قبل تسجيل الخروج"></textarea>
                     </div>
-
                 </div>
 
-                <!-- ACTIONS -->
                 <div class="logout-actions">
-
                     <button type="button" id="closeLogoutModal" class="btn btn-light">
                         إلغاء
                     </button>
@@ -428,7 +376,6 @@
                         <i class="fas fa-sign-out-alt"></i>
                         تسجيل الخروج
                     </button>
-
                 </div>
 
             </div>
@@ -443,11 +390,11 @@
             x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
             x-transition:leave="transition ease-in-out duration-300 transform"
             x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
-            class="w-64 bg-black shadow-xl shrink-0 border-l border-gray-800 flex flex-col h-full">
+            class="w-64 bg-white shadow-xl shrink-0 border-l border-gray-800 flex flex-col h-full">
 
             <!-- Sidebar Header -->
             <div
-                class="bg-black text-white h-[60px] flex items-center justify-between px-4 shrink-0 border-b border-gray-800">
+                class="bg-white text-black h-[60px] flex items-center justify-between px-4 shrink-0 border-b border-gray-800">
                 <div class="flex items-center gap-3">
                     @if (auth()->user()->role === 'admin' && auth()->user()->logo_url)
                         <img src="{{ auth()->user()->logo_url }}"
@@ -467,13 +414,13 @@
                     </div>
                 </div>
                 <button @click="sidebarOpen = false"
-                    class="p-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-all">
+                    class="p-2 rounded-lg bg-white-900 text-black hover:bg-white-800 transition-all">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
 
             <!-- Sidebar Links -->
-            <div class="flex-1 overflow-y-auto  py-4 space-y-2 text-right"> <!-- no-scrollbar -->
+            <div class="flex-1 overflow-y-auto  py-4 space-y-2 text-right">   <!-- no-scrollbar -->
                 @php
                     $role = auth()->user()->role;
                     $menuItems = config('navigation.' . $role, []);
@@ -510,7 +457,7 @@
                         @endphp
                         <div x-data="{ openSub: {{ $hasActiveChild ? 'true' : 'false' }} }">
                             <button @click="openSub = !openSub"
-                                class="flex items-center justify-between w-full px-4 py-3 bg-black text-white hover:bg-gray-800 font-bold transition-colors">
+                                class="flex items-center justify-between w-full px-4 py-3 bg-white text-black hover:text-gray-800 font-bold transition-colors">
                                 <div class="flex items-center gap-3">
                                     <i class="{{ $item['icon'] }} text-lg w-6 text-center"></i>
                                     <span>{{ $item['title'] }}</span>
@@ -518,7 +465,7 @@
                                 <i class="fas fa-chevron-left text-xs transition-transform"
                                     :class="{ '-rotate-90': openSub }"></i>
                             </button>
-                            <div x-show="openSub" class="bg-[#1a1a1a] space-y-1 mt-1 border-r-2 border-gray-700">
+                            <div x-show="openSub" class="bg-white space-y-1 mt-1 border-r-2 border-gray-700">
                                 @foreach ($item['children'] as $child)
                                     @php
                                         $isActiveChildRoute = request()->routeIs($child['active_routes']);
@@ -540,7 +487,7 @@
                                         $isChildActive = $isActiveChildRoute && $isActiveChildQuery;
                                     @endphp
                                     <a href="{{ route($child['route'], $child['query'] ?? []) }}"
-                                        class="flex items-center gap-3 px-6 py-2 text-sm {{ $isChildActive ? 'bg-white text-black font-bold' : 'text-gray-400 hover:text-white hover:bg-gray-800' }} transition-colors">
+                                        class="flex items-center gap-3 px-6 py-2 text-sm {{ $isChildActive ? 'bg-white text-black font-bold' : 'text-gray-400 hover:text-white hover:text-gray-800' }} transition-colors">
                                         <i class="{{ $child['icon'] }} text-xs"></i>
                                         <span>{{ $child['title'] }}</span>
                                     </a>
@@ -572,7 +519,7 @@
                             $isItemActive = $isActiveItemRoute && $isActiveItemQuery;
                         @endphp
                         <a href="{{ route($item['route'], $item['query'] ?? []) }}"
-                            class="flex items-center gap-3 px-4 py-3 {{ $isItemActive ? 'bg-white text-black' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }} font-bold transition-colors">
+                            class="flex items-center gap-3 px-4 py-3 {{ $isItemActive ? 'bg-white text-black' : 'text-black hover:text-gray-800 hover:text-white' }} font-bold transition-colors">
                             <i class="{{ $item['icon'] }} text-lg w-6 text-center"></i>
                             <span>{{ $item['title'] }}</span>
                         </a>
@@ -660,8 +607,8 @@
                     noteInput.required = true;
                 }
             }
-            async function loadLogoutShiftInfo() {
 
+            async function loadLogoutShiftInfo() {
                 const response = await fetch("{{ route('logout.shift.info') }}", {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -669,9 +616,6 @@
                 });
 
                 const data = await response.json();
-
-                const paymentBox = document.getElementById('paymentMethodsBox');
-                paymentBox.innerHTML = '';
 
                 if (!data.has_shift) {
                     noShiftBox.style.display = 'block';
@@ -697,21 +641,6 @@
                 endingInput.required = true;
                 endingInput.value = data.expected_cash;
 
-                // ✅ payment breakdown
-                if (data.payments_breakdown) {
-                    Object.entries(data.payments_breakdown).forEach(([method, amount]) => {
-
-                        if (method.toLowerCase() === 'cash') return;
-
-                        paymentBox.innerHTML += `
-                <div class="flex justify-between text-sm border-b border-blue-100 py-1">
-                    <span class="text-gray-700">${method}</span>
-                    <strong class="text-gray-900">${parseFloat(amount).toFixed(2)} ج.م</strong>
-                </div>
-            `;
-                    });
-                }
-
                 updateLogoutDifference();
             }
 
@@ -731,26 +660,6 @@
             if (endingInput) {
                 endingInput.addEventListener('input', updateLogoutDifference);
             }
-        });
-    </script>
-
-    <script>
-        document.addEventListener('livewire:init', () => {
-
-            Livewire.on('print-order', (event) => {
-
-                const frame = document.createElement('iframe');
-
-                frame.style.position = 'fixed';
-                frame.style.width = '1px';
-                frame.style.height = '1px';
-                frame.style.border = '0';
-
-                frame.src = event.url;
-
-                document.body.appendChild(frame);
-            });
-
         });
     </script>
 
