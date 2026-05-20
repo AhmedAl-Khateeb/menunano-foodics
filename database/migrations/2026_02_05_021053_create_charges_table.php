@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -14,28 +13,15 @@ return new class extends Migration
         Schema::create('charges', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-
-            $table->string('name');
-
-            // tax = ضريبة | fee = رسوم | discount = خصم
-            $table->enum('classification', ['tax', 'fee', 'discount'])->default('tax');
-
-            // percentage / fixed
+            $table->string('name'); // e.g., VAT, Service Charge
+            $table->enum('classification', ['tax', 'fee'])->default('tax'); // Tax or Fee
             $table->enum('type', ['percentage', 'fixed'])->default('percentage');
-
-            $table->decimal('value', 8, 2);
-
-            // الضريبة ضمن السعر ولا لأ
-            $table->boolean('is_inclusive')->default(false);
-
-            // هل مفعل
+            $table->decimal('value', 8, 2); // 15.00 or 5.00
+            $table->boolean('is_inclusive')->default(false); // Included in price?
             $table->boolean('is_active')->default(true);
-
-            // POS / Online / All
-            $table->json('applicable_order_types')->nullable();
-
             $table->string('description')->nullable();
-
+            // $table->enum('applies_to', ['all', 'pos', 'online'])->default('all');
+            $table->json('applicable_order_types')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

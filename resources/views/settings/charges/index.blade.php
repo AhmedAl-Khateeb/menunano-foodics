@@ -13,9 +13,7 @@
             type: 'percentage', // percentage, fixed
             value: '',
             is_inclusive: false,
-            is_inclusive: false,
             applicable_order_types: ['dining_in', 'takeaway', 'delivery'],
-            applies_on_events: [], // 👈 ضيفها هنا
             description: '',
             is_active: true,
             _method: 'POST'
@@ -29,9 +27,7 @@
                 type: 'percentage',
                 value: '',
                 is_inclusive: false,
-                is_inclusive: false,
                 applicable_order_types: ['dining_in', 'takeaway', 'delivery'],
-                applies_on_events: [],
                 description: '',
                 is_active: true,
                 _method: 'POST'
@@ -53,9 +49,7 @@
                 type: charge.type,
                 value: charge.value,
                 is_inclusive: Boolean(charge.is_inclusive),
-                is_inclusive: Boolean(charge.is_inclusive),
                 applicable_order_types: charge.applicable_order_types || [],
-                applies_on_events: charge.applies_on_events || [],
                 description: charge.description || '',
                 is_active: Boolean(charge.is_active),
                 _method: 'PUT'
@@ -120,7 +114,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach ($charges as $charge)
                         <div
-                            class="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-visible">
+                            class="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
                             <div
                                 class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-50 to-transparent rounded-bl-full -mr-10 -mt-10 opacity-50 group-hover:opacity-100 transition-opacity">
                             </div>
@@ -143,41 +137,39 @@
                                                 {{ $charge->type == 'percentage' ? 'نسبة مئوية' : 'مبلغ ثابت' }}</p>
                                         </div>
                                     </div>
-                                    <div class="flex gap-2">
+                                    <div class="flex gap-2 items-center">
+
+                                        <!-- Toggle Status -->
+                                        <form action="{{ route('charges.toggle', $charge->id) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+
+                                            <button type="submit"
+                                                class="p-1 transition-colors
+            {{ $charge->is_active ? 'text-green-600 hover:text-gray-600' : 'text-gray-400 hover:text-green-600' }}"
+                                                title="تغيير الحالة">
+
+                                                @if ($charge->is_active)
+                                                    <i class="fas fa-toggle-on text-lg"></i>
+                                                @else
+                                                    <i class="fas fa-toggle-off text-lg"></i>
+                                                @endif
+
+                                            </button>
+                                        </form>
+
+                                        <!-- Edit -->
                                         <button @click="openEditModal({{ $charge }})"
                                             class="text-gray-400 hover:text-indigo-600 transition-colors p-1">
                                             <i class="fas fa-edit"></i>
                                         </button>
+
+                                        <!-- Delete -->
                                         <button @click="openDeleteModal({{ $charge }})"
                                             class="text-gray-400 hover:text-red-500 transition-colors p-1">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
-                                    </div>
-                                    <div x-data="{ openMenu: false }" class="relative">
 
-                                        <!-- button -->
-                                        <button @click="openMenu = !openMenu" class="text-gray-500 hover:text-gray-700 p-2">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </button>
-
-                                        <!-- dropdown -->
-                                        <div x-show="openMenu" @click.outside="openMenu = false"
-                                            class="absolute left-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-50">
-
-                                            <div class="px-3 py-2 text-xs text-gray-500">
-                                                اختر العمليات
-                                            </div>
-
-                                            @foreach (config('applies_on_events') as $key => $label)
-                                                <label class="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-xs">
-                                                    <input type="checkbox" value="{{ $key }}"
-                                                        x-model="form.applies_on_events">
-
-                                                    <span>{{ $label }}</span>
-                                                </label>
-                                            @endforeach
-
-                                        </div>
                                     </div>
                                 </div>
 
@@ -369,50 +361,6 @@
                                             class="text-indigo-600 focus:ring-indigo-500 rounded">
                                         <span class="text-sm text-gray-700 font-bold">توصيل (Delivery)</span>
                                     </label>
-                                </div>
-                            </div>
-
-                            <!-- Applies On Events (CONFIG DROPDOWN) -->
-                            <div class="mb-5 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                <label class="block text-sm font-bold text-gray-700 mb-3">
-                                    تطبق على العمليات
-                                </label>
-
-                                <div x-data="{ open: false }" class="relative">
-
-                                    <!-- Button -->
-                                    <button type="button" @click="open = !open"
-                                        class="w-full bg-white border rounded-xl px-3 py-2 text-right flex justify-between items-center">
-
-                                        <span class="text-gray-600 text-sm">
-
-                                            <template x-if="form.applies_on_events.length === 0">
-                                                اختر العمليات
-                                            </template>
-
-                                            <template x-if="form.applies_on_events.length > 0">
-                                                <span x-text="form.applies_on_events.join(', ')"></span>
-                                            </template>
-
-                                        </span>
-
-                                        <i class="fas fa-chevron-down text-xs"></i>
-                                    </button>
-
-                                    <!-- Dropdown -->
-                                    <div x-show="open" @click.outside="open = false"
-                                        class="absolute z-50 w-full mt-2 bg-white border rounded-xl shadow-lg p-2 space-y-2">
-
-                                        @foreach (config('applies_on_events') as $key => $label)
-                                            <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
-                                                <input type="checkbox" value="{{ $key }}"
-                                                    x-model="form.applies_on_events">
-
-                                                <span class="text-sm">{{ $label }}</span>
-                                            </label>
-                                        @endforeach
-
-                                    </div>
                                 </div>
                             </div>
 

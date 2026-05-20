@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Models\Attendance;
 use App\Models\BranchLink;
 use App\Models\CashTransfer;
+use App\Models\Charge;
 use App\Models\DeliveryMan;
 use App\Models\DiningArea;
 use App\Models\GoodsReceipt;
@@ -163,5 +164,10 @@ trait BranchTrait
         return $this->belongsToMany(BranchLink::class, 'branch_links', 'from_branch_id', 'to_branch_id')
         ->withPivot(['type', 'is_active', 'business_id'])
         ->withTimestamps();
+    }
+
+    public function charges()
+    {
+        return $this->morphToMany(Charge::class, 'chargeable');
     }
 }

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Charge extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'charges';
 
@@ -35,7 +36,7 @@ class Charge extends Model
     {
         static::addGlobalScope('user_id', function ($builder) {
             if (auth()->check()) {
-                 $builder->where('user_id', auth()->id());
+                $builder->where('user_id', auth()->id());
             }
         });
 
@@ -49,5 +50,18 @@ class Charge extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function calculate(string $subtotal)
+    {
+        if (!$this->is_active) {
+            return 0;
+        }
+
+        if ($this->type === 'percentage') {
+            return $subtotal * ($this->value / 100);
+        }
+
+        return $this->value;
     }
 }

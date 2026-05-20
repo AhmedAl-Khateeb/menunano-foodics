@@ -469,6 +469,26 @@
                 </div>
             @endif
 
+            @if (!empty($order->charges_breakdown))
+                @php
+                    $charges = is_string($order->charges_breakdown)
+                        ? json_decode($order->charges_breakdown, true)
+                        : $order->charges_breakdown;
+                @endphp
+
+                @foreach ($charges as $charge)
+                    <div class="total-row">
+                        <span>
+                            {{ $charge['name'] }}
+                            ({{ $charge['type'] === 'percentage' ? $charge['value'] . '%' : 'ثابت' }})
+                        </span>
+                        <strong>
+                            {{ number_format($charge['amount'], 2) }} ج.م
+                        </strong>
+                    </div>
+                @endforeach
+            @endif
+
             <div class="total-row">
                 <span>المدفوع</span>
                 <strong>{{ number_format($paid, 2) }} ج.م</strong>

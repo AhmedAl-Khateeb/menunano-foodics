@@ -866,6 +866,8 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         ]);
 
     Route::redirect('settings/taxes', 'settings/charges');
+    Route::patch('/settings/charges/{charge}/toggle', [ChargeController::class, 'toggle'])
+    ->name('charges.toggle');
 
     /*
     |--------------------------------------------------------------------------

@@ -330,11 +330,11 @@
                             <i class="fas fa-file-invoice-dollar text-2xl text-yellow-500"></i> الفاتورة
                         </h5>
                         <div class="flex gap-2 items-center">
-                            <button wire:click="openEndShiftModal"
+                            {{-- <button wire:click="openEndShiftModal"
                                 class="bg-red-600 hover:bg-red-700 text-white transition-colors text-xs font-bold flex items-center gap-1 px-2 py-1.5 rounded-lg shadow-sm border border-red-500"
                                 title="إنهاء تقفيل الشفت">
                                 <i class="fas fa-power-off"></i> إنهاء الشفت
-                            </button>
+                            </button> --}}
                             <button wire:click="loadOpenOrders"
                                 class="text-white hover:text-blue-200 transition-colors text-xs font-bold flex items-center gap-1 bg-white/10 px-2 py-1.5 rounded-lg border border-white/20 shadow-sm"
                                 title="الطلبات المعلقة للطاولات والصالة">
@@ -1435,7 +1435,7 @@
 
                     <div
                         class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 text-2xl">
-                        {{-- <i class="fas fa-door-closed"></i> --}}
+                        <i class="fas fa-door-closed"></i>
                     </div>
 
                     <h3 class="text-2xl font-black text-gray-900 mb-1">
@@ -1945,8 +1945,6 @@
     <script>
         window.addEventListener('print-order', function(event) {
             window.location.href = event.detail.url;
-
-            //  const win = window.open(url, '_self');
         });
     </script>
 </div>

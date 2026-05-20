@@ -26,6 +26,11 @@ class Product extends Model
         'price' => 'decimal:2',
     ];
 
+    public function charges()
+    {
+        return $this->morphToMany(Charge::class, 'chargeable');
+    }
+
     public function inventory()
     {
         return $this->morphOne(Inventory::class, 'inventoriable');

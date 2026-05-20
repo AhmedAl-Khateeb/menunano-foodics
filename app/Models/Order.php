@@ -35,15 +35,18 @@ class Order extends Model
         'discount_type',
         'subtotal',
         'discount_amount',
+        'charges_breakdown',
+        'charges_total',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'returned_at' => 'datetime',
+         'charges_breakdown' => 'array',
     ];
 
     //    public function scopeOwnedBy(Builder $query, $userId): Builder
-    public function scopeOwnedBy(Builder $query,int $userId): Builder
+    public function scopeOwnedBy(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);
     }
@@ -62,7 +65,6 @@ class Order extends Model
     {
         return $query->whereIn('type', ['table', 'free_seating']);
     }
-
 
     public function scopeFilter(Builder $builder)
     {

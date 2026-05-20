@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Branch;
+use App\Models\Charge;
 use App\Models\Customer;
 use App\Models\DeliveryMan;
 use App\Models\Order;
@@ -1271,29 +1272,65 @@ class PosPage extends Component
         }
 
         // ======================
-        // 💰 الحساب
+        // 1️⃣ Subtotal
         // ======================
-        $subtotal = collect($this->cart)->sum(function ($item) {
-            return $item['price'] * $item['quantity'];
-        });
+        $subtotal = collect($this->cart)->sum(fn ($item) => $item['price'] * $item['quantity']
+        );
 
+        // ======================
+        // 2️⃣ Discount
+        // ======================
         $discountValue = (float) ($this->discount ?? 0);
         $discountType = $this->discountType ?? 'fixed';
 
-        // حساب الخصم
-        if ($discountType === 'percent') {
-            $discountAmount = ($subtotal * $discountValue) / 100;
-        } else {
-            $discountAmount = $discountValue;
-        }
+        $discountAmount = $discountType === 'percent'
+            ? ($subtotal * $discountValue) / 100
+            : $discountValue;
 
-        // منع الخصم أكبر من الإجمالي
         $discountAmount = min($discountAmount, $subtotal);
 
-        $finalTotal = $subtotal - $discountAmount;
+        $netBeforeCharges = $subtotal - $discountAmount;
 
         // ======================
-        // 💳 الدفع
+        // 3️⃣ Charges (Taxes / Fees)
+        // ======================
+        $charges = Charge::where('user_id', auth()->id())
+            ->where('is_active', 1)
+            ->get();
+
+        $chargesTotal = 0;
+        $chargesBreakdown = [];
+
+        foreach ($charges as $charge) {
+            // حساب الضريبة
+            if ($charge->type === 'percentage') {
+                $amount = $netBeforeCharges * ($charge->value / 100);
+            } else {
+                $amount = $charge->value;
+            }
+
+            $chargesTotal += $amount;
+
+            // مهم للطباعة + DB
+            $chargesBreakdown[] = [
+                'id' => $charge->id,
+                'name' => $charge->name,
+                'type' => $charge->type,
+                'value' => $charge->value,
+                'amount' => round($amount, 2),
+            ];
+        }
+
+        // ======================
+        // 4️⃣ Final Total
+        // ======================
+        $finalTotal = $netBeforeCharges + $chargesTotal;
+
+        // إضافة التوصيل لو موجود
+        $finalTotal += (float) $this->deliveryFee;
+
+        // ======================
+        // 5️⃣ Payment
         // ======================
         $isCash = (int) $this->paymentMethod === 1;
 
@@ -1322,14 +1359,16 @@ class PosPage extends Component
 
         DB::transaction(function () use (
             $activeShift,
-            $isDraft,
-            &$savedOrderId,
-            $paidAmount,
             $subtotal,
+            $discountValue,
             $discountAmount,
             $discountType,
-            $discountValue,
+            $chargesTotal,
+            $chargesBreakdown,
             $finalTotal,
+            $paidAmount,
+            $isDraft,
+            &$savedOrderId,
         ) {
             $userId = auth()->id();
 
@@ -1339,7 +1378,6 @@ class PosPage extends Component
 
             $finalCustomerId = $this->selectedCustomerId;
 
-            // إنشاء عميل لو مش موجود
             if (!$finalCustomerId && $this->customerPhone && $this->customerName) {
                 $customer = Customer::create([
                     'user_id' => $storeOwnerId,
@@ -1362,42 +1400,38 @@ class PosPage extends Component
 
             $data = [
                 'shift_id' => $activeShift->id,
+                'user_id' => $storeOwnerId,
                 'customer_id' => $finalCustomerId,
 
-                // 💰 الأسعار
                 'subtotal' => $subtotal,
-                'total_price' => $finalTotal,
 
-                // 💰 الخصم
                 'discount' => $discountValue,
-                'discount_amount' => $discountAmount,
                 'discount_type' => $discountType,
+                'discount_amount' => $discountAmount,
+
+                'charges_total' => $chargesTotal,
+                'charges_breakdown' => json_encode($chargesBreakdown),
+
+                'total_price' => $finalTotal,
 
                 'status' => $status,
                 'type' => $this->orderType,
                 'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
 
-                // 💳 الدفع
                 'payment_method' => (int) $this->paymentMethod,
                 'paid_amount' => $paidAmount,
                 'change_amount' => $this->changeAmount,
 
-                // 🚚
                 'delivery_fee' => $this->deliveryFee,
                 'delivery_man_id' => $this->selectedDeliveryManId,
 
-                // 🍳
                 'kitchen_note' => $this->kitchenNote,
+                'source' => 'pos',
             ];
 
-            if ($order) {
-                $order->update($data);
-            } else {
-                $data['user_id'] = $storeOwnerId;
-                $data['source'] = 'pos';
-
-                $order = Order::create($data);
-            }
+            $order = $order
+                ? tap($order)->update($data)
+                : Order::create($data);
 
             foreach ($this->cart as $item) {
                 if (!isset($item['id'])) {
@@ -1418,12 +1452,8 @@ class PosPage extends Component
             $this->lastOrderId = $order->id;
         });
 
-        // ======================
-        // 🖨️ الطباعة
-        // ======================
         if ($savedOrderId && !$isDraft) {
             $this->dispatch('print-order', url: route('pos.orders.print-two', $savedOrderId));
-
             $this->clearCart();
 
             return;
