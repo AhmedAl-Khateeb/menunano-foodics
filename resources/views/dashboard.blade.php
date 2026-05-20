@@ -15,7 +15,6 @@
 @endphp
 @section('main-content')
     <div class="container-fluid dashboard-page">
-
         {{-- الجزء العلوي --}}
         <div class="row mb-4">
             <div class="col-12">
@@ -61,13 +60,104 @@
                 </div>
             </div>
         </div>
-        {{-- 
-        @if (session('subscription_expired') || $subscriptionExpired)
-            <div class="expired-message-bar">
-                <i class="fas fa-exclamation-triangle ml-2"></i>
-                انتهت الباقة أو هذه الميزة غير متاحة حاليًا، يمكنك استعراض الواجهة فقط حتى يتم التجديد.
+
+
+        {{-- Store QR Section --}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm store-qr-card">
+                    <div class="card-body">
+
+                        <div class="row align-items-center">
+
+                            {{-- Right Side --}}
+                            <div class="col-lg-8 mb-4 mb-lg-0">
+
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="store-icon">
+                                        <i class="fas fa-store"></i>
+                                    </div>
+
+                                    <div class="mr-3">
+                                        <h3 class="mb-1 font-weight-bold">
+                                            متجرك الإلكتروني
+                                        </h3>
+
+                                        <p class="text-muted mb-0">
+                                            شارك رابط متجرك مع العملاء بسهولة
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {{-- Store URL --}}
+                                <div class="store-link-box">
+
+                                    <input type="text" id="storeUrl" class="form-control" value="{{ $storeUrl }}"
+                                        readonly>
+
+                                    <div class="store-link-actions">
+
+                                        <button class="btn btn-copy" onclick="copyToClipboard()">
+
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+
+                                        <a href="{{ $storeUrl }}" target="_blank" class="btn btn-open">
+
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+
+                                    </div>
+
+                                </div>
+
+                                {{-- Buttons --}}
+                                <div class="mt-4 d-flex flex-wrap gap-2">
+
+                                    <button class="btn btn-success" onclick="downloadQR()">
+
+                                        <i class="fas fa-download ml-1"></i>
+                                        تحميل QR
+                                    </button>
+
+                                    <button class="btn btn-whatsapp" onclick="shareWhatsApp()">
+
+                                        <i class="fab fa-whatsapp ml-1"></i>
+                                        واتساب
+                                    </button>
+
+                                    <button class="btn btn-telegram" onclick="shareTelegram()">
+
+                                        <i class="fab fa-telegram ml-1"></i>
+                                        تيليجرام
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            {{-- QR Side --}}
+                            <div class="col-lg-4 text-center">
+
+                                <div class="qr-wrapper">
+
+                                    <div id="qrcode"></div>
+
+                                </div>
+
+                                <small class="text-muted d-block mt-3">
+                                    امسح الكود للوصول السريع للمتجر
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
             </div>
-        @endif --}}
+        </div>
+
         {{-- الكروت --}}
         <div class="row">
             @foreach ($orderCards as $card)
@@ -372,6 +462,109 @@
             height: 100% !important;
         }
 
+        .store-qr-card {
+            border-radius: 22px;
+            overflow: hidden;
+            background:
+                linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
+        }
+
+        .store-icon {
+            width: 65px;
+            height: 65px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #7E6AA8, #5f4b8b);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .store-link-box {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            overflow: hidden;
+            padding: 6px;
+        }
+
+        .store-link-box input {
+            border: 0 !important;
+            box-shadow: none !important;
+            background: transparent;
+            font-size: 15px;
+            direction: ltr;
+        }
+
+        .store-link-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .store-link-actions .btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            border: 0;
+        }
+
+        .btn-copy {
+            background: #f3f4f6;
+            color: #333;
+        }
+
+        .btn-open {
+            background: #7E6AA8;
+            color: white;
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .btn-telegram {
+            background: #229ED9;
+            color: white;
+        }
+
+        .qr-wrapper {
+            background: white;
+            border-radius: 22px;
+            padding: 20px;
+            display: inline-block;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+            border: 1px solid #eee;
+        }
+
+        #qrcode canvas {
+            border-radius: 10px;
+        }
+
+        .gap-2 {
+            gap: 10px;
+        }
+
+        @media(max-width:768px) {
+
+            .store-link-box {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .store-link-actions {
+                width: 100%;
+            }
+
+            .store-link-actions .btn {
+                flex: 1;
+            }
+
+        }
+
         @media (max-width: 992px) {
             .dashboard-welcome {
                 font-size: 30px;
@@ -483,54 +676,132 @@
 
 
     <script>
-      const salesCtx = document.getElementById('salesChart');
+        const salesCtx = document.getElementById('salesChart');
 
-if (salesCtx) {
+        if (salesCtx) {
 
-    new Chart(salesCtx, {
-        type: 'line', // 👈 هنا التغيير الأساسي
-        data: {
-            labels: @json($salesLabels),
-            datasets: [{
-                label: 'المبيعات',
-                data: @json($salesData),
+            new Chart(salesCtx, {
+                type: 'line', // 👈 هنا التغيير الأساسي
+                data: {
+                    labels: @json($salesLabels),
+                    datasets: [{
+                        label: 'المبيعات',
+                        data: @json($salesData),
 
-                fill: true, // 👈 يخلي تحت الخط متلوّن زي الكروت
-                tension: 0.4, // 👈 يخلي الخط ناعم
-                borderColor: '#7E6AA8',
-                backgroundColor: 'rgba(126, 106, 168, 0.20)',
-                pointBackgroundColor: '#7E6AA8',
-                pointRadius: 4,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    }
+                        fill: true, // 👈 يخلي تحت الخط متلوّن زي الكروت
+                        tension: 0.4, // 👈 يخلي الخط ناعم
+                        borderColor: '#7E6AA8',
+                        backgroundColor: 'rgba(126, 106, 168, 0.20)',
+                        pointBackgroundColor: '#7E6AA8',
+                        pointRadius: 4,
+                        borderWidth: 2
+                    }]
                 },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: '#eee'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#eee'
+                            }
+                        }
                     }
                 }
-            }
-        }
-    });
+            });
 
-}
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const qrContainer = document.getElementById('qrcode');
+
+            if (qrContainer) {
+
+                new QRCode(qrContainer, {
+                    text: "{{ $storeUrl }}",
+                    width: 180,
+                    height: 180,
+                    colorDark: "#111827",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+            }
+
+        });
+
+        function copyToClipboard() {
+
+            const input = document.getElementById('storeUrl');
+
+            input.select();
+            input.setSelectionRange(0, 99999);
+
+            navigator.clipboard.writeText(input.value);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'تم النسخ',
+                text: 'تم نسخ رابط المتجر',
+                timer: 1800,
+                showConfirmButton: false
+            });
+
+        }
+
+        function downloadQR() {
+
+            const qrCanvas = document.querySelector('#qrcode canvas');
+
+            if (!qrCanvas) return;
+
+            const link = document.createElement('a');
+
+            link.download = 'store-qr.png';
+
+            link.href = qrCanvas.toDataURL();
+
+            link.click();
+
+        }
+
+        function shareWhatsApp() {
+
+            const text = encodeURIComponent(
+                `زر متجري الآن 👋\n{{ $storeUrl }}`
+            );
+
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+
+        }
+
+        function shareTelegram() {
+
+            const text = encodeURIComponent('زر متجري الإلكتروني');
+
+            window.open(
+                `https://t.me/share/url?url={{ urlencode($storeUrl) }}&text=${text}`,
+                '_blank'
+            );
+
+        }
     </script>
 
 

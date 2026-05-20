@@ -186,7 +186,6 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         ]);
     })->middleware('package.permission:dashboard.access')->name('orders.count');
 
-
     // طرق الدفع
     Route::resource('payment-methods', PaymentMethodController::class)
     ->middleware([
@@ -198,8 +197,6 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
 
     Route::patch('payment-methods/{id}/toggle', [PaymentMethodController::class, 'toggle'])
         ->name('payment-methods.toggle');
-
-
 
     /*
     |--------------------------------------------------------------------------
@@ -269,8 +266,6 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
         ->except(['create', 'edit'])
         ->middleware('package.permission:sliders.access');
 
-
-        // 
     /*
     |--------------------------------------------------------------------------
     | Orders

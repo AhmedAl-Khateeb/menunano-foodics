@@ -168,6 +168,13 @@ class ShowDashboardService
             ->orderByDesc('total')
             ->get();
 
+        // QR Code
+        $qrBaseUrl = env('QR_BASE_URL', config('app.url'));
+
+        $storeName = auth()->user()->store_name;
+
+        $storeUrl = $qrBaseUrl.'/'.$storeName;
+
         return view('dashboard', compact(
             'orderCards',
             'filter',
@@ -175,7 +182,8 @@ class ShowDashboardService
             'salesData',
             'topBranches',
             'topProducts',
-            'topPayments'
+            'topPayments',
+            'storeUrl',
         ));
     }
 }
