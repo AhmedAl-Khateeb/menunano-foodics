@@ -15,7 +15,7 @@ class UpdateAttendanceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'exists:users,id'],
+            'staff_id' => ['required', 'exists:users,id'],
             'shift_id' => ['nullable', 'exists:shifts,id'],
             'attendance_date' => ['required', 'date'],
             'check_in' => ['nullable', 'date'],
@@ -28,8 +28,8 @@ class UpdateAttendanceRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_id.required' => 'الموظف مطلوب',
-            'user_id.exists' => 'الموظف المحدد غير موجود',
+            'staff_id.required' => 'الموظف مطلوب',
+            'staff_id.exists' => 'الموظف المحدد غير موجود',
             'shift_id.exists' => 'الشيفت المحدد غير موجود',
             'attendance_date.required' => 'تاريخ الحضور مطلوب',
             'attendance_date.date' => 'تاريخ الحضور غير صحيح',

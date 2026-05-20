@@ -30,7 +30,7 @@
                             <div class="d-flex flex-wrap align-items-center gap-2">
                                 <form action="{{ route('attendances.index') }}" method="GET"
                                     class="d-flex flex-wrap gap-2">
-                                    <select name="user_id" class="form-control form-control-sm" style="width: 180px;">
+                                    <select name="staff_id" class="form-control form-control-sm" style="width: 180px;">
                                         <option value="">كل الموظفين</option>
                                         @foreach ($users as $user)
                                             <option value="{{ $user->id }}"
@@ -103,7 +103,7 @@
                                         @forelse ($attendances as $attendance)
                                             <tr>
                                                 <td>{{ $attendances->firstItem() + $loop->index }}</td>
-                                                <td>{{ $attendance->user->name ?? '-' }}</td>
+                                                <td>{{ $attendance->staff->Name ?? '-' }}</td>
                                                 <td>{{ $attendance->created_at?->format('Y-m-d') }}</td>
                                                 <td>{{ $attendance->check_in ? $attendance->check_in->format('Y-m-d h:i A') : '-' }}
                                                 </td>
@@ -125,7 +125,7 @@
                                                 </td>
                                                 <td>
                                                     @if ($attendance->shift)
-                                                        {{ $attendance->shift->user->name ?? '' }} <br>
+                                                        {{ $attendance->shift->staff->name ?? '' }} <br>
                                                         <small>
                                                             {{ $attendance->shift->start_time?->format('Y-m-d h:i A') }}
                                                         </small>

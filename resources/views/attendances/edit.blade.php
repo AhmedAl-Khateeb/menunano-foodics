@@ -47,7 +47,7 @@
 
                                 <div class="form-group">
                                     <label for="user_id">الموظف</label>
-                                    <select name="user_id" id="user_id" class="form-control" required>
+                                    <select name="staff_id" id="user_id" class="form-control" required>
                                         <option value="">اختر الموظف</option>
                                         @foreach ($users as $user)
                                             <option value="{{ $user->id }}"

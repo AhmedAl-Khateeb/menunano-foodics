@@ -6,6 +6,9 @@ use App\Models\salary_m;
 use App\Traits\UploadImg;
 use Illuminate\Http\Request;
 
+
+
+
 class Salary_mcontroller extends Controller
 {
     use UploadImg;   //  use Traits
@@ -18,6 +21,8 @@ class Salary_mcontroller extends Controller
 
         ->where('staff_id', $staff_id)->orderByDesc('created_at')
         ->get();
+
+        //dd ($salary);
 
         return view('dashboard.staff.salary.index', compact('salary'));
     }
@@ -42,7 +47,9 @@ class Salary_mcontroller extends Controller
         salary_m::create([
             'staff_id' => $staff_id,
 
-            'penalties' => $penalties, 'Salary_advance' => $Salary_advance,
+            'penalties' => $penalties,
+
+            'Salary_advance' => $Salary_advance,
 
             'Rewards' => $Rewards,
 
@@ -99,7 +106,12 @@ class Salary_mcontroller extends Controller
         $user_id = auth()->id();
 
         $salary_m->update([
-            'Name' => $Name, 'BirthDay' => $BirthDay, 'Academic_qualification' => $Academic_qualification, 'Start_date' => $Start_date, 'End_date' => $End_date, 'attach_File' => $FILENAME, 'Salary' => $Salary, 'user_id' => $user_id,
+            'penalties' => $penalties,
+            'Salary_advance' => $Salary_advance,
+            'Rewards' => $Rewards,
+            'staff_id' => $staff_id,
+            'Salary' => $Salary,
+            'user_id' => $user_id,
         ]);
 
         return redirect()->route('salary_m.index')->with('success', 'update  sent  succefuly');

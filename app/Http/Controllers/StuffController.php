@@ -28,9 +28,13 @@ class stuffcontroller extends Controller
     {
         $Name = $request->Name;
 
-        $BirthDay = $request->BirthDay;
 
-        $Academic_qualification = $request->Academic_qualification;
+        $mobile=$request->mobile;
+
+
+        $Number_of_days = $request->Number_of_days;
+
+        $Number_of_hours = $request->Number_of_hours;
 
         $Start_date = $request->Start_date;
 
@@ -44,8 +48,9 @@ class stuffcontroller extends Controller
 
         staff::create([
             'Name' => $Name,
-            'BirthDay' => $BirthDay,
-            'Academic_qualification' => $Academic_qualification,
+            'Number_of_days' => $Number_of_days,
+            'Number_of_hours' => $Number_of_hours,
+            'mobile' => $mobile,
             'Start_date' => $Start_date,
             'End_date' => $End_date,
             'attach_File' => $FILENAME,
@@ -75,9 +80,11 @@ class stuffcontroller extends Controller
     {
         $Name = $request->Name;
 
-        $BirthDay = $request->BirthDay;
+        $mobile=$request->mobile;
 
-        $Academic_qualification = $request->Academic_qualification;
+        $Number_of_days = $request->Number_of_days;
+
+        $Number_of_hours = $request->Number_of_hours;
 
         $Start_date = $request->Start_date;
 
@@ -90,7 +97,15 @@ class stuffcontroller extends Controller
         @$FILENAME = $this->saveImage($request->upload, 'Attachfile/staff');
 
         $staff->update([
-            'Name' => $Name, 'BirthDay' => $BirthDay, 'Academic_qualification' => $Academic_qualification, 'Start_date' => $Start_date, 'End_date' => $End_date, 'attach_File' => $FILENAME, 'Salary' => $Salary, 'user_id' => $user_id,
+            'Name' => $Name, 
+            'Number_of_days' => $Number_of_days,
+            'Number_of_hours' => $Number_of_hours,
+            'mobile' => $mobile,
+            'Start_date' => $Start_date, 
+            'End_date' => $End_date, 
+            'attach_File' => $FILENAME, 
+            'Salary' => $Salary, 
+            'user_id' => $user_id,
         ]);
 
         return redirect()->route('staff.index')->with('success', 'update  sent  succefuly');
