@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('charges', function (Blueprint $table) {
-            $table->enum('applies_to', ['all', 'pos', 'online'])->default('all')->after('name');
+        Schema::table('orders', function (Blueprint $table) {
+            $table->decimal('discount_amount', 10, 2)->default(0);
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('charges', function (Blueprint $table) {
-            $table->dropColumn('applies_to');
+        Schema::table('orders', function (Blueprint $table) {
+            //
         });
     }
 };

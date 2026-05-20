@@ -30,7 +30,7 @@
                                 <td>{{ $methods->firstItem() + $i }}</td>
                                 <td>{{ $m->name }}</td>
                                 <td>{{ $m->description }}</td>
-                                <td>{{ $m->phone }}</td>
+                               <td>{{ $m->id != 1 ? $m->phone : '' }}</td>
                                 <td>
                                     <form action="{{ route('payment-methods.toggle', $m->id) }}" method="POST"
                                         class="d-inline">
@@ -51,7 +51,7 @@
                                             </button>
                                         @endif
                                         @else
-                                            <span class="badge bg-secondary">افتراضية</span>
+                                            {{-- <span class="badge bg-secondary">افتراضية</span> --}}
                                         @endif
                                     </form>
                                 </td>
@@ -73,7 +73,7 @@
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="badge bg-secondary">افتراضية</span>
+                                            {{-- <span class="badge bg-secondary">افتراضية</span> --}}
                                         @endif
 
                                     </div>

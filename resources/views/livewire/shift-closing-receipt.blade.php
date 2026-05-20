@@ -7,7 +7,7 @@
 
     <style>
         @page {
-            size: 80mm auto;
+            size: 80mm;
             margin: 0;
         }
 
@@ -20,12 +20,22 @@
             direction: rtl;
         }
 
+        .print-container {
+            display: flex;
+            flex-direction: column;
+        }
+
         .receipt {
             width: 72mm;
             padding: 8px 6px;
             margin: 0 auto;
             font-size: 11px;
             line-height: 1.5;
+
+            page-break-inside: avoid;
+            break-inside: avoid;
+            page-break-after: avoid;
+            display: block;
         }
 
         .center {
@@ -103,10 +113,6 @@
         }
 
         @media print {
-            .no-print {
-                display: none !important;
-            }
-
             body {
                 background: #fff;
                 padding: 0;
@@ -115,6 +121,33 @@
             .receipt {
                 box-shadow: none;
             }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        @media print {
+
+            html,
+            body {
+                width: 80mm;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .print-container {
+                width: 80mm;
+            }
+        }
+
+        .receipt {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+
+        .print-container {
+            display: block !important;
         }
     </style>
 </head>
@@ -122,200 +155,155 @@
 <body>
 
     @php
-        $ordersCount = $ordersCount ?? 0;
-        $ordersTotal = $ordersTotal ?? 0;
-
-        $deposit = $deposit ?? ($shift->starting_cash ?? 0);
-        $availableCash = $availableCash ?? 0;
-
-        $cashSales = $cashSales ?? 0;
-        $visaSales = $visaSales ?? 0;
-
-        $cashRefund = $cashRefund ?? 0;
-        $visaRefund = $visaRefund ?? 0;
-
-        $expenses = $expenses ?? 0;
-        $transfers = $transfers ?? 0;
-
-        $expectedCash = $expectedCash ?? 0;
-        $endingCash = $endingCash ?? 0;
-        $difference = $difference ?? 0;
-
         $shiftNotes = $shift->notes ?? ($shift->close_note ?? '');
     @endphp
 
-    <div class="receipt">
+    <div class="print-container">
 
-        <div class="center">
-            <div class="title">تقرير إغلاق وردية كاشير</div>
-            <div class="subtitle">{{ config('app.name') }}</div>
-        </div>
+        <!-- ===================== -->
+        <!-- الفاتورة الأولى -->
+        <!-- ===================== -->
+        <div class="receipt">
 
-        <div class="line"></div>
-
-        <div class="row">
-            <span>رقم الشفت</span>
-            <strong>{{ $shift->id }}</strong>
-        </div>
-
-        <div class="row">
-            <span>الكاشير</span>
-            <strong>{{ $cashier->name ?? '-' }}</strong>
-        </div>
-
-        <div class="row">
-            <span>الفرع</span>
-            <strong>{{ $branch->name ?? '-' }}</strong>
-        </div>
-
-        <div class="row">
-            <span>بداية الشفت</span>
-            <strong class="ltr">{{ optional($shift->start_time)->format('Y-m-d H:i') }}</strong>
-        </div>
-
-        <div class="row">
-            <span>نهاية الشفت</span>
-            <strong class="ltr">{{ optional($shift->end_time)->format('Y-m-d H:i') }}</strong>
-        </div>
-
-        <div class="section-title">ملخص الطلبات</div>
-
-        <div class="row">
-            <span>عدد الطلبات</span>
-            <strong>{{ $ordersCount }}</strong>
-        </div>
-
-        <div class="row">
-            <span>إجمالي الطلبات</span>
-            <strong>{{ number_format($ordersTotal, 2) }}</strong>
-        </div>
-
-        <div class="section-title">تفصيل طرق الدفع</div>
-
-        @foreach ($paymentsBreakdown as $item)
-            <div class="row">
-                <span>{{ $item['name'] }}</span>
-                <strong>{{ number_format($item['total'], 2) }} ج.م</strong>
+            <div class="center">
+                <div class="title">تقرير إغلاق وردية كاشير</div>
+                <div class="subtitle">{{ config('app.name') }}</div>
             </div>
-        @endforeach
 
-        <div class="row">
-            <span>المبيعات النقدية</span>
-            <strong>{{ number_format($cashSales, 2) }}</strong>
-        </div>
-
-        <div class="row">
-            <span>مبيعات الفيزا</span>
-            <strong>{{ number_format($visaSales, 2) }}</strong>
-        </div>
-
-        <div class="row">
-            <span>مرتجع نقدي</span>
-            <strong>{{ number_format($cashRefund, 2) }}</strong>
-        </div>
-
-        <div class="row">
-            <span>مرتجع فيزا</span>
-            <strong>{{ number_format($visaRefund, 2) }}</strong>
-        </div>
-
-        <div class="section-title">ملخص الدرج</div>
-
-        <div class="row">
-            <span>الإيداع</span>
-            <strong>{{ number_format($deposit, 2) }}</strong>
-        </div>
-
-        <div class="row">
-            <span>مصروفات</span>
-            <strong>{{ number_format($expenses, 2) }}</strong>
-        </div>
-
-        <div class="row">
-            <span>تسليم للمدير</span>
-            <strong>{{ number_format($transfers, 2) }}</strong>
-        </div>
-
-        <div class="row">
-            <span>المتاح</span>
-            <strong>{{ number_format($availableCash, 2) }}</strong>
-        </div>
-
-        <div class="line"></div>
-
-        <div class="row total-row">
-            <span>المتوقع في الدرج</span>
-            <strong>{{ number_format($expectedCash, 2) }}</strong>
-        </div>
-
-        <div class="row total-row">
-            <span>الفعلي في الدرج</span>
-            <strong>{{ number_format($endingCash, 2) }}</strong>
-        </div>
-
-        <div class="row total-row">
-            <span>الفرق</span>
-            <strong>
-                @if ($difference > 0)
-                    زيادة {{ number_format($difference, 2) }}
-                @elseif ($difference < 0)
-                    عجز {{ number_format(abs($difference), 2) }}
-                @else
-                    0.00
-                @endif
-            </strong>
-        </div>
-
-        @if (!empty($shiftNotes))
             <div class="line"></div>
 
-            <div class="note">
-                <strong>ملاحظات:</strong>
-                <br>
-                {{ $shiftNotes }}
+            <div class="row">
+                <span>رقم الشفت</span>
+                <strong>{{ $shift->id }}</strong>
             </div>
-        @endif
 
-        <div class="line"></div>
+            <div class="row">
+                <span>الكاشير</span>
+                <strong>{{ $cashier->name ?? '-' }}</strong>
+            </div>
 
-        <div class="center">
-            شكراً لك
-            <br>
-            {{ now()->format('Y-m-d H:i') }}
+            <div class="row">
+                <span>الفرع</span>
+                <strong>{{ $branch->name ?? '-' }}</strong>
+            </div>
+
+            <div class="row">
+                <span>بداية الشفت</span>
+                <strong class="ltr">{{ optional($shift->start_time)->format('Y-m-d H:i') }}</strong>
+            </div>
+
+            <div class="row">
+                <span>نهاية الشفت</span>
+                <strong class="ltr">{{ optional($shift->end_time)->format('Y-m-d H:i') }}</strong>
+            </div>
+
+            <div class="line"></div>
+
+            <div class="center">
+                <strong>ملخص الشفت</strong>
+            </div>
+
+            <div class="row">
+                <span>عدد الطلبات</span>
+                <strong>{{ $ordersCount }}</strong>
+            </div>
+
+            <div class="row">
+                <span>إجمالي المبيعات</span>
+                <strong>{{ number_format($ordersTotal, 2) }}</strong>
+            </div>
+
+        </div>
+
+        <!-- ===================== -->
+        <!-- الفاتورة الثانية -->
+        <!-- ===================== -->
+        <div class="receipt">
+
+            <div class="center">
+                <div class="title">تفاصيل الدفعات والدرج</div>
+            </div>
+
+            <div class="line"></div>
+
+            @foreach ($paymentsBreakdown as $item)
+                <div class="row">
+                    <span>{{ $item['name'] }}</span>
+                    <strong>{{ number_format($item['total'], 2) }}</strong>
+                </div>
+            @endforeach
+
+            <div class="line"></div>
+
+            <div class="row">
+                <span>المبيعات النقدية</span>
+                <strong>{{ number_format($cashSales, 2) }}</strong>
+            </div>
+
+            <div class="row">
+                <span>مبيعات الفيزا</span>
+                <strong>{{ number_format($visaSales, 2) }}</strong>
+            </div>
+
+            <div class="row">
+                <span>مرتجع نقدي</span>
+                <strong>{{ number_format($cashRefund, 2) }}</strong>
+            </div>
+
+            <div class="row">
+                <span>مرتجع فيزا</span>
+                <strong>{{ number_format($visaRefund, 2) }}</strong>
+            </div>
+
+            <div class="line"></div>
+
+            <div class="row total-row">
+                <span>المتوقع</span>
+                <strong>{{ number_format($expectedCash, 2) }}</strong>
+            </div>
+
+            <div class="row total-row">
+                <span>الفعلي</span>
+                <strong>{{ number_format($endingCash, 2) }}</strong>
+            </div>
+
+            <div class="row total-row">
+                <span>الفرق</span>
+                <strong>
+                    @if ($difference > 0)
+                        زيادة {{ number_format($difference, 2) }}
+                    @elseif ($difference < 0)
+                        عجز {{ number_format(abs($difference), 2) }}
+                    @else
+                        0.00
+                    @endif
+                </strong>
+            </div>
+
+            @if (!empty($shiftNotes))
+                <div class="line"></div>
+                <div class="note">
+                    <strong>ملاحظات:</strong><br>
+                    {{ $shiftNotes }}
+                </div>
+            @endif
+
+            <div class="line"></div>
+
+            <div class="center">
+                شكراً لك
+                <br>
+                {{ now()->format('Y-m-d H:i') }}
+            </div>
+
         </div>
 
     </div>
 
-    <form id="logout-form" method="POST" action="{{ route('logout') }}">
-        @csrf
-    </form>
-
     <script>
-        let logoutDone = false;
-
-        function logoutAfterPrint() {
-            if (logoutDone) return;
-
-            logoutDone = true;
-
-            document.getElementById('logout-form').submit();
-        }
-
         window.addEventListener('load', function() {
-            setTimeout(function() {
-                window.print();
-            }, 500);
+            setTimeout(() => window.print(), 500);
         });
-
-        window.addEventListener('afterprint', function() {
-            setTimeout(function() {
-                logoutAfterPrint();
-            }, 500);
-        });
-
-        setTimeout(function() {
-            logoutAfterPrint();
-        }, 8000);
     </script>
 
 </body>

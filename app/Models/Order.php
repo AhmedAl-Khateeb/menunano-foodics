@@ -31,6 +31,10 @@ class Order extends Model
         'branch_id',
         'kitchen_note',
         'returned_at',
+        'discount',
+        'discount_type',
+        'subtotal',
+        'discount_amount',
     ];
 
     protected $casts = [

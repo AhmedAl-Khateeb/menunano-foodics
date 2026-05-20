@@ -312,51 +312,100 @@
         <div id="logoutShiftModal" class="logout-shift-overlay" style="display: none;" dir="rtl">
             <div class="logout-shift-card">
 
+                <!-- ICON -->
                 <div class="logout-icon">
                     <i class="fas fa-door-closed"></i>
                 </div>
 
                 <h3 class="logout-title">إنهاء الشفت وتسجيل الخروج</h3>
 
+                <!-- NO SHIFT -->
                 <div id="logoutNoShiftBox" class="alert alert-info text-right" style="display: none;">
                     لا يوجد شفت مفتوح حاليًا، سيتم تسجيل الخروج مباشرة.
                 </div>
 
+                <!-- SHIFT DETAILS -->
                 <div id="logoutShiftDetails" style="display: none;">
+
                     <p class="logout-subtitle">
                         راجع المبلغ المتوقع في الدرج، ثم أكد رصيد نهاية الشفت.
                     </p>
 
-                    <div class="logout-summary">
-                        <div class="logout-row">
-                            <span>رصيد بداية الشفت</span>
-                            <strong><span id="logoutStartingCash">0.00</span> ج.م</strong>
+                    <!-- SUMMARY CARD -->
+                    <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-4 text-right space-y-2">
+
+                        <!-- Start Cash -->
+                        <div class="flex justify-between text-sm border-b border-blue-100 pb-2">
+                            <span class="text-gray-700 font-bold">رصيد بداية الشفت</span>
+                            <strong class="text-gray-800">
+                                <span id="logoutStartingCash">0.00</span> ج.م
+                            </strong>
                         </div>
 
-                        <div class="logout-row">
-                            <span>مبيعات الكاش</span>
-                            <strong><span id="logoutCashSales">0.00</span> ج.م</strong>
+                        <!-- Cash Sales -->
+                        <div class="flex justify-between text-sm border-b border-blue-100 pb-2">
+                            <span class="text-gray-700 font-bold">مبيعات الكاش</span>
+                            <strong class="text-green-700">
+                                <span id="logoutCashSales">0.00</span> ج.م
+                            </strong>
                         </div>
 
-                        <div class="logout-row total">
-                            <span>المبلغ المتوقع في الدرج</span>
-                            <strong><span id="logoutExpectedCashText">0.00</span> ج.م</strong>
+                        <!-- Payment Methods -->
+                        <div id="paymentMethodsBox" class="space-y-2 border-b border-blue-100 pb-2">
+
+                            {{-- هيتملأ بالـ JS --}}
+                            {{-- مثال شكل:
+            <div class="flex justify-between text-sm">
+                <span>InstaPay</span>
+                <strong>100.00 ج.م</strong>
+            </div>
+            --}}
+                        </div>
+
+                        <!-- Expenses -->
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-700 font-bold">مصروفات الدرج</span>
+                            <strong class="text-red-600">
+                                - 0.00 ج.م
+                            </strong>
+                        </div>
+
+                        <!-- Transfers -->
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-700 font-bold">المسلم للمدير</span>
+                            <strong class="text-red-600">
+                                - 0.00 ج.م
+                            </strong>
+                        </div>
+
+                        <!-- Expected Cash BIG -->
+                        <div class="pt-3 border-t border-blue-200 flex justify-between items-center">
+                            <span class="text-blue-700 font-black text-base">
+                                المبلغ المتوقع في الدرج
+                            </span>
+
+                            <strong class="text-blue-700 font-black text-2xl">
+                                <span id="logoutExpectedCashText">0.00</span> ج.م
+                            </strong>
                         </div>
                     </div>
 
+                    <!-- INPUT -->
                     <div class="form-group text-right">
                         <label class="font-weight-bold">
                             رصيد نهاية الدرج الفعلي <span class="text-danger">*</span>
                         </label>
 
-                        <input type="number" step="0.5" min="0" name="ending_cash" id="logoutEndingCash"
-                            class="form-control form-control-lg text-right" placeholder="0.00">
+                        <input type="number" step="0.5" min="0" name="ending_cash"
+                            id="logoutEndingCash" class="form-control form-control-lg text-right" placeholder="0.00">
                     </div>
 
+                    <!-- DIFFERENCE -->
                     <div id="logoutDifferenceBox" class="logout-difference success">
                         الدرج مضبوط ولا يوجد فرق.
                     </div>
 
+                    <!-- NOTE -->
                     <div id="logoutNoteBox" class="form-group text-right mt-3" style="display: none;">
                         <label class="font-weight-bold">
                             سبب الفرق <span class="text-danger">*</span>
@@ -365,9 +414,12 @@
                         <textarea name="notes" id="logoutShiftNote" rows="2" class="form-control text-right"
                             placeholder="اكتب سبب العجز أو الزيادة قبل تسجيل الخروج"></textarea>
                     </div>
+
                 </div>
 
+                <!-- ACTIONS -->
                 <div class="logout-actions">
+
                     <button type="button" id="closeLogoutModal" class="btn btn-light">
                         إلغاء
                     </button>
@@ -376,6 +428,7 @@
                         <i class="fas fa-sign-out-alt"></i>
                         تسجيل الخروج
                     </button>
+
                 </div>
 
             </div>
@@ -607,8 +660,8 @@
                     noteInput.required = true;
                 }
             }
-
             async function loadLogoutShiftInfo() {
+
                 const response = await fetch("{{ route('logout.shift.info') }}", {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -616,6 +669,9 @@
                 });
 
                 const data = await response.json();
+
+                const paymentBox = document.getElementById('paymentMethodsBox');
+                paymentBox.innerHTML = '';
 
                 if (!data.has_shift) {
                     noShiftBox.style.display = 'block';
@@ -641,6 +697,21 @@
                 endingInput.required = true;
                 endingInput.value = data.expected_cash;
 
+                // ✅ payment breakdown
+                if (data.payments_breakdown) {
+                    Object.entries(data.payments_breakdown).forEach(([method, amount]) => {
+
+                        if (method.toLowerCase() === 'cash') return;
+
+                        paymentBox.innerHTML += `
+                <div class="flex justify-between text-sm border-b border-blue-100 py-1">
+                    <span class="text-gray-700">${method}</span>
+                    <strong class="text-gray-900">${parseFloat(amount).toFixed(2)} ج.م</strong>
+                </div>
+            `;
+                    });
+                }
+
                 updateLogoutDifference();
             }
 
@@ -664,24 +735,24 @@
     </script>
 
     <script>
-document.addEventListener('livewire:init', () => {
+        document.addEventListener('livewire:init', () => {
 
-    Livewire.on('print-order', (event) => {
+            Livewire.on('print-order', (event) => {
 
-        const frame = document.createElement('iframe');
+                const frame = document.createElement('iframe');
 
-        frame.style.position = 'fixed';
-        frame.style.width = '1px';
-        frame.style.height = '1px';
-        frame.style.border = '0';
+                frame.style.position = 'fixed';
+                frame.style.width = '1px';
+                frame.style.height = '1px';
+                frame.style.border = '0';
 
-        frame.src = event.url;
+                frame.src = event.url;
 
-        document.body.appendChild(frame);
-    });
+                document.body.appendChild(frame);
+            });
 
-});
-</script>
+        });
+    </script>
 
 
     @stack('scripts')

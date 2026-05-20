@@ -116,6 +116,9 @@ class PosPage extends Component
 
     public $shiftPaymentsBreakdown = [];
 
+    public $discount = 0;
+    public $discountType = 'fixed';
+
     protected $listeners = [
         'echo:orders,new-order' => 'handleNewOrder',
     ];
@@ -140,19 +143,35 @@ class PosPage extends Component
     public function updatedCustomerPhone()
     {
         $storeOwnerId = StoreService::getStoreOwnerId();
-
         $phone = trim($this->customerPhone);
 
-        // reset دائم
+        // reset الحالة المؤكدة فقط
         $this->selectedCustomerId = null;
-        $this->customerName = '';
 
         if ($phone === '') {
+            $this->customerName = '';
+
             return;
         }
 
-        // 1) لو الرقم كامل (11 رقم مصر)
-        if (strlen($phone) >= 11) {
+        // 🟡 1) suggestion (بحث خفيف بدون تأكيد)
+        if (strlen($phone) >= 4 && strlen($phone) < 10) {
+            $suggest = Customer::where('user_id', $storeOwnerId)
+                ->where('phone', 'like', $phone.'%')
+                ->first();
+
+            // مهم: ما تعتبرهش عميل فعلي
+            if ($suggest) {
+                $this->customerName = $suggest->name;
+            } else {
+                $this->customerName = '';
+            }
+
+            return;
+        }
+
+        // 🟢 2) تأكيد العميل (رقم شبه كامل أو كامل)
+        if (strlen($phone) >= 10) {
             $customer = Customer::where('user_id', $storeOwnerId)
                 ->where('phone', $phone)
                 ->first();
@@ -161,19 +180,6 @@ class PosPage extends Component
                 $this->selectedCustomerId = $customer->id;
                 $this->customerName = $customer->name;
             }
-
-            return;
-        }
-
-        // 2) اقتراح فقط (بدون override للاسم النهائي)
-        $suggest = Customer::where('user_id', $storeOwnerId)
-            ->where('phone', 'like', $phone.'%')
-            ->orderBy('id')
-            ->first();
-
-        // ⚠️ مهم: ما تعتبرش ده اسم نهائي
-        if ($suggest) {
-            $this->customerName = $suggest->name;
         }
     }
 
@@ -199,48 +205,7 @@ class PosPage extends Component
         $this->closeResetModal();
     }
 
-    // public function selectDeliveryOrder($orderId)
-    // {
-    //     $order = Order::with('items.product', 'paymentMethodRelation')
-    //         ->find($orderId);
-
-    //     if (!$order) {
-    //         return;
-    //     }
-
-    //     // فتح الفاتورة (ده أهم سطر)
-    //     $this->activeTab = 'cart';
-
-    //     $this->orderType = 'delivery';
-
-    //     $this->selectedOrder = $order;
-
-    //     $this->customerName = $order->name;
-    //     $this->customerPhone = $order->phone;
-    //     $this->paymentMethod = $order->payment_method;
-
-    //     $this->cart = [];
-
-    //     foreach ($order->items as $item) {
-    //         $this->cart[] = [
-    //             'id' => $item->id,
-    //             'name' => $item->product->name ?? '',
-    //             'price' => $item->pivot->price,
-    //             'quantity' => $item->pivot->quantity,
-    //         ];
-    //     }
-
-    //     $this->calculateTotal();
-
-    //     $order->status = 'served';
-    //     $order->save();
-
-    //     $this->loadDeliveryOrders();
-
-    //     $this->dispatch('stopSound');
-    // }
-
-    public function approveAndOpenOrder($orderId)
+    public function approveAndOpenOrder(int $orderId)
     {
         $order = Order::with(['items.product', 'customer', 'paymentMethodRelation'])
             ->findOrFail($orderId);
@@ -275,7 +240,7 @@ class PosPage extends Component
         $this->dispatch('stopSound');
     }
 
-    public function fillOrderToPos($order)
+    public function fillOrderToPos(string $order)
     {
         $this->activeTab = 'cart';
 
@@ -302,8 +267,13 @@ class PosPage extends Component
         $this->calculateTotal();
     }
 
-    public function openDeliveryOrder($orderId)
+    public function openDeliveryOrder(int $orderId)
     {
+        if (!empty($this->cart)) {
+            session()->flash('error', 'يجب إنهاء الطلب الحالي أولاً');
+
+            return;
+        }
         $order = Order::with(['items.product', 'customer'])
             ->findOrFail($orderId);
 
@@ -317,7 +287,8 @@ class PosPage extends Component
         $this->kitchenNote = $order->kitchen_note;
 
         // ⚠️ مهم: خليه من الداتا مباشرة بدون relation
-        $this->paymentMethod = $order->payment_method;
+        $this->paymentMethod = (int) $order->payment_method;
+        // $this->paymentMethod = $order->paymentMethodRelation?->id;
 
         $this->paidAmount = $order->paid_amount ?? 0;
         $this->changeAmount = $order->change_amount ?? 0;
@@ -344,13 +315,35 @@ class PosPage extends Component
         $this->dispatch('stopSound');
     }
 
+    // رفض الطلب (تحديث الحالة فقط، بدون حذف أو تعديل البيانات)
+    public function rejectOrder(int $orderId)
+    {
+        $order = Order::findOrFail($orderId);
+
+        // تحديث الحالة
+        $order->update([
+            'status' => 'returned',
+        ]);
+
+        // تحديث الإشعارات
+        $this->loadDeliveryOrders();
+
+        // إيقاف الصوت لو مفيش طلبات
+        if (count($this->deliveryOrders) === 0) {
+            $this->dispatch('stopSound');
+        }
+
+        // ممكن تضيف نوتيفيكيشن
+        session()->flash('success', 'تم رفض الطلب');
+    }
+
     public function loadDeliveryOrders()
     {
         $this->deliveryOrders = Order::with(['paymentMethodRelation', 'customer'])
             ->where('type', 'delivery')
             ->where('status', 'pending')
             ->latest()
-            ->take(10)
+            ->take(5)
             ->get();
     }
 
@@ -405,55 +398,6 @@ class PosPage extends Component
             $this->calculateTotal();
         }
     }
-
-    //   public function mount()
-    // {
-    //     $this->activeTab = request()->get('tab', 'products');
-
-    //     $storeId = StoreService::getStoreOwnerId();
-
-    //     // 1. تحميل البيانات الأساسية أولاً
-    //     $this->loadBusinessType($storeId);
-    //     $this->normalizeOrderType();
-
-    //     $this->paymentMethods = \App\Models\PaymentMethod::where('is_active', 1)
-    //         ->where(function ($q) use ($storeId) {
-    //             $q->where('created_by', $storeId)
-    //               ->orWhereNull('created_by');
-    //         })
-    //         ->orderBy('id')
-    //         ->get();
-
-    //     $this->tables = \App\Models\Table::with(['diningArea', 'orders' => function ($q) {
-    //         $q->where('status', 'pending');
-    //     }])
-    //         ->where('user_id', $storeId)
-    //         ->where('is_active', true)
-    //         ->get();
-
-    //     $this->paymentMethod = 'cash';
-
-    //     $this->checkActiveShift();
-    //     $this->loadSuggestedStartingCash();
-
-    //     // 2. تحميل الإشعارات
-    //     $this->loadDeliveryOrders();
-
-    //     // 3. فتح الطلب بعد كل حاجة
-    //     if ($orderId = request()->get('order_id')) {
-    //         $this->openDeliveryOrder($orderId);
-    //     }
-
-    //     // 4. مودال الإغلاق
-    //     if (request()->boolean('showEndShift')) {
-    //         $this->openEndShiftModal();
-    //     }
-
-    //     // 5. إعادة الحساب
-    //     if (!empty($this->cart)) {
-    //         $this->calculateTotal();
-    //     }
-    // }
 
     public function checkActiveShift()
     {
@@ -581,25 +525,22 @@ class PosPage extends Component
         $this->changeAmount = 0;
     }
 
-// الحصول على تفصيل المدفوعات لكل طريقة دفع في الشيفت (نسخة محسنة)
+    // الحصول على تفصيل المدفوعات لكل طريقة دفع في الشيفت (نسخة محسنة)
     public function getShiftPaymentsBreakdown(int $shiftId)
-{
-    return Order::with('paymentMethodRelation')
-    ->where('shift_id', $shiftId)
-    ->get()
-    ->groupBy('payment_method')
-    ->map(function ($orders) {
-        return [
-            'name' => $orders->first()->paymentMethodRelation?->name ?? 'غير معروف',
-            'total' => $orders->sum(fn ($o) =>
-                (float)$o->paid_amount - (float)$o->change_amount
-            ),
-        ];
-    })
-    ->values()
-    ->toArray();
-}
-
+    {
+        return Order::with('paymentMethodRelation')
+            ->where('shift_id', $shiftId)
+            ->get()
+            ->groupBy('payment_method')
+            ->map(function ($orders) {
+                return [
+                    'name' => $orders->first()->paymentMethodRelation?->name ?? 'غير معروف',
+                    'total' => $orders->sum('total_price'),
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
 
     public function openEndShiftModal()
     {
@@ -623,7 +564,7 @@ class PosPage extends Component
 
         $this->shiftExpectedCash = $shiftService->calculateExpectedCashForShift($activeShift);
         $this->shiftPaymentsBreakdown =
-    $shiftService->getPaymentsBreakdownForShift($activeShift);
+          $shiftService->getPaymentsBreakdownForShift($activeShift);
 
         $this->shiftEndingCash = $this->shiftExpectedCash;
         $this->shiftCashDifferencePreview = 0;
@@ -643,8 +584,6 @@ class PosPage extends Component
     {
         $this->showEndShiftModal = false;
     }
-
-
 
     public function endShift()
     {
@@ -682,7 +621,7 @@ class PosPage extends Component
 
         $this->showEndShiftModal = false;
 
-        return redirect()->route('pos.shift.closing-reipt', $activeShift->id);
+        return redirect()->route('pos.shift.closing-receipt', $activeShift->id);
     }
 
     public function openShiftExpenseModal()
@@ -1157,18 +1096,60 @@ class PosPage extends Component
         $this->changeAmount = ($paid >= $total) ? ($paid - $total) : 0;
     }
 
+    public function updatedDiscount()
+    {
+        $this->calculateTotal();
+    }
+
+    public function updatedDiscountType()
+    {
+        $this->calculateTotal();
+    }
+
     public function calculateTotal()
     {
-        $this->total = 0;
+        $subtotal = 0;
 
+        // ✅ حساب مجموع المنتجات فقط
         foreach ($this->cart as $item) {
-            $this->total += $item['price'] * $item['quantity'];
+            $subtotal += $item['price'] * $item['quantity'];
         }
 
+        // ✅ إضافة الدليفري (لو طلب توصيل)
+        $deliveryFee = 0;
         if ($this->orderType === 'delivery') {
-            $this->total += (float) $this->deliveryFee;
+            $deliveryFee = (float) $this->deliveryFee;
+            $subtotal += $deliveryFee;
         }
 
+        // ✅ خزن subtotal (بعد إضافة الدليفري)
+        $this->subtotal = $subtotal;
+
+        // ✅ حساب الخصم
+        $discountValue = (float) $this->discount;
+        $discountType = $this->discountType;
+
+        $discountAmount = 0;
+
+        if ($discountValue > 0) {
+            if ($discountType === 'percent') {
+                $discountAmount = ($subtotal * $discountValue) / 100;
+            } else {
+                $discountAmount = $discountValue;
+            }
+        }
+
+        // ✅ منع الخصم الأكبر من الإجمالي
+        $discountAmount = min($discountAmount, $subtotal);
+
+        // ✅ الصافي النهائي (مهم نحميه من السالب)
+        $finalTotal = max(0, $subtotal - $discountAmount);
+
+        // ✅ تخزين القيم
+        $this->discountAmount = $discountAmount;
+        $this->total = $finalTotal;
+
+        // ✅ تحديث الكاش لو كاش
         $this->updatedPaidAmount();
     }
 
@@ -1252,154 +1233,204 @@ class PosPage extends Component
 
     // ... (existing methods)
 
- 
- 
-public function checkout()
-{
-    if (empty($this->cart)) {
-        session()->flash('error', 'السلة فارغة!');
-        return;
-    }
+    public function checkout()
+    {
+        if (empty($this->cart)) {
+            session()->flash('error', 'السلة فارغة!');
 
-    if ($this->orderType === 'table' && empty($this->selectedTableId)) {
-        session()->flash('error', 'يرجى تحديد الطاولة!');
-        return;
-    }
-
-    if ($this->orderType === 'delivery' && (empty($this->customerPhone) || empty($this->customerName))) {
-        session()->flash('error', 'يرجى إدخال بيانات العميل!');
-        return;
-    }
-
-    if ($this->orderType === 'delivery' && !$this->selectedDeliveryManId) {
-        session()->flash('error', 'يرجى اختيار المندوب!');
-        return;
-    }
-
-    $activeShift = Shift::where('user_id', auth()->id())
-        ->where('status', 'active')
-        ->latest()
-        ->first();
-
-    if (!$activeShift) {
-        session()->flash('error', 'لا يوجد شيفت مفتوح.');
-        return;
-    }
-
-    // ======================
-    // 💡 الحساب الصح للدفع
-    // ======================
-    $total = (float) $this->total;
-    $paidAmount = (float) $this->paidAmount;
-
-    $isCash = (int) $this->paymentMethod === 1;
-
-    // ✅ لو مش كاش = مدفوع كامل تلقائي
-    if (!$isCash) {
-        $paidAmount = $total;
-        $this->changeAmount = 0;
-    } else {
-        $this->changeAmount = max(0, $paidAmount - $total);
-    }
-
-    $isDraft = in_array($this->orderType, ['table', 'free_seating', 'takeaway'])
-        && $paidAmount == 0;
-
-    // ❗ الشرط ده للكاش فقط
-    if (!$isDraft && $isCash && $paidAmount < $total) {
-        session()->flash('error', 'المبلغ المدفوع أقل من الإجمالي!');
-        return;
-    }
-
-    $savedOrderId = null;
-
-    DB::transaction(function () use ($activeShift, $isDraft, &$savedOrderId, $paidAmount) {
-
-        logger()->info('PAYMENT METHOD', [
-            'value' => $this->paymentMethod
-        ]);
-
-        $userId = auth()->id();
-
-        $storeOwnerId = auth()->user()->role === 'super_admin'
-            ? $userId
-            : (auth()->user()->created_by ?? $userId);
-
-        $finalCustomerId = $this->selectedCustomerId;
-
-        if (!$finalCustomerId && $this->customerPhone && $this->customerName) {
-            $customer = Customer::create([
-                'user_id' => $storeOwnerId,
-                'name' => $this->customerName,
-                'phone' => $this->customerPhone,
-            ]);
-
-            $finalCustomerId = $customer->id;
+            return;
         }
 
-        $order = null;
+        if ($this->orderType === 'table' && empty($this->selectedTableId)) {
+            session()->flash('error', 'يرجى تحديد الطاولة!');
 
-        if ($this->orderType === 'table' && $this->selectedTableId) {
-            $order = Order::where('table_id', $this->selectedTableId)
-                ->where('status', 'pending')
-                ->first();
+            return;
         }
 
-        $status = $isDraft ? 'pending' : 'served';
+        if ($this->orderType === 'delivery' && (empty($this->customerPhone) || empty($this->customerName))) {
+            session()->flash('error', 'يرجى إدخال بيانات العميل!');
 
-        $data = [
-            'shift_id' => $activeShift->id,
-            'customer_id' => $finalCustomerId,
-            'total_price' => $this->total,
-            'status' => $status,
-            'type' => $this->orderType,
-            'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
-            'payment_method' => (int) $this->paymentMethod,
-            'paid_amount' => $paidAmount,
-            'change_amount' => $this->changeAmount,
-            'delivery_fee' => $this->deliveryFee,
-            'delivery_man_id' => $this->selectedDeliveryManId,
-            'kitchen_note' => $this->kitchenNote,
-        ];
+            return;
+        }
 
-        if ($order) {
-            $order->update($data);
+        if ($this->orderType === 'delivery' && !$this->selectedDeliveryManId) {
+            session()->flash('error', 'يرجى اختيار المندوب!');
+
+            return;
+        }
+
+        $activeShift = Shift::where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+
+        if (!$activeShift) {
+            session()->flash('error', 'لا يوجد شيفت مفتوح.');
+
+            return;
+        }
+
+        // ======================
+        // 💰 الحساب
+        // ======================
+        $subtotal = collect($this->cart)->sum(function ($item) {
+            return $item['price'] * $item['quantity'];
+        });
+
+        $discountValue = (float) ($this->discount ?? 0);
+        $discountType = $this->discountType ?? 'fixed';
+
+        // حساب الخصم
+        if ($discountType === 'percent') {
+            $discountAmount = ($subtotal * $discountValue) / 100;
         } else {
-            $data['user_id'] = $storeOwnerId;
-            $data['source'] = 'pos';
-
-            $order = Order::create($data);
+            $discountAmount = $discountValue;
         }
 
-        foreach ($this->cart as $item) {
-            if (!isset($item['id'])) continue;
+        // منع الخصم أكبر من الإجمالي
+        $discountAmount = min($discountAmount, $subtotal);
 
-            DB::table('order_product_sizes')->insert([
-                'order_id' => $order->id,
-                'product_size_id' => $item['id'],
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $finalTotal = $subtotal - $discountAmount;
+
+        // ======================
+        // 💳 الدفع
+        // ======================
+        $isCash = (int) $this->paymentMethod === 1;
+
+        $paidAmount = ($this->paidAmount !== null && $this->paidAmount !== '')
+            ? (float) $this->paidAmount
+            : $finalTotal;
+
+        if (!$isCash) {
+            $paidAmount = $finalTotal;
+            $this->changeAmount = 0;
+        } else {
+            $this->changeAmount = max(0, $paidAmount - $finalTotal);
         }
 
-        $savedOrderId = $order->id;
-        $this->lastOrderId = $order->id;
+        if ($isCash && $paidAmount < 0) {
+            session()->flash('error', 'المبلغ غير صحيح!');
 
-        
-    });
+            return;
+        }
 
-    if ($savedOrderId && !$isDraft) {
-        $this->dispatch('print-order', url: route('pos.orders.print-two', $savedOrderId));
-        $this->clearCart();
-        return;
+        $isDraft =
+            in_array($this->orderType, ['table', 'free_seating', 'takeaway'])
+            && trim((string) $this->paidAmount) === '';
+
+        $savedOrderId = null;
+
+        DB::transaction(function () use (
+            $activeShift,
+            $isDraft,
+            &$savedOrderId,
+            $paidAmount,
+            $subtotal,
+            $discountAmount,
+            $discountType,
+            $discountValue,
+            $finalTotal,
+        ) {
+            $userId = auth()->id();
+
+            $storeOwnerId = auth()->user()->role === 'super_admin'
+                ? $userId
+                : (auth()->user()->created_by ?? $userId);
+
+            $finalCustomerId = $this->selectedCustomerId;
+
+            // إنشاء عميل لو مش موجود
+            if (!$finalCustomerId && $this->customerPhone && $this->customerName) {
+                $customer = Customer::create([
+                    'user_id' => $storeOwnerId,
+                    'name' => $this->customerName,
+                    'phone' => $this->customerPhone,
+                ]);
+
+                $finalCustomerId = $customer->id;
+            }
+
+            $order = null;
+
+            if ($this->orderType === 'table' && $this->selectedTableId) {
+                $order = Order::where('table_id', $this->selectedTableId)
+                    ->where('status', 'pending')
+                    ->first();
+            }
+
+            $status = $isDraft ? 'pending' : 'served';
+
+            $data = [
+                'shift_id' => $activeShift->id,
+                'customer_id' => $finalCustomerId,
+
+                // 💰 الأسعار
+                'subtotal' => $subtotal,
+                'total_price' => $finalTotal,
+
+                // 💰 الخصم
+                'discount' => $discountValue,
+                'discount_amount' => $discountAmount,
+                'discount_type' => $discountType,
+
+                'status' => $status,
+                'type' => $this->orderType,
+                'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
+
+                // 💳 الدفع
+                'payment_method' => (int) $this->paymentMethod,
+                'paid_amount' => $paidAmount,
+                'change_amount' => $this->changeAmount,
+
+                // 🚚
+                'delivery_fee' => $this->deliveryFee,
+                'delivery_man_id' => $this->selectedDeliveryManId,
+
+                // 🍳
+                'kitchen_note' => $this->kitchenNote,
+            ];
+
+            if ($order) {
+                $order->update($data);
+            } else {
+                $data['user_id'] = $storeOwnerId;
+                $data['source'] = 'pos';
+
+                $order = Order::create($data);
+            }
+
+            foreach ($this->cart as $item) {
+                if (!isset($item['id'])) {
+                    continue;
+                }
+
+                DB::table('order_product_sizes')->insert([
+                    'order_id' => $order->id,
+                    'product_size_id' => $item['id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $savedOrderId = $order->id;
+            $this->lastOrderId = $order->id;
+        });
+
+        // ======================
+        // 🖨️ الطباعة
+        // ======================
+        if ($savedOrderId && !$isDraft) {
+            $this->dispatch('print-order', url: route('pos.orders.print-two', $savedOrderId));
+
+            $this->clearCart();
+
+            return;
+        }
+
+        $this->showSuccessModal = true;
     }
-
-    $this->showSuccessModal = true;
-}
-
-
 
     // Merge Tables Functionality
     public $showMergeModal = false;
@@ -1638,7 +1669,7 @@ public function checkout()
     public function addDeliveryMan()
     {
         $this->validate([
-            'newDeliveryManName' => 'required|string|max:255',
+            'newDeliveryManName' => 'nullable|string|max:255',
             'newDeliveryManPhone' => 'nullable|string|max:20',
             'newDeliveryManCommission' => 'nullable|numeric|min:0|max:100',
         ]);

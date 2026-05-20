@@ -48,7 +48,6 @@ class AuthController extends Controller
         return redirect()->route('dashboard');
     }
 
-    
     public function webLogout(Request $request)
     {
         $request->validate([
@@ -101,12 +100,16 @@ class AuthController extends Controller
         $startingCash = (float) $activeShift->starting_cash;
         $cashSales = $expectedCash - $startingCash;
 
+        $breakdown = app(\App\Services\ShiftService::class)
+    ->getPaymentsBreakdownForShift($activeShift);
+
         return response()->json([
             'has_shift' => true,
             'shift_id' => $activeShift->id,
             'starting_cash' => number_format($startingCash, 2, '.', ''),
             'cash_sales' => number_format($cashSales, 2, '.', ''),
             'expected_cash' => number_format($expectedCash, 2, '.', ''),
+            'payments_breakdown' => $breakdown,
         ]);
     }
 }

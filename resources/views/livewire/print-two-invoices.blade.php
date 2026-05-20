@@ -257,13 +257,19 @@
             }
         }
     </style>
-    
+
 </head>
 
 <body>
 
     @php
         $items = $order->items ?? collect();
+
+        $subtotal = (float) $order->subtotal;
+        $discount = (float) $order->discount;
+        $discountType = $order->discount_type;
+        $discountAmount = (float) $order->discount_amount;
+        $finalTotal = (float) $order->total_price;
 
         $deliveryFee = (float) ($order->delivery_fee ?? 0);
         $total = (float) ($order->total_price ?? 0);
@@ -376,6 +382,30 @@
             <span>طريقة الدفع</span>
             <strong>{{ $paymentText }}</strong>
         </div>
+        @if ($discount > 0)
+            <div class="row">
+                <span>السعر قبل الخصم</span>
+                <strong>{{ number_format($subtotal, 2) }} ج.م</strong>
+            </div>
+
+            <div class="row">
+                <span>الخصم</span>
+                <strong>
+                    @if ($discountType === 'percent')
+                        {{ $discount }} %
+                    @else
+                        {{ number_format($discount, 2) }} ج.م
+                    @endif
+                </strong>
+            </div>
+
+            <div class="row">
+                <span>قيمة الخصم</span>
+                <strong>
+                    -{{ number_format($discountAmount, 2) }} ج.م
+                </strong>
+            </div>
+        @endif
 
         <div class="line"></div>
 
@@ -427,10 +457,17 @@
                 </div>
             @endif
 
-            <div class="total-header">
-                <span>الإجمالي</span>
-                <strong>{{ number_format($total, 2) }} ج.م</strong>
-            </div>
+            @if ($discount > 0)
+                <div class="total-header">
+                    <span>الإجمالي بعد الخصم</span>
+                    <strong>{{ number_format($finalTotal, 2) }} ج.م</strong>
+                </div>
+            @else
+                <div class="total-header">
+                    <span>الإجمالي</span>
+                    <strong>{{ number_format($total, 2) }} ج.م</strong>
+                </div>
+            @endif
 
             <div class="total-row">
                 <span>المدفوع</span>
@@ -531,15 +568,16 @@
         <a href="#" onclick="window.print(); return false;" class="btn">طباعة مرة أخرى</a>
     </div>
 
-   <script>
-    window.addEventListener('load', function() {
-        window.print();
-    });
+    <script>
+        window.addEventListener('load', function() {
+            window.print();
+        });
 
-    window.onafterprint = function() {
-        window.location.replace("{{ route('pos.index') }}");
-    };
-</script>
+        window.onafterprint = function() {
+            window.location.replace("{{ route('pos.index') }}");
+        };
+    </script>
+
 
 </body>
 

@@ -73,6 +73,8 @@
             </button>
         </div>
 
+
+
         <!-- Content Area (Grid on Desktop) -->
         <div class="max-w-full mx-auto pb-24 md:pb-3 md:grid md:grid-cols-3 md:gap-3 px-2 md:px-3">
 
@@ -101,16 +103,12 @@
                                     <i class="fas fa-search text-sm"></i>
                                 </div>
                             </div>
+
                             <audio id="pendingSound" src="{{ asset('new-order.mp3') }}" preload="auto" loop></audio>
 
                             <!-- 🔊 الصوت -->
                             <div id="clickReminder"
                                 class="audio-reminder w-[50px] h-[50px] flex items-center justify-center cursor-pointer relative group">
-
-                                <!-- الأيقونة فقط -->
-                                {{-- <div class="audio-reminder-icon text-xl">
-                                    <i class="fas fa-bell-slash"></i>
-                                </div> --}}
 
                                 <!-- Tooltip -->
                                 <div
@@ -153,66 +151,74 @@
                                     </div>
 
                                     @forelse($deliveryOrders as $order)
-                                        <div class="p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition flex flex-col gap-3"
+                                        <div class="p-2 mb-2 border rounded-lg hover:bg-gray-50 transition cursor-pointer bg-white shadow-sm"
                                             wire:click="openDeliveryOrder({{ $order->id }})">
 
-                                            <!-- Top Row: Customer Info -->
-                                            <div class="flex justify-between items-start gap-4">
+                                            <div class="flex items-center justify-between gap-2">
 
-                                                <div class="flex flex-col gap-1">
-                                                    <div class="text-lg font-bold text-gray-900">
+                                                <!-- LEFT -->
+                                                <div class="flex flex-col min-w-[140px]">
+                                                    <div class="text-sm font-bold text-gray-900 line-clamp-1">
                                                         {{ $order->customer?->name ?? $order->name }}
                                                     </div>
 
-                                                    <div class="text-sm text-gray-600">
-                                                        📞 {{ $order->customer?->phone ?? $order->phone }}
-                                                    </div>
-
-                                                    <div class="text-xs text-gray-500">
-                                                        🧾 الطلب #{{ $order->id }}
+                                                    <div class="text-[11px] text-gray-500">
+                                                        #{{ $order->id }} •
+                                                        {{ $order->customer?->phone ?? $order->phone }}
                                                     </div>
                                                 </div>
 
-                                                <div class="text-sm font-bold text-gray-800 whitespace-nowrap">
-                                                    💳
-                                                    {{ $order->paymentMethodRelation?->name ?? $order->payment_method }}
+                                                <!-- MIDDLE -->
+                                                <div class="flex-1 flex flex-col text-[11px] text-gray-600">
+                                                    <span class="line-clamp-1">
+                                                        💳
+                                                        {{ $order->paymentMethodRelation?->name ?? $order->payment_method }}
+                                                    </span>
+
+                                                    @if ($order->kitchen_note)
+                                                        <span
+                                                            class="text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded mt-1 w-fit">
+                                                            📝
+                                                            {{ \Illuminate\Support\Str::limit($order->kitchen_note, 20) }}
+                                                        </span>
+                                                    @endif
                                                 </div>
 
-                                                @if ($order->kitchen_note)
-                                                    <div
-                                                        class="text-xs text-yellow-700 bg-yellow-100 p-2 rounded-lg mt-2">
-                                                        📝 {{ $order->kitchen_note }}
-                                                    </div>
-                                                @endif
+                                                <!-- RIGHT ACTIONS -->
+                                                <div class="flex gap-1 shrink-0">
+
+                                                    <button wire:click.stop="approveAndOpenOrder({{ $order->id }})"
+                                                        class="bg-green-600 hover:bg-green-700 text-white text-[10px] px-2 py-1 rounded-md">
+                                                        قبول
+                                                    </button>
+
+                                                    <button wire:click.stop="rejectOrder({{ $order->id }})"
+                                                        class="bg-red-600 hover:bg-red-700 text-white text-[10px] px-2 py-1 rounded-md">
+                                                        رفض
+                                                    </button>
+
+                                                </div>
                                             </div>
 
-                                            <!-- Products Row (Wide Horizontal Scroll if many) -->
-                                            <div class="flex gap-2 overflow-x-auto pb-1">
+
+                                            <!-- PRODUCTS (Horizontal scroll unchanged) -->
+                                            {{-- <div class="flex gap-2 overflow-x-auto mt-3 pb-1">
 
                                                 @foreach ($order->items as $item)
-                                                    <div class="min-w-[220px] bg-gray-100 p-2 rounded-lg text-sm">
+                                                    <div class="min-w-[200px] bg-gray-100 p-2 rounded-lg text-xs">
                                                         <div class="font-bold text-gray-800">
                                                             🛒 {{ $item->product?->name ?? 'منتج' }}
                                                         </div>
 
-                                                        <div class="text-xs text-gray-600 mt-1">
-                                                            الحجم: {{ $item->size_name ?? '-' }}
-                                                        </div>
-
-                                                        <div class="text-xs text-gray-600">
+                                                        <div class="text-[11px] text-gray-600">
                                                             العدد: {{ $item->pivot->quantity }} ×
                                                             {{ $item->pivot->price }}
                                                         </div>
                                                     </div>
                                                 @endforeach
 
-                                            </div>
-                                            <!-- زر الموافقة -->
-                                            <button wire:click.stop="approveAndOpenOrder({{ $order->id }})"
-                                                class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded-lg">
+                                            </div> --}}
 
-                                                موافقة
-                                            </button>
                                         </div>
                                     @empty
                                         <div class="p-3 text-center text-gray-400">
@@ -225,6 +231,11 @@
                             </div>
 
                         </div>
+                        @if (session()->has('error'))
+                            <div class="bg-red-100 text-red-700 p-3 rounded-lg mb-3 text-center font-bold">
+                                {{ session('error') }}
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -722,7 +733,7 @@
                                                     <i class="fas fa-check-circle"></i>
                                                 </div>
                                             </div>
-                                        @elseif(strlen($customerPhone) > 3)
+                                        @elseif(strlen($customerPhone) >= 4 && !$selectedCustomerId)
                                             <!-- New Customer Option -->
                                             <div class="w-full" x-show="!showNameInput && '$wire.customerName' == ''">
                                                 <button type="button" @click="showNameInput = true"
@@ -760,6 +771,26 @@
                                     placeholder="مثال: بدون سكر، زيادة ثلج، تجهيز سريع..."></textarea>
                             </div>
 
+                            <!-- Discount Input -->
+                            <div class="mb-3 bg-yellow-50 p-3 rounded-xl border border-yellow-200">
+                                <label class="text-xs font-bold text-yellow-700 mb-2 block">
+                                    خصم على الطلب
+                                </label>
+
+                                <div class="flex gap-2">
+                                    <input type="percentage" step="0.01" min="0"
+                                        wire:model.live.debounce.300ms="discount"
+                                        class="w-full bg-white border border-yellow-300 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-yellow-400"
+                                        placeholder="0.00">
+
+                                    <select wire:model="discountType"
+                                        class="bg-white border border-yellow-300 rounded-lg px-2 text-sm font-bold">
+                                        <option value="fixed">جنيه</option>
+                                        <option value="percent">%</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div> {{-- Root element واحد فقط لكل Livewire component --}}
 
                                 <!-- Payment & Action -->
@@ -769,7 +800,6 @@
                                     <div>
                                         <label class="text-xs font-bold text-gray-400 mb-2 block px-1">طريقة
                                             الدفع</label>
-
                                         <div class="flex flex-wrap gap-2">
                                             @foreach ($paymentMethods as $method)
                                                 <button type="button"
@@ -782,7 +812,7 @@
                                                         {{ $method->name }}
                                                     </div>
 
-                                                    @if ($method->phone)
+                                                    @if ($method->id != 1 && $method->phone)
                                                         <span class="text-[10px] opacity-80">
                                                             {{ $method->phone }}
                                                         </span>
@@ -790,8 +820,6 @@
                                                 </button>
                                             @endforeach
                                         </div>
-
-
                                     </div>
 
                                     <!-- Cash Calculations (تظهر فقط إذا اخترت النقدي) -->
@@ -809,8 +837,7 @@
                                                 دخل
                                                 الدرج</label>
                                             <div class="relative">
-                                                <input type="number" step="0.5"
-                                                    wire:model.live.debounce.300ms="paidAmount"
+                                                <input type="number" step="0.5" wire:model="paidAmount"
                                                     class="w-full bg-white border border-gray-300 rounded-xl pl-2 pr-4 py-2.5 font-bold text-lg text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none shadow-sm"
                                                     placeholder="0.00">
                                             </div>
@@ -834,7 +861,8 @@
                                             floatval($paidAmount) == 0;
                                         $isCash = $paymentMethod == 1;
 
-                                        $btnDisabled = !$isDraft && $isCash && $paidAmount < $total ? 'disabled' : '';
+                                        $btnDisabled =
+                                            !$isDraft && $isCash && floatval($this->paidAmount) < 0 ? 'disabled' : '';
                                     @endphp
 
                                     <!-- Checkout Button -->
@@ -861,6 +889,8 @@
             </div>
 
         </div>
+
+
 
         <!-- Advanced Add to Cart Modal -->
         @if ($showSizeModal && $this->selectedProductForSize)
@@ -1405,7 +1435,7 @@
 
                     <div
                         class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 text-2xl">
-                        <i class="fas fa-door-closed"></i>
+                        {{-- <i class="fas fa-door-closed"></i> --}}
                     </div>
 
                     <h3 class="text-2xl font-black text-gray-900 mb-1">
@@ -1913,16 +1943,10 @@
     </style>
 
     <script>
-        document.addEventListener('livewire:init', () => {
+        window.addEventListener('print-order', function(event) {
+            window.location.href = event.detail.url;
 
-            Livewire.on('stopSound', () => {
-                const audio = document.getElementById('pendingSound');
-                if (audio) {
-                    audio.pause();
-                    audio.currentTime = 0;
-                }
-            });
-
+            //  const win = window.open(url, '_self');
         });
     </script>
 </div>

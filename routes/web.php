@@ -223,7 +223,7 @@ Route::middleware(['auth', 'active', 'CheckSubscription'])->group(function () {
     ->middleware([
         'package.permission:shifts.access',
         'branch.permissions:shifts.access',
-    ])->name('pos.shift.closing-reipt');
+    ])->name('pos.shift.closing-receipt');
 
     // pos routes print
     Route::get('/pos/orders/{order}/print-two', [PosPrintController::class, 'printTwo'])

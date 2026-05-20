@@ -21,7 +21,7 @@ class ShiftReceiptController extends Controller
         $cashier = User::find($shift->user_id);
         $branch = Branch::find($shift->branch_id);
 
-        $ordersQuery = \App\Models\Order::where('shift_id', $shift->id)
+        $ordersQuery = Order::where('shift_id', $shift->id)
             ->whereIn('status', ['served', 'completed']);
 
         // عدد الطلبات
@@ -62,13 +62,11 @@ class ShiftReceiptController extends Controller
     ->get()
     ->groupBy('payment_method')
     ->map(function ($orders) {
-
         $method = $orders->first()->paymentMethodRelation;
 
         return [
             'name' => $method?->name ?? 'غير معروف',
-            'total' => $orders->sum(fn ($o) =>
-                (float) $o->paid_amount - (float) $o->change_amount
+            'total' => $orders->sum(fn ($o) => (float) $o->paid_amount - (float) $o->change_amount
             ),
         ];
     });
