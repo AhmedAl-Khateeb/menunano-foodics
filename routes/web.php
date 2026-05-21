@@ -171,7 +171,10 @@ Route::middleware(['auth', 'super_admin'])->prefix('super')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'active'])->group(function () {
-    Route::get('/dashboard', [ShowController::class, 'index'])->name('dashboard');
+    
+     Route::get('/dashboard', function () {
+        return view('/dashboard');
+    })->name('dashboard');
 
 
 
