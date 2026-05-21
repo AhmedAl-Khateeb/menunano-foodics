@@ -175,7 +175,7 @@ class ShowDashboardService
 
         $storeUrl = $qrBaseUrl.'/'.$storeName;
 
-        return view('dashboard', compact(
+        return view('summary', compact(
             'orderCards',
             'filter',
             'salesLabels',

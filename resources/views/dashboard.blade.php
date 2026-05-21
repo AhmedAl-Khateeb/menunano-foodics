@@ -1,857 +1,385 @@
 @extends('layouts.app')
 @section('title', 'Dashboard')
-
 @section('content_header')
     <h1>مرحبا بك في لوحة التحكم الخاصة بك</h1>
 @stop
 
-
-@php
-    $subscriptionExpired =
-        auth()->check() &&
-        auth()->user()->role !== 'super_admin' &&
-        method_exists(auth()->user(), 'hasActiveSubscription') &&
-        !auth()->user()->hasActiveSubscription();
-@endphp
 @section('main-content')
-    <div class="container-fluid dashboard-page">
-        {{-- الجزء العلوي --}}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="dashboard-top-bar">
-                    <div class="dashboard-top-content">
+@php
+    $qrBaseUrl = env('QR_BASE_URL', config('app.url'));
+    $storeName = auth()->user()->store_name;
+    $storeUrl = $qrBaseUrl . '/' . $storeName;
+@endphp
 
-                        {{-- اليمين: العنوان + التبويبات --}}
-                        <div class="dashboard-top-right">
-                            <h2 class="dashboard-welcome">مرحبًا، {{ auth()->user()->name }}</h2>
-
-                            <div class="dashboard-tabs {{ $subscriptionExpired ? 'disabled-dashboard-links' : '' }}">
-                                <a href="javascript:void(0)" class="active">عام</a>
-                                <a href="{{ route('branches.index') }}">الفروع</a>
-                                <a href="{{ route('inventory.dashboard') }}">المخزون</a>
-                                <a href="{{ route('settings.index') }}">مركز الاتصال</a>
-                            </div>
-                        </div>
-
-                        {{-- الشمال: الفلاتر + التاريخ --}}
-                        <div class="dashboard-top-left">
-                            <div class="btn-group filter-group" role="group">
-                                <a href="{{ route('dashboard', ['filter' => 'day']) }}"
-                                    class="btn btn-filter {{ request('filter', 'day') == 'day' ? 'active' : '' }}">
-                                    اليوم
-                                </a>
-
-                                <a href="{{ route('dashboard', ['filter' => 'week']) }}"
-                                    class="btn btn-filter {{ request('filter') == 'week' ? 'active' : '' }}">
-                                    الأسبوع
-                                </a>
-
-                                <a href="{{ route('dashboard', ['filter' => 'month']) }}"
-                                    class="btn btn-filter {{ request('filter') == 'month' ? 'active' : '' }}">
-                                    الشهر
-                                </a>
-                            </div>
-
-                            <input type="date" class="form-control date-filter"
-                                value="{{ request('date', now()->toDateString()) }}"
-                                onchange="window.location.href='?filter={{ request('filter', 'day') }}&date=' + this.value">
-                        </div>
-                    </div>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-gradient-primary text-white text-center py-4">
+                    <h3 class="mb-0">
+                        <i class="fas fa-store ml-2"></i>
+                        متجرك الإلكتروني
+                    </h3>
                 </div>
-            </div>
-        </div>
 
+                <div class="card-body text-center py-5">
+                    <!-- Store Link Section -->
+                    <div class="mb-5">
+                        <h4 class="text-primary mb-3">
+                            <i class="fas fa-link ml-2"></i>
+                            رابط متجرك الخاص
+                        </h4>
+                        <div class="input-group mb-3" dir="ltr">
+                            <div class="input-group-prepend">
+                                <button class="btn btn-outline-primary" type="button"
+                                        onclick="copyToClipboard()" title="نسخ الرابط">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <a href="{{ $storeUrl }}" target="_blank"
+                                   class="btn btn-primary" title="زيارة المتجر">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                            <input type="text" class="form-control form-control-lg text-center"
+                                   id="storeUrl" value="{{ $storeUrl }}" readonly>
+                        </div>
+                        <small class="text-muted">يمكنك مشاركة هذا الرابط مع عملائك</small>
+                    </div>
 
-        {{-- Store QR Section --}}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm store-qr-card">
-                    <div class="card-body">
-
-                        <div class="row align-items-center">
-
-                            {{-- Right Side --}}
-                            <div class="col-lg-8 mb-4 mb-lg-0">
-
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="store-icon">
-                                        <i class="fas fa-store"></i>
-                                    </div>
-
-                                    <div class="mr-3">
-                                        <h3 class="mb-1 font-weight-bold">
-                                            متجرك الإلكتروني
-                                        </h3>
-
-                                        <p class="text-muted mb-0">
-                                            شارك رابط متجرك مع العملاء بسهولة
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {{-- Store URL --}}
-                                <div class="store-link-box">
-
-                                    <input type="text" id="storeUrl" class="form-control" value="{{ $storeUrl }}"
-                                        readonly>
-
-                                    <div class="store-link-actions">
-
-                                        <button class="btn btn-copy" onclick="copyToClipboard()">
-
-                                            <i class="fas fa-copy"></i>
-                                        </button>
-
-                                        <a href="{{ $storeUrl }}" target="_blank" class="btn btn-open">
-
-                                            <i class="fas fa-external-link-alt"></i>
-                                        </a>
-
-                                    </div>
-
-                                </div>
-
-                                {{-- Buttons --}}
-                                <div class="mt-4 d-flex flex-wrap gap-2">
-
-                                    <button class="btn btn-success" onclick="downloadQR()">
-
-                                        <i class="fas fa-download ml-1"></i>
-                                        تحميل QR
-                                    </button>
-
-                                    <button class="btn btn-whatsapp" onclick="shareWhatsApp()">
-
-                                        <i class="fab fa-whatsapp ml-1"></i>
+                    <!-- QR Code Section -->
+                    <div class="mb-4">
+                        <h4 class="text-primary mb-3">
+                            <i class="fas fa-qrcode ml-2"></i>
+                            رمز QR لمتجرك
+                        </h4>
+                        <div class="qr-container mb-3">
+                            <div id="qrcode" class="d-inline-block p-3 bg-white rounded shadow-sm"></div>
+                        </div>
+                        <div class="qr-actions">
+                            <button class="btn btn-success mx-2" onclick="downloadQR()" title="تحميل QR Code">
+                                <i class="fas fa-download ml-2"></i>
+                                تحميل الكود
+                            </button>
+                            <div class="btn-group mx-2" role="group">
+                                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-share-alt ml-2"></i>
+                                    مشاركة
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#" onclick="shareWhatsApp()">
+                                        <i class="fab fa-whatsapp text-success ml-2"></i>
                                         واتساب
-                                    </button>
-
-                                    <button class="btn btn-telegram" onclick="shareTelegram()">
-
-                                        <i class="fab fa-telegram ml-1"></i>
+                                    </a>
+                                    <a class="dropdown-item" href="#" onclick="shareTelegram()">
+                                        <i class="fab fa-telegram text-info ml-2"></i>
                                         تيليجرام
-                                    </button>
-
+                                    </a>
+                                    <a class="dropdown-item" href="#" onclick="shareEmail()">
+                                        <i class="fas fa-envelope text-danger ml-2"></i>
+                                        البريد الإلكتروني
+                                    </a>
+                                    <a class="dropdown-item" href="#" onclick="copyStoreLink()">
+                                        <i class="fas fa-copy text-primary ml-2"></i>
+                                        نسخ الرابط
+                                    </a>
                                 </div>
-
                             </div>
-
-                            {{-- QR Side --}}
-                            <div class="col-lg-4 text-center">
-
-                                <div class="qr-wrapper">
-
-                                    <div id="qrcode"></div>
-
-                                </div>
-
-                                <small class="text-muted d-block mt-3">
-                                    امسح الكود للوصول السريع للمتجر
-                                </small>
-
-                            </div>
-
                         </div>
-
+                        <small class="text-muted d-block mt-2">امسح الكود باستخدام كاميرا الهاتف للوصول السريع لمتجرك</small>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        {{-- الكروت --}}
-        <div class="row">
-            @foreach ($orderCards as $card)
-                <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-                    <div
-                        class="card dashboard-stat-card shadow-sm border-0 {{ $subscriptionExpired ? 'expired-overlay-card' : '' }}">
-                        <div class="card-body">
-                            <div class="stat-header">
-                                <h6>{{ $card['title'] }}</h6>
-                                <h3>{{ $card['value'] }}</h3>
+                <div class="card-footer bg-light text-center py-3">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="text-primary">
+                                <i class="fas fa-mobile-alt fa-2x mb-2"></i>
+                                <p class="small mb-0">متوافق مع الهواتف</p>
                             </div>
-                            <div class="chart-wrapper">
-                                <canvas id="{{ $card['key'] }}"></canvas>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-success">
+                                <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                                <p class="small mb-0">آمن ومحمي</p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-info">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <p class="small mb-0">متاح 24/7</p>
                             </div>
                         </div>
                     </div>
                 </div>
-            @endforeach
+            </div>
         </div>
-        {{-- رسم المبيعات --}}
-        <div class="row mt-4">
-
-            <div class="col-12 mb-4">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-
-                        <h5 class="mb-4 text-center">المبيعات لكل ساعة</h5>
-
-                        <div style="height:350px">
-                            <canvas id="salesChart"></canvas>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        {{-- الكروت السفلية --}}
-        <div class="row">
-
-            {{-- طرق الدفع --}}
-            <div class="col-lg-4 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-
-                        <h5 class="mb-4 text-center">طرق الدفع الأكثر استخدامًا</h5>
-
-                        @foreach ($topPayments as $payment)
-                            <div class="d-flex justify-content-between mb-3">
-
-                                <span>
-                                    {{ $payment->paymentMethodRelation->name ?? ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
-                                </span>
-
-                                <strong>{{ $payment->total }}</strong>
-
-                            </div>
-                        @endforeach
-
-                    </div>
-                </div>
-            </div>
-
-            {{-- أعلى الفروع --}}
-            <div class="col-lg-4 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-
-                        <h5 class="mb-4 text-center">أعلى الفروع مبيعًا</h5>
-
-                        @foreach ($topBranches as $branch)
-                            <div class="d-flex justify-content-between mb-3">
-
-                                <span>
-                                    {{ $branch->branch->name ?? 'بدون فرع' }}
-                                </span>
-
-                                <strong>
-                                    {{ number_format($branch->total_sales, 2) }} ج
-                                </strong>
-
-                            </div>
-                        @endforeach
-
-                    </div>
-                </div>
-            </div>
-
-            {{-- أعلى المنتجات --}}
-            <div class="col-lg-4 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-
-                        <h5 class="mb-4 text-center">أعلى المنتجات مبيعًا</h5>
-
-                        @foreach ($topProducts as $product)
-                            <div class="d-flex justify-content-between mb-3">
-
-                                <span>{{ $product->name }}</span>
-
-                                <strong>
-                                    {{ number_format($product->total_sales, 2) }} ج
-                                </strong>
-
-                            </div>
-                        @endforeach
-
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
     </div>
+</div>
 
-
+<!-- Toast for notifications -->
+<div class="toast-container position-fixed bottom-0 left-0 p-3">
+    <div id="toast" class="toast hide" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-check-circle text-success ml-2"></i>
+            <strong class="ml-auto">نجح</strong>
+            <button type="button" class="mr-2 mb-1 close" data-dismiss="toast">
+                <span>&times;</span>
+            </button>
+        </div>
+        <div class="toast-body" id="toast-message">
+            تم نسخ الرابط بنجاح!
+        </div>
     </div>
+</div>
 
-    <style>
-        .disabled-dashboard-links {
-            pointer-events: none;
-            opacity: 0.6;
-        }
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+}
 
-        .expired-overlay-card {
-            position: relative;
-            opacity: 0.7;
-            pointer-events: none;
-            overflow: hidden;
-        }
+.qr-container {
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
 
-        .expired-overlay-card::after {
-            content: 'الباقة منتهية';
-            position: absolute;
-            inset: 0;
-            background: rgba(255, 255, 255, 0.55);
-            color: #b45309;
-            font-size: 20px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-        }
+#qrcode {
+    border-radius: 8px;
+}
 
-        .expired-message-bar {
-            background: linear-gradient(90deg, #fff3cd, #ffe08a);
-            color: #7a5200;
-            border: 1px solid #f4d06f;
-            border-radius: 14px;
-            padding: 16px 20px;
-            margin: 0 0 20px 0;
-            font-weight: 700;
-            text-align: right;
-        }
+.card {
+    transition: transform 0.2s ease-in-out;
+}
 
-        .dashboard-page {
-            direction: rtl;
-        }
+.card:hover {
+    transform: translateY(-5px);
+}
 
-        .dashboard-top-bar {
-            background: #eef1f5;
-            border-radius: 14px;
-            padding: 24px 28px;
-        }
+.btn {
+    transition: all 0.3s ease;
+}
 
-        .dashboard-top-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
 
-        .dashboard-top-right {
-            text-align: right;
-        }
+.input-group input {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
 
-        .dashboard-welcome {
-            font-size: 42px;
-            font-weight: 700;
-            color: #222;
-            margin-bottom: 12px;
-        }
+.card-footer .col-4:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+}
 
-        .dashboard-tabs {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 28px;
-            flex-wrap: wrap;
-        }
+/* تأكد من عرض الأزرار بشكل صحيح في RTL */
+.input-group[dir="ltr"] .input-group-prepend .btn {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
 
-        .dashboard-tabs a {
-            text-decoration: none;
-            color: #666;
-            font-size: 18px;
-            font-weight: 600;
-            position: relative;
-            padding-bottom: 6px;
-        }
+.input-group[dir="ltr"] .input-group-prepend .btn:last-child {
+    border-left: 0;
+}
 
-        .dashboard-tabs a.active {
-            color: #7a69ac;
-        }
+.input-group[dir="ltr"] input {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
 
-        .dashboard-tabs a.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            right: 0;
-            width: 100%;
-            height: 2px;
-            background: #7a69ac;
-            border-radius: 3px;
-        }
+@media (max-width: 768px) {
+    .qr-actions .btn, .qr-actions .btn-group {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+    }
 
-        .dashboard-top-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
+    .qr-actions .btn-group .btn {
+        width: 100%;
+    }
 
-        .filter-group {
-            direction: rtl;
-        }
+    .input-group[dir="ltr"] {
+        flex-direction: column;
+    }
 
-        .btn-filter {
-            background: #fff;
-            border: 1px solid #d9dde3;
-            color: #555;
-            min-width: 78px;
-            font-weight: 600;
-            border-radius: 0;
-            box-shadow: none !important;
-        }
+    .input-group[dir="ltr"] .input-group-prepend {
+        width: 100%;
+        margin-bottom: 10px;
+        flex-direction: row;
+    }
 
-        .btn-filter.active {
-            background: #4a4f57;
-            color: #fff;
-            border-color: #4a4f57;
-        }
+    .input-group[dir="ltr"] .input-group-prepend .btn {
+        flex: 1;
+        border-radius: 0.25rem;
+        margin-left: 5px;
+    }
 
-        .filter-group .btn:first-child {
-            border-top-right-radius: 8px;
-            border-bottom-right-radius: 8px;
-        }
+    .input-group[dir="ltr"] .input-group-prepend .btn:first-child {
+        margin-left: 0;
+    }
 
-        .filter-group .btn:last-child {
-            border-top-left-radius: 8px;
-            border-bottom-left-radius: 8px;
-        }
+    .input-group[dir="ltr"] input {
+        border-radius: 0.25rem;
+    }
+}
+</style>
 
-        .date-filter {
-            width: 150px;
-            height: 40px;
-            border-radius: 8px;
-            border: 1px solid #d9dde3;
-            box-shadow: none !important;
-        }
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+let qrCode;
 
-        .dashboard-stat-card {
-            border-radius: 18px;
-            background: #fff;
-            min-height: 250px;
-        }
+// Initialize QR Code
+document.addEventListener('DOMContentLoaded', function() {
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="sr-only">جاري التحميل...</span></div>';
 
-        .dashboard-stat-card .card-body {
-            padding: 20px;
-        }
-
-        .stat-header {
-            text-align: right;
-            margin-bottom: 14px;
-        }
-
-        .stat-header h6 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 8px;
-        }
-
-        .stat-header h3 {
-            font-size: 52px;
-            font-weight: 700;
-            color: #222;
-            line-height: 1;
-            margin: 0;
-        }
-
-        .chart-wrapper {
-            position: relative;
-            width: 100%;
-            height: 140px;
-        }
-
-        .chart-wrapper canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        .store-qr-card {
-            border-radius: 22px;
-            overflow: hidden;
-            background:
-                linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
-        }
-
-        .store-icon {
-            width: 65px;
-            height: 65px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, #7E6AA8, #5f4b8b);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-        }
-
-        .store-link-box {
-            display: flex;
-            align-items: center;
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            overflow: hidden;
-            padding: 6px;
-        }
-
-        .store-link-box input {
-            border: 0 !important;
-            box-shadow: none !important;
-            background: transparent;
-            font-size: 15px;
-            direction: ltr;
-        }
-
-        .store-link-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .store-link-actions .btn {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            border: 0;
-        }
-
-        .btn-copy {
-            background: #f3f4f6;
-            color: #333;
-        }
-
-        .btn-open {
-            background: #7E6AA8;
-            color: white;
-        }
-
-        .btn-whatsapp {
-            background: #25D366;
-            color: white;
-        }
-
-        .btn-telegram {
-            background: #229ED9;
-            color: white;
-        }
-
-        .qr-wrapper {
-            background: white;
-            border-radius: 22px;
-            padding: 20px;
-            display: inline-block;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-            border: 1px solid #eee;
-        }
-
-        #qrcode canvas {
-            border-radius: 10px;
-        }
-
-        .gap-2 {
-            gap: 10px;
-        }
-
-        @media(max-width:768px) {
-
-            .store-link-box {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .store-link-actions {
-                width: 100%;
-            }
-
-            .store-link-actions .btn {
-                flex: 1;
-            }
-
-        }
-
-        @media (max-width: 992px) {
-            .dashboard-welcome {
-                font-size: 30px;
-            }
-
-            .dashboard-tabs a {
-                font-size: 16px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-top-content {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .dashboard-top-right {
-                width: 100%;
-            }
-
-            .dashboard-tabs {
-                justify-content: flex-start;
-                gap: 18px;
-            }
-
-            .dashboard-top-left {
-                width: 100%;
-            }
-
-            .stat-header h3 {
-                font-size: 38px;
-            }
-        }
-    </style>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        function createMiniChart(chartId, data, labels) {
-            const element = document.getElementById(chartId);
-            if (!element) return;
-
-            const ctx = element.getContext('2d');
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        borderColor: '#7E6AA8',
-                        backgroundColor: 'rgba(126, 106, 168, 0.25)',
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#7E6AA8',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            enabled: true
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: '#ececec',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#777',
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#f1f1f1',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#777',
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        const orderCards = @json($orderCards);
-
-        document.addEventListener('DOMContentLoaded', function() {
-            orderCards.forEach(card => {
-                createMiniChart(card.key, card.data, card.labels);
-            });
+    setTimeout(() => {
+        qrContainer.innerHTML = '';
+        qrCode = new QRCode(qrContainer, {
+            text: "{{ $storeUrl }}",
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
         });
-    </script>
+    }, 500);
+});
 
+// Copy URL to clipboard
+function copyToClipboard() {
+    const urlInput = document.getElementById('storeUrl');
+    urlInput.select();
+    urlInput.setSelectionRange(0, 99999);
 
-    <script>
-        const salesCtx = document.getElementById('salesChart');
-
-        if (salesCtx) {
-
-            new Chart(salesCtx, {
-                type: 'line', // 👈 هنا التغيير الأساسي
-                data: {
-                    labels: @json($salesLabels),
-                    datasets: [{
-                        label: 'المبيعات',
-                        data: @json($salesData),
-
-                        fill: true, // 👈 يخلي تحت الخط متلوّن زي الكروت
-                        tension: 0.4, // 👈 يخلي الخط ناعم
-                        borderColor: '#7E6AA8',
-                        backgroundColor: 'rgba(126, 106, 168, 0.20)',
-                        pointBackgroundColor: '#7E6AA8',
-                        pointRadius: 4,
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#eee'
-                            }
-                        }
-                    }
-                }
+    try {
+        document.execCommand('copy');
+        showToast('تم نسخ الرابط بنجاح!', 'success');
+    } catch (err) {
+        // Fallback for modern browsers
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(urlInput.value).then(() => {
+                showToast('تم نسخ الرابط بنجاح!', 'success');
+            }).catch(() => {
+                showToast('فشل في نسخ الرابط', 'error');
             });
-
+        } else {
+            showToast('فشل في نسخ الرابط', 'error');
         }
-    </script>
+    }
+}
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
+// Download QR Code
+function downloadQR() {
+    const qrCanvas = document.querySelector('#qrcode canvas');
+    if (qrCanvas) {
+        const link = document.createElement('a');
+        link.download = 'store-qr-code.png';
+        link.href = qrCanvas.toDataURL();
+        link.click();
+        showToast('تم تحميل الكود بنجاح!', 'success');
+    } else {
+        showToast('فشل في تحميل الكود', 'error');
+    }
+}
 
-            const qrContainer = document.getElementById('qrcode');
+// Share via WhatsApp
+function shareWhatsApp() {
+    const text = encodeURIComponent(`زر متجري الإلكتروني 🛍️\n\nيمكنك زيارة متجري من خلال الرابط التالي:\n{{ $storeUrl }}\n\nأو امسح الكود المرفق للوصول السريع 📱`);
+    const url = `https://wa.me/?text=${text}`;
+    window.open(url, '_blank');
+    showToast('تم فتح واتساب للمشاركة!', 'success');
+}
 
-            if (qrContainer) {
+// Share via Telegram
+function shareTelegram() {
+    const text = encodeURIComponent(`زر متجري الإلكتروني 🛍️\n\nيمكنك زيارة متجري من خلال الرابط التالي:\n{{ $storeUrl }}`);
+    const url = `https://t.me/share/url?url={{ urlencode($storeUrl) }}&text=${text}`;
+    window.open(url, '_blank');
+    showToast('تم فتح تيليجرام للمشاركة!', 'success');
+}
 
-                new QRCode(qrContainer, {
-                    text: "{{ $storeUrl }}",
-                    width: 180,
-                    height: 180,
-                    colorDark: "#111827",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
+// Share via Email
+function shareEmail() {
+    const subject = encodeURIComponent('زر متجري الإلكتروني 🛍️');
+    const body = encodeURIComponent(`السلام عليكم ورحمة الله وبركاته
 
-            }
+أدعوك لزيارة متجري الإلكتروني الجديد!
 
+رابط المتجر: {{ $storeUrl }}
+
+يمكنك أيضاً استخدام كاميرا هاتفك لمسح الكود المرفق للوصول السريع إلى المتجر.
+
+شكراً لك ❤️`);
+
+    const url = `mailto:?subject=${subject}&body=${body}`;
+    window.location.href = url;
+    showToast('تم فتح تطبيق البريد الإلكتروني!', 'success');
+}
+
+// Copy store link with formatted text
+function copyStoreLink() {
+    const shareText = `زر متجري الإلكتروني 🛍️
+
+رابط المتجر: {{ $storeUrl }}
+
+يمكنك زيارة المتجر مباشرة أو مسح الكود للوصول السريع!`;
+
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareText).then(() => {
+            showToast('تم نسخ نص المشاركة مع الرابط!', 'success');
+        }).catch(() => {
+            fallbackCopy(shareText);
         });
+    } else {
+        fallbackCopy(shareText);
+    }
+}
 
-        function copyToClipboard() {
+// Fallback copy function for older browsers
+function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast('تم نسخ نص المشاركة مع الرابط!', 'success');
+    } catch (err) {
+        showToast('فشل في نسخ النص', 'error');
+    }
+    document.body.removeChild(textArea);
+}
 
-            const input = document.getElementById('storeUrl');
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    const toastHeader = toast.querySelector('.toast-header');
 
-            input.select();
-            input.setSelectionRange(0, 99999);
+    // Update message
+    toastMessage.textContent = message;
 
-            navigator.clipboard.writeText(input.value);
+    // Update icon based on type
+    const icon = toastHeader.querySelector('i');
+    if (type === 'success') {
+        icon.className = 'fas fa-check-circle text-success ml-2';
+        toastHeader.querySelector('strong').textContent = 'نجح';
+    } else {
+        icon.className = 'fas fa-exclamation-circle text-danger ml-2';
+        toastHeader.querySelector('strong').textContent = 'خطأ';
+    }
 
-            Swal.fire({
-                icon: 'success',
-                title: 'تم النسخ',
-                text: 'تم نسخ رابط المتجر',
-                timer: 1800,
-                showConfirmButton: false
-            });
+    // Show toast
+    $(toast).toast({
+        delay: 3000
+    }).toast('show');
+}
+</script>
 
-        }
-
-        function downloadQR() {
-
-            const qrCanvas = document.querySelector('#qrcode canvas');
-
-            if (!qrCanvas) return;
-
-            const link = document.createElement('a');
-
-            link.download = 'store-qr.png';
-
-            link.href = qrCanvas.toDataURL();
-
-            link.click();
-
-        }
-
-        function shareWhatsApp() {
-
-            const text = encodeURIComponent(
-                `زر متجري الآن 👋\n{{ $storeUrl }}`
-            );
-
-            window.open(`https://wa.me/?text=${text}`, '_blank');
-
-        }
-
-        function shareTelegram() {
-
-            const text = encodeURIComponent('زر متجري الإلكتروني');
-
-            window.open(
-                `https://t.me/share/url?url={{ urlencode($storeUrl) }}&text=${text}`,
-                '_blank'
-            );
-
-        }
-    </script>
-
-
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    @if (session('subscription_expired'))
-        <script>
-            Swal.fire({
-                icon: 'warning',
-                title: 'تنبيه',
-                text: @json(session('subscription_expired')),
-                confirmButtonText: 'حسنًا',
-                confirmButtonColor: '#f59e0b'
-            });
-        </script>
-    @endif
-
-    @if (session('permission_denied'))
-        <script>
-            Swal.fire({
-                icon: 'warning',
-                title: 'غير متاح',
-                text: @json(session('permission_denied')),
-                confirmButtonText: 'حسنًا',
-                confirmButtonColor: '#f59e0b'
-            });
-        </script>
-    @endif
-
-    @if (session('success'))
-        <script>
-            Swal.fire({
-                icon: 'success',
-                title: 'تم بنجاح',
-                text: @json(session('success')),
-                timer: 3000,
-                showConfirmButton: false
-            });
-        </script>
-    @endif
-
-    @if (session('error'))
-        <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'خطأ',
-                text: @json(session('error')),
-                timer: 3000,
-                showConfirmButton: false
-            });
-        </script>
-    @endif
 @stop

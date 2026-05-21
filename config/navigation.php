@@ -68,12 +68,12 @@ return [
 
     // Admin
     'admin' => [
-        [
-            'title' => 'الرئيسية',
-            'icon' => 'fas fa-home',
-            'route' => 'dashboard',
-            'active_routes' => ['dashboard'],
-            'permission' => 'dashboard.access',
+         [
+            'title' => 'الملخص العام',
+            'icon' => 'fas fa-chart-line',
+            'route' => 'summary',
+            'active_routes' => ['summary'],
+            'permission' => 'summary.access',
         ],
 
         // E-Menu Module
@@ -87,6 +87,14 @@ return [
             'children' => [
                 // Categories
                 [
+
+                  [
+                    'title' => 'الرئيسية',
+                    'icon' => 'fas fa-home',
+                    'route' => 'dashboard',
+                    'active_routes' => ['dashboard'],
+                    'permission' => 'dashboard.access',
+                   ],
                     'title' => 'الفئات',
                     'icon' => 'far fa-circle',
                     'route' => 'categories.index',
