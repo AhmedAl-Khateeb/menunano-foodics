@@ -4,20 +4,18 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
- class staff extends Migration
+ class editAttendance extends Migration
 {
     /**
      * Run the migrations.
      */
     public function up()
     {
-        Schema::table('staff', function (Blueprint $table) {
+        Schema::table('Attendance', function (Blueprint $table) {
 
-            //$table->dropColumn('BirthDay');
-            //$table->renameColumn('Number of hours', 'Number_of_hours');
-            //$table->integer('Number_of_hours')->change();
-            //$table->integer('Number_of_days')->nullable()->after('Number_of_hours');
-            $table->integer('mobile')->nullable()->after('Number_of_days');
+            $table->renameColumn('user_id', 'staff_id');
+
+
         });
     }
 
@@ -26,7 +24,7 @@ use Illuminate\Support\Facades\Schema;
      */
     public function down()
     {
-        Schema::table('staff', function (Blueprint $table) {
+        Schema::table('Attendance', function (Blueprint $table) {
             //
         });
     }
