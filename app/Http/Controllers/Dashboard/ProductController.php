@@ -57,6 +57,7 @@ class ProductController extends Controller
                         'size' => $size['size'] ?? null,
                         'Purchase_price' => $size['Purchase_price'] ?? null,
                         'selling_price' => $size['selling_price'] ?? null,
+                        'quantity' => $size['quantity'] ?? 0,
                     ]);
                 }
             }
@@ -93,7 +94,7 @@ class ProductController extends Controller
 
             if (is_array($request->sizes)) {
                 foreach ($request->sizes as $size) {
-                    if (!empty($size['size']) || !empty($size['Purchase_price']) || !empty($size['selling_price'])) {
+                    if (!empty($size['size']) || !empty($size['Purchase_price']) || !empty($size['selling_price']) || !empty($size['quantity'])) {
                         $product->sizes()->create($size);
                     }
                 }

@@ -23,6 +23,7 @@ return [
         'roles.access',
         'branches.access',
         'branch_creation_request.access',
+        'branch_creation_request.access',
         'branch_links.access',
         'shifts.access',
         'attendances.access',
@@ -59,7 +60,7 @@ return [
         'shift_receipts.access',
         'orders.returns',
         'orders.update_source',
-        'payment_methods.access'
+        'payment_methods.access',
     ],
 
     // محل
@@ -78,6 +79,7 @@ return [
         'users.access',
         'roles.access',
         'branches.access',
+        'branch_creation_request.access',
         'shifts.access',
         'attendances.access',
         'cashier-cash-reports.access',
@@ -109,7 +111,7 @@ return [
         'shift_receipts.access',
         'orders.returns',
         'orders.update_source',
-        'payment_methods.access'
+        'payment_methods.access',
     ],
 
     // منيو إلكتروني فقط
@@ -130,6 +132,6 @@ return [
         'shift_receipts.access',
         'orders.returns',
         'orders.update_source',
-        'payment_methods.access'
+        'payment_methods.access',
     ],
 ];

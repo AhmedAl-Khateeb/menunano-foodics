@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
      */
     public function up()
     {
-        Schema::table('Attendance', function (Blueprint $table) {
+        Schema::table('edit_attendance', function (Blueprint $table) {
 
             $table->renameColumn('user_id', 'staff_id');
 
@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Schema;
      */
     public function down()
     {
-        Schema::table('Attendance', function (Blueprint $table) {
+        Schema::table('edit_attendance', function (Blueprint $table) {
             //
         });
     }

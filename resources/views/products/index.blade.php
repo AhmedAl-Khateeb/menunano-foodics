@@ -99,7 +99,6 @@
                                     </div>
 
 
-
                                     <div class="col-md-6 mb-3">
                                         <label for="cover">الصورة الرئيسية</label>
                                         <input type="file" name="cover" id="cover"
@@ -113,33 +112,39 @@
 
                                 <hr>
                                 <h5>إضافة الأحجام</h5>
-                                <div id="sizes-wrapper">
-                                    <div class="row size-item mb-2">
 
-                                        <div class="col-md-4">
+                                <div id="sizes-wrapper">
+
+                                    <div class="row size-item mb-2 align-items-center">
+
+                                        <div class="col-md-3">
                                             <input type="text" name="sizes[0][size]" class="form-control"
                                                 placeholder="الحجم" required>
                                         </div>
-
 
                                         <div class="col-md-3">
                                             <input type="number" name="sizes[0][Purchase_price]" class="form-control"
                                                 placeholder="سعر الشراء" required>
                                         </div>
 
-
-
                                         <div class="col-md-3">
                                             <input type="number" name="sizes[0][selling_price]" class="form-control"
                                                 placeholder="سعر البيع" required>
                                         </div>
 
-
-                                        <div class="col-md-1 d-flex align-items-center">
-                                            <button type="button" class="btn btn-danger btn-sm remove-size"
-                                                disabled>&times;</button>
+                                        <div class="col-md-2">
+                                            <input type="number" name="sizes[0][quantity]" class="form-control"
+                                                placeholder="الكمية" min="0" required>
                                         </div>
+
+                                        <div class="col-md-1 d-flex align-items-center justify-content-center">
+                                            <button type="button" class="btn btn-danger btn-sm remove-size">
+                                                &times;
+                                            </button>
+                                        </div>
+
                                     </div>
+
                                 </div>
                                 <button type="button" id="add-size" class="btn btn-secondary btn-sm mt-2">+ إضافة حجم
                                     آخر</button>
@@ -167,6 +172,7 @@
                                 <th style="width: 13%;">الفئة</th>
                                 <th style="width:10%;">سعرالشراء</th>
                                 <th style="width:10%;">سعر بيع</th>
+                                <th style="width:10%;">الكمية</th>
                                 <th style="width: 14%;">الصورة</th>
                                 <th style="width: 20%;">الإجراءات</th>
                             </tr>
@@ -201,6 +207,10 @@
 
                                     <td>
                                         {{ $product->selling_price !== null ? number_format($product->selling_price, 2) . '' : '—' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $product->sizes->sum('quantity') > 0 ? number_format($product->sizes->sum('quantity'), 0) : '—' }}
                                     </td>
 
                                     <td>
@@ -353,6 +363,8 @@
                                                                         class="form-control">
                                                                 </div>
 
+
+
                                                                 <div class="col-md-6 mt-2">
                                                                     <label>الصورة</label>
                                                                     <input type="file" name="cover"
@@ -366,37 +378,50 @@
                                                             </div>
 
                                                             <hr>
-
                                                             <h6>الأحجام</h6>
 
                                                             <div id="sizes-wrapper-edit-{{ $product->id }}">
                                                                 @foreach ($product->sizes as $index => $size)
                                                                     <div class="row size-item mb-2">
-                                                                        <div class="col-md-4">
+
+                                                                        <div class="col-md-3">
                                                                             <input type="text"
                                                                                 name="sizes[{{ $index }}][size]"
                                                                                 value="{{ $size->size }}"
-                                                                                class="form-control">
+                                                                                class="form-control" placeholder="الحجم">
                                                                         </div>
 
-                                                                        <div class="col-md-3">
+                                                                        <div class="col-md-2">
                                                                             <input type="number"
                                                                                 name="sizes[{{ $index }}][Purchase_price]"
                                                                                 value="{{ $size->Purchase_price }}"
-                                                                                class="form-control">
+                                                                                class="form-control"
+                                                                                placeholder="سعر الشراء">
                                                                         </div>
 
-                                                                        <div class="col-md-3">
+                                                                        <div class="col-md-2">
                                                                             <input type="number"
                                                                                 name="sizes[{{ $index }}][selling_price]"
                                                                                 value="{{ $size->selling_price }}"
-                                                                                class="form-control">
+                                                                                class="form-control"
+                                                                                placeholder="سعر البيع">
+                                                                        </div>
+
+                                                                        <div class="col-md-1">
+                                                                            <input type="number"
+                                                                                name="sizes[{{ $index }}][quantity]"
+                                                                                value="{{ $size->quantity ?? 0 }}"
+                                                                                class="form-control" min="0"
+                                                                                placeholder="الكميه">
                                                                         </div>
 
                                                                         <div class="col-md-2">
                                                                             <button type="button"
-                                                                                class="btn btn-danger btn-sm remove-size">&times;</button>
+                                                                                class="btn btn-danger btn-sm remove-size">
+                                                                                &times;
+                                                                            </button>
                                                                         </div>
+
                                                                     </div>
                                                                 @endforeach
                                                             </div>
@@ -436,6 +461,18 @@
                 {{ $products->links() }}
             </div>
         </div>
+        <div class="col-sm-6">
+            <ol class="float-sm-right mb-0 p-0" style="list-style: none;">
+                <li>
+                    <a href="{{ route('dashboard') }}" class="btn btn-success"
+                        style="color: #fff; transition: all 0.2s ease-in-out;"
+                        onmouseover="this.style.backgroundColor='#007bff'; this.style.borderColor='#007bff'; this.style.color='#fff';"
+                        onmouseout="this.style.backgroundColor=''; this.style.borderColor=''; this.style.color='#fff';">
+                        الرئيسية
+                    </a>
+                </li>
+            </ol>
+        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @if (session('success'))
@@ -445,6 +482,16 @@
     @endif
 
     <style>
+        .size-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .size-item>div {
+            flex: 1;
+        }
+
         .bg-gradient-primary {
             background: linear-gradient(45deg, #007bff, #0056b3);
         }
@@ -576,7 +623,7 @@
         // إضافة حجم جديد في مودال الإضافة
         $('#add-size').click(function() {
             $('#sizes-wrapper').append(`
-                               <div class="row size-item mb-2">
+                               <div class="row size-item mb-2 align-items-center">
 
                               <div class="col-md-4">
                              <input type="text" name="sizes[${sizeIndex}][size]" class="form-control" placeholder="الحجم" required>
@@ -591,6 +638,9 @@
                               <input type="number" name="sizes[${sizeIndex}][selling_price]" class="form-control" placeholder="سعر البيع" required>
                               </div>
 
+                              <div class="col-md-2">
+                              <input type="number" name="sizes[${sizeIndex}][quantity]" class="form-control" placeholder="الكمية" min="0" required>
+                              </div>
 
                                <div class="col-md-1 d-flex align-items-center">
                                <button type="button" class="btn btn-danger btn-sm remove-size">&times;</button>
@@ -612,7 +662,7 @@
             let newIndex = wrapper.find('.size-item').length;
 
             wrapper.append(`
-                                  <div class="row size-item mb-2">
+                                  <div class="row size-item mb-2 align-items-center">
                                    <div class="col-md-4">
                                     <input type="text" name="sizes[${newIndex}][size]" class="form-control" placeholder="الحجم" required>
                                     </div>
@@ -627,6 +677,9 @@
                                    <input type="number" name="sizes[${newIndex}][selling_price]" class="form-control" placeholder="سعر البيع" required>
                                   </div>
 
+                                  <div class="col-md-2">
+                                  <input type="number" name="sizes[${newIndex}][quantity]" class="form-control" placeholder="الكمية" min="0" required>
+                                   </div>
 
                                    <div class="col-md-1 d-flex align-items-center">
                                     <button type="button" class="btn btn-danger btn-sm remove-size">&times;</button>

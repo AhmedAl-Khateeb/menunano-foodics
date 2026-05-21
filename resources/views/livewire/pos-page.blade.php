@@ -252,10 +252,24 @@
                             @foreach ($products as $product)
                                 @php
                                     $isInCart = in_array($product->id, $cartProductIds);
+
+                                    if ($product->sizes->isNotEmpty()) {
+                                        $totalQty = (int) $product->sizes->sum('quantity');
+                                    } else {
+                                        $totalQty = (int) ($product->quantity ?? 0);
+                                    }
+
+                                    $isOutOfStock = $totalQty <= 0;
                                 @endphp
                                 <div wire:key="product-{{ $product->id }}"
-                                    class="group relative bg-white border {{ $isInCart ? 'border-green-500 ring-2 ring-green-100 shadow-md' : 'border-gray-100 hover:shadow-lg' }} rounded-lg overflow-hidden transition-all duration-300 cursor-pointer h-full flex flex-col"
-                                    wire:click="openSizeModal({{ $product->id }})">
+                                    class="group relative bg-white border
+                                    {{ $isOutOfStock
+                                        ? 'bg-gray-50 cursor-not-allowed border-red-300'
+                                        : ($isInCart
+                                            ? 'border-green-500 ring-2 ring-green-100 shadow-md'
+                                            : 'border-gray-100 hover:shadow-lg') }}
+                                      rounded-lg overflow-hidden transition-all duration-300 h-full flex flex-col"
+                                    @if (!$isOutOfStock) wire:click="openSizeModal({{ $product->id }})" @endif>
                                     <!-- Image with Overlay -->
                                     <div class="relative aspect-square overflow-hidden bg-gray-100 shrink-0">
                                         <img src="{{ $product->cover ? asset('Attachfile/products/' . $product->cover) : asset('dist/img/prod-1.jpg') }}"
@@ -263,6 +277,35 @@
                                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                             alt="{{ $product->name }}">
                                         <!-- Add Overlay -->
+
+
+                                        @if ($totalQty <= 0)
+                                            <div class="absolute top-2 left-2 z-[99999]">
+                                                <span
+                                                    class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                                                    نفذت الكمية
+                                                </span>
+                                            </div>
+                                        @elseif($totalQty <= 5)
+                                            <div class="absolute top-2 left-2 z-[99999]">
+                                                <span
+                                                    class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                                                    متبقي {{ $totalQty }}
+                                                </span>
+                                            </div>
+                                        @else
+                                            <div class="absolute top-2 left-2 z-[99999]">
+                                                <span
+                                                    class="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                                                    {{ $totalQty }} متوفر
+                                                </span>
+                                            </div>
+                                        @endif
+
+                                        <div
+                                            class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none">
+                                        </div>
+
                                         <div
                                             class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300">
                                         </div>
@@ -418,15 +461,18 @@
                                             </div>
 
                                             <!-- Bottom Row: Price, Extras, Quantity, Total -->
+                                            <!-- Bottom Row -->
                                             <div class="flex items-end justify-between mt-1">
+
                                                 <!-- Price & Size -->
                                                 <div class="flex flex-col">
                                                     @if (isset($item['size_name']) && $item['size_name'])
                                                         <span
-                                                            class="text-[9px] bg-indigo-50 text-indigo-700 px-1 rounded border border-indigo-100 font-bold self-start mb-0.5">
+                                                            class="text-[9px] bg-indigo-50 text-indigo-700 px-1 rounded">
                                                             {{ $item['size_name'] }}
                                                         </span>
                                                     @endif
+
                                                     <div class="text-[10px] text-gray-500 font-bold">
                                                         {{ number_format($item['price'], 2) }} ×
                                                     </div>
@@ -434,22 +480,31 @@
 
                                                 <!-- Quantity Controls -->
                                                 <div
-                                                    class="flex items-center bg-gray-50 rounded border border-gray-200 h-6 mx-1">
-                                                    <button wire:click="increment({{ $index }})"
-                                                        class="w-6 h-full text-green-600 hover:bg-green-100 rounded-r transition-colors flex items-center justify-center"><i
-                                                            class="fas fa-plus text-[9px]"></i></button>
-                                                    <div
-                                                        class="w-8 h-full flex items-center justify-center font-bold text-xs bg-white border-x border-gray-200">
-                                                        {{ $item['quantity'] }}</div>
-                                                    <button wire:click="decrement({{ $index }})"
-                                                        class="w-6 h-full text-red-500 hover:bg-red-100 rounded-l transition-colors flex items-center justify-center"><i
-                                                            class="fas fa-minus text-[9px]"></i></button>
+                                                    class="flex items-center bg-gray-100 rounded border border-gray-200 overflow-hidden">
+
+                                                    <button type="button"
+                                                        wire:click="decrement({{ $index }})"
+                                                        class="px-2 py-1 text-red-500 hover:bg-red-100 font-bold text-xs">
+                                                        -
+                                                    </button>
+
+                                                    <div class="px-2 text-xs font-black text-gray-800">
+                                                        {{ $item['quantity'] }}
+                                                    </div>
+
+                                                    <button type="button"
+                                                        wire:click="increment({{ $index }})"
+                                                        class="px-2 py-1 text-green-600 hover:bg-green-100 font-bold text-xs">
+                                                        +
+                                                    </button>
+
                                                 </div>
 
-                                                <!-- Row Total -->
+                                                <!-- Total -->
                                                 <div class="font-black text-gray-800 text-sm">
                                                     {{ number_format($item['price'] * $item['quantity'], 2) }}
                                                 </div>
+
                                             </div>
                                         </div>
                                     </div>

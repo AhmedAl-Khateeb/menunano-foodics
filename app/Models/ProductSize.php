@@ -16,6 +16,7 @@ class ProductSize extends Model
         'Purchase_price',
         'selling_price',
         'barcode',
+        'quantity',
     ];
 
     protected $casts = [

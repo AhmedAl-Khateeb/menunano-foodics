@@ -788,7 +788,7 @@ class PosPage extends Component
 
         $products = $productsQuery
             ->with([
-                'sizes:id,product_id,size,barcode,price,Purchase_price,selling_price',
+                'sizes:id,product_id,size,barcode,price,Purchase_price,selling_price,quantity',
             ])
             ->latest('id')
             ->take(80)
@@ -990,7 +990,45 @@ class PosPage extends Component
         $this->closeSizeModal();
     }
 
-    public function addToCart($productId, $sizeId = null)
+    public function addNumberToQty($index, $number)
+    {
+        $current = $this->cart[$index]['quantity'] ?? 0;
+
+        $newValue = (int) ($current.$number);
+
+        // حماية من الأرقام الكبيرة جدًا
+        if ($newValue > 999) {
+            $newValue = 999;
+        }
+
+        $this->cart[$index]['quantity'] = max(1, $newValue);
+
+        $this->calculateTotal();
+    }
+
+    public function clearQty($index)
+    {
+        $this->cart[$index]['quantity'] = 1;
+
+        $this->calculateTotal();
+    }
+
+    public function updatedCart($value, $key)
+    {
+        $parts = explode('.', $key);
+
+        if (isset($parts[1]) && $parts[1] === 'quantity') {
+            $index = $parts[0];
+
+            if ($this->cart[$index]['quantity'] < 1) {
+                $this->cart[$index]['quantity'] = 1;
+            }
+
+            $this->calculateTotal();
+        }
+    }
+
+    public function addToCart(int $productId, $sizeId = null)
     {
         $product = Product::with('sizes')->find($productId);
 
@@ -998,45 +1036,64 @@ class PosPage extends Component
             return;
         }
 
+        // لو عنده sizes ولم يتم اختيار size
         if (is_null($sizeId) && $product->sizes->isNotEmpty()) {
             $this->openSizeModal($productId);
 
             return;
         }
 
+        $name = $product->name;
+        $sizeName = null;
+        $effectiveSizeId = null;
+
         $price = $this->getPosSellingPrice($product);
         $purchasePrice = (float) ($product->Purchase_price ?? 0);
 
-        $name = $product->name;
-        $effectiveSizeId = null;
-        $sizeName = null;
+        $availableQty = 0;
+
+        $size = null;
 
         if ($sizeId) {
-            $size = $product->sizes->find($sizeId);
+            $size = ProductSize::find($sizeId);
 
-            if ($size) {
-                $price = $this->getPosSellingPrice($size);
-                $purchasePrice = (float) ($size->Purchase_price ?? $product->Purchase_price ?? 0);
-
-                $name = $product->name;
-                $sizeName = $size->size;
-                $effectiveSizeId = $size->id;
+            if (!$size) {
+                return;
             }
-        } elseif ($price <= 0 && $product->sizes->isNotEmpty()) {
+
+            $price = $this->getPosSellingPrice($size);
+            $purchasePrice = (float) ($size->Purchase_price ?? $product->Purchase_price ?? 0);
+
+            $sizeName = $size->size;
+            $effectiveSizeId = $size->id;
+            $availableQty = (int) $size->quantity;
+        } elseif ($product->sizes->isNotEmpty()) {
             $size = $product->sizes->first();
 
             $price = $this->getPosSellingPrice($size);
             $purchasePrice = (float) ($size->Purchase_price ?? $product->Purchase_price ?? 0);
 
-            $name = $product->name;
             $sizeName = $size->size;
             $effectiveSizeId = $size->id;
+            $availableQty = (int) $size->quantity;
+        } else {
+            $availableQty = (int) $product->quantity;
         }
 
         $cartItemId = $product->id.($effectiveSizeId ? '-'.$effectiveSizeId : '');
 
         foreach ($this->cart as $index => $item) {
-            if (isset($item['cart_item_id']) && $item['cart_item_id'] === $cartItemId) {
+            if (($item['cart_item_id'] ?? null) === $cartItemId) {
+                $currentQty = $this->cart[$index]['quantity'];
+                $maxQty = $item['available_quantity'] ?? $availableQty;
+
+                // ✔️ منع الزيادة فوق المخزون
+                if (($currentQty + 1) > $maxQty) {
+                    session()->flash('error', 'لا يوجد كمية كافية من المنتج');
+
+                    return;
+                }
+
                 ++$this->cart[$index]['quantity'];
                 $this->calculateTotal();
                 $this->closeSizeModal();
@@ -1045,21 +1102,27 @@ class PosPage extends Component
             }
         }
 
+        if ($availableQty <= 0) {
+            session()->flash('error', 'المنتج غير متوفر حالياً');
+
+            return;
+        }
+
         $this->cart[] = [
             'cart_item_id' => $cartItemId,
             'id' => $product->id,
             'size_id' => $effectiveSizeId,
+
             'name' => $name,
             'size_name' => $sizeName,
 
-            // سعر البيع
             'price' => $price,
             'selling_price' => $price,
-
-            // سعر الشراء
             'purchase_price' => $purchasePrice,
 
             'quantity' => 1,
+            'available_quantity' => $availableQty,
+
             'cover' => $product->cover,
         ];
 
@@ -1069,17 +1132,50 @@ class PosPage extends Component
 
     public function increment($index)
     {
+        if (!isset($this->cart[$index])) {
+            return;
+        }
+
+        $item = $this->cart[$index];
+
+        $productSizeId = $item['size_id'] ?? null;
+
+        if ($productSizeId) {
+            $productSize = ProductSize::find($productSizeId);
+
+            if (!$productSize) {
+                return;
+            }
+
+            // الكمية الموجودة فعليًا في السلة لنفس المنتج
+            $cartQty = $this->cart[$index]['quantity'];
+
+            // المخزون الحقيقي
+            $available = $productSize->quantity;
+
+            if ($cartQty >= $available) {
+                session()->flash('error', 'لا يوجد كمية كافية من المنتج');
+
+                return;
+            }
+        }
+
         ++$this->cart[$index]['quantity'];
         $this->calculateTotal();
     }
 
     public function decrement($index)
     {
+        if (!isset($this->cart[$index])) {
+            return;
+        }
+
         if ($this->cart[$index]['quantity'] > 1) {
             --$this->cart[$index]['quantity'];
         } else {
             $this->removeFromCart($index);
         }
+
         $this->calculateTotal();
     }
 
@@ -1154,7 +1250,7 @@ class PosPage extends Component
         $this->updatedPaidAmount();
     }
 
-    private function loadBusinessType($storeOwnerId)
+    private function loadBusinessType(int $storeOwnerId)
     {
         $this->businessTypeSlug = 'rest';
 
@@ -1198,7 +1294,7 @@ class PosPage extends Component
         }
     }
 
-    public function setOrderType($type)
+    public function setOrderType(string $type)
     {
         if (!in_array($type, $this->availableOrderTypes, true)) {
             return;
@@ -1248,13 +1344,19 @@ class PosPage extends Component
             return;
         }
 
-        if ($this->orderType === 'delivery' && (empty($this->customerPhone) || empty($this->customerName))) {
+        if (
+            $this->orderType === 'delivery'
+            && (empty($this->customerPhone) || empty($this->customerName))
+        ) {
             session()->flash('error', 'يرجى إدخال بيانات العميل!');
 
             return;
         }
 
-        if ($this->orderType === 'delivery' && !$this->selectedDeliveryManId) {
+        if (
+            $this->orderType === 'delivery'
+            && !$this->selectedDeliveryManId
+        ) {
             session()->flash('error', 'يرجى اختيار المندوب!');
 
             return;
@@ -1272,13 +1374,13 @@ class PosPage extends Component
         }
 
         // ======================
-        // 1️⃣ Subtotal
+        // Subtotal
         // ======================
-        $subtotal = collect($this->cart)->sum(fn ($item) => $item['price'] * $item['quantity']
-        );
+        $subtotal = collect($this->cart)
+            ->sum(fn ($item) => $item['price'] * $item['quantity']);
 
         // ======================
-        // 2️⃣ Discount
+        // Discount
         // ======================
         $discountValue = (float) ($this->discount ?? 0);
         $discountType = $this->discountType ?? 'fixed';
@@ -1292,7 +1394,7 @@ class PosPage extends Component
         $netBeforeCharges = $subtotal - $discountAmount;
 
         // ======================
-        // 3️⃣ Charges (Taxes / Fees)
+        // Charges
         // ======================
         $charges = Charge::where('user_id', auth()->id())
             ->where('is_active', 1)
@@ -1302,16 +1404,12 @@ class PosPage extends Component
         $chargesBreakdown = [];
 
         foreach ($charges as $charge) {
-            // حساب الضريبة
-            if ($charge->type === 'percentage') {
-                $amount = $netBeforeCharges * ($charge->value / 100);
-            } else {
-                $amount = $charge->value;
-            }
+            $amount = $charge->type === 'percentage'
+                ? $netBeforeCharges * ($charge->value / 100)
+                : $charge->value;
 
             $chargesTotal += $amount;
 
-            // مهم للطباعة + DB
             $chargesBreakdown[] = [
                 'id' => $charge->id,
                 'name' => $charge->name,
@@ -1322,15 +1420,13 @@ class PosPage extends Component
         }
 
         // ======================
-        // 4️⃣ Final Total
+        // Final Total
         // ======================
         $finalTotal = $netBeforeCharges + $chargesTotal;
-
-        // إضافة التوصيل لو موجود
         $finalTotal += (float) $this->deliveryFee;
 
         // ======================
-        // 5️⃣ Payment
+        // Payment
         // ======================
         $isCash = (int) $this->paymentMethod === 1;
 
@@ -1357,109 +1453,179 @@ class PosPage extends Component
 
         $savedOrderId = null;
 
-        DB::transaction(function () use (
-            $activeShift,
-            $subtotal,
-            $discountValue,
-            $discountAmount,
-            $discountType,
-            $chargesTotal,
-            $chargesBreakdown,
-            $finalTotal,
-            $paidAmount,
-            $isDraft,
-            &$savedOrderId,
-        ) {
-            $userId = auth()->id();
+        try {
+            DB::transaction(function () use (
+                $activeShift,
+                $subtotal,
+                $discountValue,
+                $discountAmount,
+                $discountType,
+                $chargesTotal,
+                $chargesBreakdown,
+                $finalTotal,
+                $paidAmount,
+                $isDraft,
+                &$savedOrderId
+            ) {
+                $userId = auth()->id();
 
-            $storeOwnerId = auth()->user()->role === 'super_admin'
-                ? $userId
-                : (auth()->user()->created_by ?? $userId);
+                $storeOwnerId = auth()->user()->role === 'super_admin'
+                    ? $userId
+                    : (auth()->user()->created_by ?? $userId);
 
-            $finalCustomerId = $this->selectedCustomerId;
+                // ======================
+                // Customer
+                // ======================
+                $finalCustomerId = $this->selectedCustomerId;
 
-            if (!$finalCustomerId && $this->customerPhone && $this->customerName) {
-                $customer = Customer::create([
-                    'user_id' => $storeOwnerId,
-                    'name' => $this->customerName,
-                    'phone' => $this->customerPhone,
-                ]);
+                if (
+                    !$finalCustomerId
+                    && $this->customerPhone
+                    && $this->customerName
+                ) {
+                    $customer = Customer::create([
+                        'user_id' => $storeOwnerId,
+                        'name' => $this->customerName,
+                        'phone' => $this->customerPhone,
+                    ]);
 
-                $finalCustomerId = $customer->id;
-            }
-
-            $order = null;
-
-            if ($this->orderType === 'table' && $this->selectedTableId) {
-                $order = Order::where('table_id', $this->selectedTableId)
-                    ->where('status', 'pending')
-                    ->first();
-            }
-
-            $status = $isDraft ? 'pending' : 'served';
-
-            $data = [
-                'shift_id' => $activeShift->id,
-                'user_id' => $storeOwnerId,
-                'customer_id' => $finalCustomerId,
-
-                'subtotal' => $subtotal,
-
-                'discount' => $discountValue,
-                'discount_type' => $discountType,
-                'discount_amount' => $discountAmount,
-
-                'charges_total' => $chargesTotal,
-                'charges_breakdown' => json_encode($chargesBreakdown),
-
-                'total_price' => $finalTotal,
-
-                'status' => $status,
-                'type' => $this->orderType,
-                'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
-
-                'payment_method' => (int) $this->paymentMethod,
-                'paid_amount' => $paidAmount,
-                'change_amount' => $this->changeAmount,
-
-                'delivery_fee' => $this->deliveryFee,
-                'delivery_man_id' => $this->selectedDeliveryManId,
-
-                'kitchen_note' => $this->kitchenNote,
-                'source' => 'pos',
-            ];
-
-            $order = $order
-                ? tap($order)->update($data)
-                : Order::create($data);
-
-            foreach ($this->cart as $item) {
-                if (!isset($item['id'])) {
-                    continue;
+                    $finalCustomerId = $customer->id;
                 }
 
-                DB::table('order_product_sizes')->insert([
-                    'order_id' => $order->id,
-                    'product_size_id' => $item['id'],
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                // ======================
+                // Existing Table Order
+                // ======================
+                $order = null;
+
+                if (
+                    $this->orderType === 'table'
+                    && $this->selectedTableId
+                ) {
+                    $order = Order::where('table_id', $this->selectedTableId)
+                        ->where('status', 'pending')
+                        ->first();
+                }
+
+                // ======================
+                // Existing items (FIXED KEY)
+                // ======================
+                $existingItems = [];
+
+                if ($order) {
+                    $existingItems = DB::table('order_product_sizes')
+                        ->where('order_id', $order->id)
+                        ->pluck('quantity', 'product_size_id')
+                        ->toArray();
+                }
+
+                // ======================
+                // STOCK CHECK (FIXED)
+                // ======================
+                foreach ($this->cart as $item) {
+                    if (!isset($item['id'])) {
+                        continue;
+                    }
+
+                    $productSizeId = $item['size_id'] ?? null;
+
+                    // لو فيه size
+                    if ($productSizeId) {
+                        $productSize = ProductSize::with('product')
+                            ->lockForUpdate()
+                            ->find($productSizeId);
+
+                        if (!$productSize) {
+                            throw new \Exception('المنتج غير موجود');
+                        }
+
+                        // الكمية المطلوبة = الموجودة في السلة
+                        $requiredQty = $item['quantity'];
+
+                        // الكمية الحقيقية المتاحة
+                        $availableQty = $productSize->quantity;
+
+                        if ($requiredQty > $availableQty) {
+                            throw new \Exception("الكمية غير كافية: {$productSize->product->name} ({$productSize->size}) المتاح {$availableQty}");
+                        }
+
+                        // خصم مباشر (بدون تعقيد oldQty)
+                        $productSize->decrement('quantity', $requiredQty);
+                    }
+                }
+
+                // ======================
+                // Order data
+                // ======================
+                $status = $isDraft ? 'pending' : 'served';
+
+                $data = [
+                    'shift_id' => $activeShift->id,
+                    'user_id' => $storeOwnerId,
+                    'customer_id' => $finalCustomerId,
+
+                    'subtotal' => $subtotal,
+                    'discount' => $discountValue,
+                    'discount_type' => $discountType,
+                    'discount_amount' => $discountAmount,
+
+                    'charges_total' => $chargesTotal,
+                    'charges_breakdown' => json_encode($chargesBreakdown),
+
+                    'total_price' => $finalTotal,
+                    'status' => $status,
+
+                    'type' => $this->orderType,
+                    'table_id' => $this->orderType === 'table' ? $this->selectedTableId : null,
+
+                    'payment_method' => (int) $this->paymentMethod,
+                    'paid_amount' => $paidAmount,
+                    'change_amount' => $this->changeAmount,
+
+                    'delivery_fee' => $this->deliveryFee,
+                    'delivery_man_id' => $this->selectedDeliveryManId,
+
+                    'kitchen_note' => $this->kitchenNote,
+                    'source' => 'pos',
+                ];
+
+                $order = $order
+                    ? tap($order)->update($data)
+                    : Order::create($data);
+
+                DB::table('order_product_sizes')
+                    ->where('order_id', $order->id)
+                    ->delete();
+
+                foreach ($this->cart as $item) {
+                    DB::table('order_product_sizes')->insert([
+                        'order_id' => $order->id,
+                        'product_size_id' => $item['size_id'],
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                $savedOrderId = $order->id;
+                $this->lastOrderId = $order->id;
+            });
+
+            if ($savedOrderId && !$isDraft) {
+                $this->dispatch(
+                    'print-order',
+                    url: route('pos.orders.print-two', $savedOrderId)
+                );
+
+                $this->clearCart();
+
+                return;
             }
 
-            $savedOrderId = $order->id;
-            $this->lastOrderId = $order->id;
-        });
-
-        if ($savedOrderId && !$isDraft) {
-            $this->dispatch('print-order', url: route('pos.orders.print-two', $savedOrderId));
-            $this->clearCart();
-
-            return;
+            $this->showSuccessModal = true;
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
         }
-
-        $this->showSuccessModal = true;
     }
 
     // Merge Tables Functionality

@@ -51,6 +51,11 @@ class Product extends Model
         return $this->hasMany(ProductSize::class);
     }
 
+    public function getAvailableQuantityAttribute()
+{
+    return $this->sizes->sum('quantity');
+}
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
