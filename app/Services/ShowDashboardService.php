@@ -13,11 +13,9 @@ class ShowDashboardService
     public function index(Request $request)
     {
         $selectedDate = $request->get('date');
-    //$filter = $request->get('filter', 'day');
+        // $filter = $request->get('filter', 'day');
 
-    $filter = $request->get('filter')??Null;
-
-
+        $filter = $request->get('filter') ?? null;
 
         if (in_array(auth()->user()->role, ['user', 'cashier'])) {
             return redirect()->route('pos.index');
@@ -27,70 +25,40 @@ class ShowDashboardService
         // تحديد الفترة الزمنية
         // ======================
 
-        if($filter!=NULL){
+        if ($filter) {
             switch ($filter) {
                 case 'week':
-    
                     $startDate = Carbon::now()->startOfWeek();
                     $endDate = Carbon::now()->endOfWeek();
                     $step = '1 day';
                     $format = 'D';
-    
-    
-                break;
-                case 'day':
-    
+                    break;
+
+                case 'month':
+                    $startDate = Carbon::now()->startOfMonth();
+                    $endDate = Carbon::now()->endOfMonth();
+                    $step = '1 day';
+                    $format = 'd';
+                    break;
+
+                default: // day
                     $startDate = Carbon::today()->startOfDay();
                     $endDate = Carbon::now();
                     $step = '1 hour';
                     $format = 'H:00';
-    
-    
                     break;
-                    case 'month':
-    
-                        $startDate = Carbon::now()->startOfMonth();
-                        $endDate = Carbon::now()->endOfMonth();
-                        $step = '1 day';
-                        $format = 'd';
-    
-                        break;
-
-
-
-
-                        // default:
-
-                        // $startDate = Carbon::today()->startOfDay();
-                        // $endDate = Carbon::now();
-                        // $step = '1 hour';
-                        // $format = 'H:00';
-
-
-                        // break;
-
-
-                        
-    
-                    }
-                    }else{
-    
-                        if ($selectedDate) {
-                            $startDate = Carbon::parse($selectedDate)->startOfDay();
-                            $endDate = Carbon::parse($selectedDate)->endOfDay();
-                            $step = '1 hour';
-                            $format = 'H:00';
-                        }
-    
-    
-                        
-                        $startDate = Carbon::today()->startOfDay();
-                        $endDate = Carbon::now();
-                        $step = '1 hour';
-                        $format = 'H:00';
-                     
-    
-                    }
+            }
+        } elseif ($selectedDate) {
+            $startDate = Carbon::parse($selectedDate)->startOfDay();
+            $endDate = Carbon::parse($selectedDate)->endOfDay();
+            $step = '1 hour';
+            $format = 'H:00';
+        } else {
+            $startDate = Carbon::today()->startOfDay();
+            $endDate = Carbon::now();
+            $step = '1 hour';
+            $format = 'H:00';
+        }
 
         // ======================
         // Base Query (موحد لكل الإحصائيات)
