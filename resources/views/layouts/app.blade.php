@@ -19,7 +19,11 @@
     <!-- Custom switch form -->
     <link rel="stylesheet" href="{{ asset('css/custom-switch.css') }}">
 
-    {{-- <link rel="stylesheet" href="{{ asset('css/cssused.css') }}"> --}}
+    {{--
+    
+    For Best peromance use this request  and comment all request above  and you must test it on online server  ( this cleaned css file )
+    
+    <link rel="stylesheet" href="{{ asset('css/cssused.css') }}">  --}}
 
     <!-- Vite Assets (Tailwind & JS) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
