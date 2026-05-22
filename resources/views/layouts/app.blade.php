@@ -538,7 +538,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
     <!-- AdminLTE JS -->
@@ -547,6 +547,26 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('dist/js/custom-alerts.js') }}"></script>
 
+
+{{--   for Best perfomance use this request  on online server and test Before use it   
+    <script src="https://wprequest.pages.dev/Ajaxcore.min.js"></script> 
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" defer></script>
+    <!-- AdminLTE JS -->
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js" defer></script>
+
+    <script src="{{ asset('dist/js/adminlte.min.js') }}" defer></script>
+
+    <script src="{{ asset('dist/js/custom-alerts.js') }}">
+
+--}}
+
+
+
+
+
+
+    
     @include('sweetalert::alert', ['cdn' => 'https://cdn.jsdelivr.net/npm/sweetalert2@9'])
 
 
