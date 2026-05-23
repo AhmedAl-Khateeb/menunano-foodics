@@ -384,7 +384,7 @@
                                                                 @foreach ($product->sizes as $index => $size)
                                                                     <div class="row size-item mb-2">
 
-                                                                        <div class="col-md-3">
+                                                                        <div class="col-md-2">
                                                                             <input type="text"
                                                                                 name="sizes[{{ $index }}][size]"
                                                                                 value="{{ $size->size }}"
@@ -407,7 +407,7 @@
                                                                                 placeholder="سعر البيع">
                                                                         </div>
 
-                                                                        <div class="col-md-1">
+                                                                        <div class="col-md-2">
                                                                             <input type="number"
                                                                                 name="sizes[{{ $index }}][quantity]"
                                                                                 value="{{ $size->quantity ?? 0 }}"

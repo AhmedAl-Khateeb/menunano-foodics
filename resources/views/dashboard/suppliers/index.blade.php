@@ -8,11 +8,6 @@
                     <h1 class="m-0">الموردون</h1>
                 </div>
                 <div class="col-sm-6">
-                    {{-- <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item">
-                            <a href="{{ route('dashboard') }}">الرئيسية</a>
-                        </li>
-                    </ol> --}}
                 </div>
             </div>
         </div>
@@ -61,9 +56,11 @@
                             </a>
                         </form>
 
-                        <a href="{{ route('inventory.suppliers.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus"></i> إضافة مورد
-                        </a>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal"
+                            data-target="#createSupplierModal">
+                            <i class="fas fa-plus"></i>
+                            إضافة مورد
+                        </button>
                     </div>
                 </div>
 
@@ -95,10 +92,10 @@
                                                     <i class="fas fa-eye"></i>
                                                 </a>
 
-                                                <a href="{{ route('inventory.suppliers.edit', $supplier->id) }}"
-                                                    class="btn btn-primary btn-sm" title="تعديل">
+                                                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal"
+                                                    data-target="#editSupplierModal{{ $supplier->id }}">
                                                     <i class="fas fa-edit"></i>
-                                                </a>
+                                                </button>
 
                                                 <form action="{{ route('inventory.suppliers.destroy', $supplier->id) }}"
                                                     method="POST" class="d-inline delete-form">
@@ -118,6 +115,44 @@
                                         <td colspan="8">لا توجد بيانات حالياً</td>
                                     </tr>
                                 @endforelse
+
+                                @foreach ($suppliers as $supplier)
+    {{-- Edit Supplier Modal --}}
+    <div class="modal fade" id="editSupplierModal{{ $supplier->id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <form method="POST"
+                    action="{{ route('inventory.suppliers.update', $supplier->id) }}">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">تعديل المورد</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        @include('dashboard.suppliers.form', ['supplier' => $supplier])
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            إلغاء
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            تحديث
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+@endforeach
                             </tbody>
                         </table>
                     </div>
@@ -244,4 +279,47 @@
             });
         });
     </script>
+
+
+    {{-- Create Supplier Modal --}}
+    <div class="modal fade" id="createSupplierModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <form method="POST" action="{{ route('inventory.suppliers.store') }}">
+                    @csrf
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">إضافة مورد</h5>
+
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        @include('dashboard.suppliers.form', [
+                            'supplier' => null,
+                        ])
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            إلغاء
+                        </button>
+
+                        <button type="submit" class="btn btn-primary">
+                            حفظ
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
 @endsection

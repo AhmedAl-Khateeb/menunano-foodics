@@ -1,4 +1,5 @@
 <div class="card-body text-right">
+
     @if ($errors->any())
         <div class="alert alert-danger">
             <ul class="mb-0">
@@ -10,42 +11,48 @@
     @endif
 
     <div class="row">
-        <div class="col-md-6 form-group">
-            <label for="name">الاسم <span class="text-danger">*</span></label>
-            <input type="text" name="name" id="name" class="form-control"
-                value="{{ old('name', $supplier->name ?? '') }}" required>
+
+        <div class="col-md-6 mb-3">
+            <label>اسم المورد <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" value="{{ old('name', $supplier->name ?? '') }}"
+                required>
         </div>
 
-        <div class="col-md-6 form-group">
-            <label for="code">كود المورد</label>
-            <input type="text" name="code" id="code" class="form-control"
-                value="{{ old('code', $supplier->code ?? '') }}">
+        <div class="col-md-6 mb-3">
+            <label>كود المورد</label>
+            <input type="text" name="code" class="form-control" value="{{ old('code', $supplier->code ?? '') }}">
         </div>
-    </div>
 
-    <div class="row">
-        <div class="col-md-4 form-group">
-            <label for="contact_name">اسم الاتصال</label>
-            <input type="text" name="contact_name" id="contact_name" class="form-control"
+        <div class="col-md-4 mb-3">
+            <label>اسم الاتصال</label>
+            <input type="text" name="contact_name" class="form-control"
                 value="{{ old('contact_name', $supplier->contact_name ?? '') }}">
         </div>
 
-        <div class="col-md-4 form-group">
-            <label for="phone">الهاتف</label>
-            <input type="text" name="phone" id="phone" class="form-control"
+        <div class="col-md-4 mb-3">
+            <label>الهاتف</label>
+            <input type="text" name="phone" class="form-control"
                 value="{{ old('phone', $supplier->phone ?? '') }}">
         </div>
 
-        <div class="col-md-4 form-group">
-            <label for="email">البريد الإلكتروني</label>
-            <input type="email" name="email" id="email" class="form-control"
+        <div class="col-md-4 mb-3">
+            <label>البريد الإلكتروني</label>
+            <input type="email" name="email" class="form-control"
                 value="{{ old('email', $supplier->email ?? '') }}">
         </div>
+
+        <div class="col-md-12 mb-2">
+            <div class="form-check">
+                <input type="checkbox" name="is_active" value="1" class="form-check-input"
+                    id="is_active_{{ $supplier->id ?? 'create' }}"
+                    {{ old('is_active', $supplier->is_active ?? true) ? 'checked' : '' }}>
+
+                <label class="form-check-label" for="is_active_{{ $supplier->id ?? 'create' }}">
+                    نشط
+                </label>
+            </div>
+        </div>
+
     </div>
 
-    <div class="form-group form-check text-right">
-        <input type="checkbox" name="is_active" value="1" class="form-check-input" id="is_active"
-            {{ old('is_active', $supplier->is_active ?? true) ? 'checked' : '' }}>
-        <label class="form-check-label mr-4" for="is_active">نشط</label>
-    </div>
 </div>
