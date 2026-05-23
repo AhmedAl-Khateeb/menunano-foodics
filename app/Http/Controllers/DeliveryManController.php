@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 use App\Models\DeliveryMan;
+use Illuminate\Http\Request;
 
 class DeliveryManController extends Controller
 {
     public function index()
     {
-        $deliveryMen = DeliveryMan::where('user_id', auth()->id())->latest()->get();
+        $deliveryMen = DeliveryMan::where('user_id', auth()->id())->latest()->paginate(10);
+
         return view('dashboard.delivery_men.index', compact('deliveryMen'));
     }
 
     public function create()
     {
-        return view('dashboard.delivery_men.create');
+        return redirect()->route('delivery_men.index');
     }
 
     public function store(Request $request)
@@ -40,13 +40,14 @@ class DeliveryManController extends Controller
 
     public function edit(DeliveryMan $deliveryMan)
     {
-        if ($deliveryMan->user_id !== auth()->id()) abort(403);
-        return view('dashboard.delivery_men.edit', compact('deliveryMan'));
+        return redirect()->route('delivery_men.index');
     }
 
     public function update(Request $request, DeliveryMan $deliveryMan)
     {
-        if ($deliveryMan->user_id !== auth()->id()) abort(403);
+        if ($deliveryMan->user_id !== auth()->id()) {
+            abort(403);
+        }
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -66,8 +67,11 @@ class DeliveryManController extends Controller
 
     public function destroy(DeliveryMan $deliveryMan)
     {
-        if ($deliveryMan->user_id !== auth()->id()) abort(403);
+        if ($deliveryMan->user_id !== auth()->id()) {
+            abort(403);
+        }
         $deliveryMan->delete();
+
         return redirect()->route('delivery_men.index')->with('success', 'تم الحذف بنجاح');
     }
 }

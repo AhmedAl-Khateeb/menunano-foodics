@@ -10,7 +10,6 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">الرئيسية</a></li>
-                        {{-- <li class="breadcrumb-item active">المستخدمين</li> --}}
                     </ol>
                 </div>
             </div>
@@ -60,9 +59,12 @@
 
                                     </form>
 
-                                    <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-plus"></i> إضافة مستخدم
-                                    </a>
+                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="modal"
+                                        data-target="#createUserModal">
+
+                                        <i class="fas fa-plus"></i>
+                                        إضافة مستخدم
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -120,10 +122,11 @@
                                                                 <i class="fas fa-user-secret"></i>
                                                             </a>
                                                         @endif --}}
-                                                        <a href="{{ route('users.edit', $user->id) }}"
-                                                            class="btn btn-info btn-sm">
+                                                        <button type="button" class="btn btn-info btn-sm"
+                                                            data-toggle="modal"
+                                                            data-target="#editUserModal{{ $user->id }}">
                                                             <i class="fas fa-edit"></i>
-                                                        </a>
+                                                        </button>
                                                         <form action="{{ route('users.destroy', $user->id) }}"
                                                             method="POST" style="display:inline-block;">
                                                             @csrf
@@ -178,10 +181,10 @@
                                                         <i class="fas fa-user-secret"></i> دخول
                                                     </a>
                                                 @endif
-                                                <a href="{{ route('users.edit', $user->id) }}"
-                                                    class="btn btn-info btn-sm flex-grow-1">
-                                                    <i class="fas fa-edit"></i> تعديل
-                                                </a>
+                                                <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
+                                                    data-bs-target="#editUserModal{{ $user->id }}">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
                                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST"
                                                     class="flex-grow-1">
                                                     @csrf
@@ -219,6 +222,95 @@
             </div>
         </div>
     </section>
+
+
+    <!-- User Modal -->
+    {{-- Create User Modal --}}
+    <div class="modal fade" id="createUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <form method="POST" action="{{ route('users.store') }}" enctype="multipart/form-data">
+
+                    @csrf
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            إضافة مستخدم
+                        </h5>
+
+                        <button type="button" class="close" data-dismiss="modal">
+
+                            <span>&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        @include('users.form', [
+                            'user' => null,
+                        ])
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+
+                            إلغاء
+                        </button>
+
+                        <button type="submit" class="btn btn-primary">
+
+                            حفظ
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    {{-- Edit User Modal --}}
+    @foreach ($users as $user)
+        <div class="modal fade" id="editUserModal{{ $user->id }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+
+                    <form method="POST" action="{{ route('users.update', $user->id) }}" enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="modal-header">
+                            <h5 class="modal-title">تعديل المستخدم</h5>
+
+                            <button type="button" class="close" data-dismiss="modal">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+
+                        <div class="modal-body">
+                            @include('users.form', ['user' => $user])
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                إلغاء
+                            </button>
+
+                            <button type="submit" class="btn btn-primary">
+                                تحديث
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    @endforeach
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 

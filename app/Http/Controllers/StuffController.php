@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Staff;
 use App\Traits\UploadImg;
-use App\Models\staff;
 use Illuminate\Http\Request;
 
 class stuffcontroller extends Controller
@@ -14,48 +14,34 @@ class stuffcontroller extends Controller
     {
         $staffs = staff::where('user_id', auth()->id())
         ->orderByDesc('created_at')
-        ->get();
+        ->paginate(10);
 
         return view('dashboard.staff.index', compact('staffs'));
     }
 
     public function create()
     {
-        return view('dashboard.staff.create');
+        return redirect()->route('staff.index');
     }
 
     public function store(Request $request)
     {
-        $Name = $request->Name;
+        $FILENAME = null;
 
+        if ($request->hasFile('upload')) {
+            $FILENAME = $this->saveImage($request->file('upload'), 'Attachfile/staff');
+        }
 
-        $mobile=$request->mobile;
-
-
-        $Number_of_days = $request->Number_of_days;
-
-        $Number_of_hours = $request->Number_of_hours;
-
-        $Start_date = $request->Start_date;
-
-        $End_date = $request->End_date;
-
-        $Salary = $request->Salary;
-
-        @$FILENAME = $this->saveImage($request->upload, 'Attachfile/staff');
-
-        $user_id = auth()->id();
-
-        staff::create([
-            'Name' => $Name,
-            'Number_of_days' => $Number_of_days,
-            'Number_of_hours' => $Number_of_hours,
-            'mobile' => $mobile,
-            'Start_date' => $Start_date,
-            'End_date' => $End_date,
+        Staff::create([
+            'Name' => $request->Name,
+            'Number_of_days' => $request->Number_of_days,
+            'Number_of_hours' => $request->Number_of_hours,
+            'mobile' => $request->mobile,
+            'Start_date' => $request->Start_date,
+            'End_date' => $request->End_date,
             'attach_File' => $FILENAME,
-            'Salary' => $Salary,
-            'user_id' => $user_id,
+            'Salary' => $request->Salary,
+            'user_id' => auth()->id(),
         ]);
 
         return redirect()->route('staff.index')->with('success', 'تم الاضافة بنجاح');
@@ -72,43 +58,34 @@ class stuffcontroller extends Controller
         return view('dashboard.staff.update', compact('staffs'));
     }
 
-    public function edit(Request $request, staff $staff)
+    public function edit($id)
     {
+        return redirect()->route('staff.index');
     }
 
     public function update(Request $request, staff $staff)
     {
-        $Name = $request->Name;
-
-        $mobile=$request->mobile;
-
-        $Number_of_days = $request->Number_of_days;
-
-        $Number_of_hours = $request->Number_of_hours;
-
-        $Start_date = $request->Start_date;
-
-        $End_date = $request->End_date;
-
-        $Salary = $request->Salary;
-
         $user_id = auth()->id();
 
-        @$FILENAME = $this->saveImage($request->upload, 'Attachfile/staff');
+        $FILENAME = $staff->attach_File;
+
+        if ($request->hasFile('upload')) {
+            $FILENAME = $this->saveImage($request->file('upload'), 'Attachfile/staff');
+        }
 
         $staff->update([
-            'Name' => $Name, 
-            'Number_of_days' => $Number_of_days,
-            'Number_of_hours' => $Number_of_hours,
-            'mobile' => $mobile,
-            'Start_date' => $Start_date, 
-            'End_date' => $End_date, 
-            'attach_File' => $FILENAME, 
-            'Salary' => $Salary, 
+            'Name' => $request->Name,
+            'Number_of_days' => $request->Number_of_days,
+            'Number_of_hours' => $request->Number_of_hours,
+            'mobile' => $request->mobile,
+            'Start_date' => $request->Start_date,
+            'End_date' => $request->End_date,
+            'attach_File' => $FILENAME,
+            'Salary' => $request->Salary,
             'user_id' => $user_id,
         ]);
 
-        return redirect()->route('staff.index')->with('success', 'update  sent  succefuly');
+        return redirect()->route('staff.index')->with('success', 'updated successfully');
     }
 
     public function destroy(staff $staff)

@@ -12,7 +12,6 @@ return new class extends Migration {
     {
         Schema::create('staff', function (Blueprint $table) {
             $table->id();
-
             $table->string('Name');
             $table->date('BirthDay')->nullable();
             $table->string('Academic_qualification')->nullable();

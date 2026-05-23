@@ -4,24 +4,24 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class staff extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('staff', function (Blueprint $table) {
-            $table->string('mobile',20)->nullable();
+            $table->integer('Number_of_days')->nullable();
+            $table->integer('Number_of_hours')->nullable();
         });
     }
 
     /**
      * Reverse the migrations.
      */
-    public function down()
+    public function down(): void
     {
         Schema::table('staff', function (Blueprint $table) {
         });
     }
-}
+};

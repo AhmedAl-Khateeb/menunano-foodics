@@ -21,16 +21,14 @@ class UserController extends Controller
     {
         $users = $this->userService->index($request);
 
-        return view('users.index', compact('users'));
-    }
-
-    public function create()
-    {
         if (auth()->user()->role === 'super_admin') {
             $roles = Role::where('created_by', auth()->id())->get();
         } else {
             $roles = collect([
-                (object) ['id' => 'cashier', 'name' => 'cashier'],
+                (object) [
+                    'id' => 'cashier',
+                    'name' => 'cashier',
+                ],
             ]);
         }
 
@@ -38,7 +36,21 @@ class UserController extends Controller
             ->where('is_active', true)
             ->get();
 
-        return view('users.create', compact('roles', 'branches'));
+        return view('users.index', compact(
+            'users',
+            'roles',
+            'branches'
+        ));
+    }
+
+    public function create()
+    {
+        return redirect()->route('users.index');
+    }
+
+    public function edit(User $user)
+    {
+        return redirect()->route('users.index');
     }
 
     public function store(StoreUserRequest $request)
@@ -48,21 +60,6 @@ class UserController extends Controller
         return redirect()
             ->route('users.index')
             ->with('success', 'تم إنشاء المستخدم بنجاح');
-    }
-
-    public function edit(User $user)
-    {
-        if (auth()->user()->role === 'super_admin') {
-            $roles = Role::where('created_by', auth()->id())->get();
-        } else {
-            $roles = collect([
-                (object) ['id' => 'cashier', 'name' => 'cashier'],
-            ]);
-        }
-
-        $branches = Branch::where('created_by', auth()->id())->get();
-
-        return view('users.edit', compact('user', 'roles', 'branches'));
     }
 
     public function update(UpdateUserRequest $request, User $user)
