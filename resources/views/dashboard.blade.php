@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard')
+@section('title', 'Nanocity')
 
 @section('content_header')
     <h1>لوحة التحكم</h1>

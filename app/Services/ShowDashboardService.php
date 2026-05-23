@@ -54,10 +54,11 @@ class ShowDashboardService
             $step = '1 hour';
             $format = 'H:00';
         } else {
-            $startDate = Carbon::today()->startOfDay();
+            $startDate = Order::where('user_id', auth()->id())
+        ->min('created_at') ?? Carbon::today();
             $endDate = Carbon::now();
-            $step = '1 hour';
-            $format = 'H:00';
+            $step = '1 day';
+            $format = 'd';
         }
 
         // ======================
@@ -69,11 +70,41 @@ class ShowDashboardService
         // ======================
         // كروت الطلبات + الرسوم الصغيرة
         // ======================
+        // ======================
+        // الكروت + الرسوم البيانية
+        // ======================
+
         $orderCards = [
-            ['title' => 'كل الطلبات', 'key' => 'allOrdersChart', 'type' => null],
-            ['title' => 'التوصيل', 'key' => 'deliveryChart', 'type' => 'delivery'],
-            ['title' => 'الاستلام', 'key' => 'pickupChart', 'type' => 'takeaway'],
-            ['title' => 'محلي', 'key' => 'localChart', 'type' => 'local'],
+            [
+                'title' => 'كل الطلبات',
+                'key' => 'allOrdersChart',
+                'type' => null,
+            ],
+            [
+                'title' => 'التوصيل',
+                'key' => 'deliveryChart',
+                'type' => 'delivery',
+            ],
+            [
+                'title' => 'الاستلام',
+                'key' => 'pickupChart',
+                'type' => 'takeaway',
+            ],
+            [
+                'title' => 'محلي',
+                'key' => 'localChart',
+                'type' => 'local',
+            ],
+            [
+                'title' => 'المصروفات',
+                'key' => 'expenseChart',
+                'type' => 'expense',
+            ],
+            [
+                'title' => 'صافي المبيعات',
+                'key' => 'netSalesChart',
+                'type' => 'net_sales',
+            ],
         ];
 
         foreach ($orderCards as &$card) {
@@ -83,36 +114,72 @@ class ShowDashboardService
             $period = CarbonPeriod::create($startDate, $step, $endDate);
 
             foreach ($period as $p) {
+                $from = $step === '1 hour'
+                    ? $p->copy()->startOfHour()
+                    : $p->copy()->startOfDay();
+
+                $to = $step === '1 hour'
+                    ? $p->copy()->endOfHour()
+                    : $p->copy()->endOfDay();
+
                 $labels[] = $p->format($format);
 
-                $q = Order::where('user_id', auth()->id())
-                    ->whereBetween('created_at', [
-                        $step === '1 hour' ? $p->copy()->startOfHour() : $p->copy()->startOfDay(),
-                        $step === '1 hour' ? $p->copy()->endOfHour() : $p->copy()->endOfDay(),
-                    ]);
+                // ======================
+                // المصروفات
+                // ======================
+                if ($card['type'] === 'expense') {
+                    $expense = \App\Models\Expense::where('user_id', auth()->id())
+                        ->whereBetween('created_at', [$from, $to])
+                        ->sum('Amount');
 
-                if ($card['type'] === 'local') {
-                    $q->whereIn('type', ['table', 'free_seating']);
-                } elseif ($card['type']) {
-                    $q->where('type', $card['type']);
+                    $data[] = $expense;
+
+                    continue;
                 }
 
-                $data[] = $q->count();
+                // ======================
+                // صافي المبيعات
+                // ======================
+                if ($card['type'] === 'net_sales') {
+                    $sales = Order::where('user_id', auth()->id())
+                        ->whereBetween('created_at', [$from, $to])
+                        ->sum('total_price');
+
+                    $returns = Order::where('user_id', auth()->id())
+                        ->where('status', 'returned')
+                        ->whereBetween('created_at', [$from, $to])
+                        ->sum('total_price');
+
+                    $discounts = Order::where('user_id', auth()->id())
+                        ->whereBetween('created_at', [$from, $to])
+                        ->sum('discount_amount');
+
+                    $net = $sales - $returns - $discounts;
+
+                    $data[] = $net;
+
+                    continue;
+                }
+
+                // ======================
+                // الطلبات
+                // ======================
+                $query = Order::where('user_id', auth()->id())
+                    ->whereBetween('created_at', [$from, $to]);
+
+                if ($card['type'] === 'local') {
+                    $query->whereIn('type', ['table', 'free_seating']);
+                } elseif ($card['type']) {
+                    $query->where('type', $card['type']);
+                }
+
+                $data[] = $query->count();
             }
 
             $card['labels'] = $labels;
             $card['data'] = $data;
-            $card['value'] = (clone $baseQuery)
-                ->when($card['type'], function ($q) use ($card) {
-                    if ($card['type'] === 'local') {
-                        $q->whereIn('type', ['table', 'free_seating']);
-                    } else {
-                        $q->where('type', $card['type']);
-                    }
-                })
-                ->count();
+            $card['value'] = array_sum($data);
         }
-
         // ======================
         // المبيعات لكل ساعة / يوم
         // ======================

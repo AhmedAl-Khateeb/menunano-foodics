@@ -21,39 +21,35 @@
         ========================== --}}
         <div class="d-flex mb-4">
 
-            <form method="GET"
-                action="{{ route('summary') }}"
-                class="d-flex flex-wrap align-items-center">
+            <form method="GET" action="{{ route('summary') }}" class="d-flex align-items-center gap-2 flex-nowrap">
 
-                <input type="date"
-                    name="date"
-                    class="form-control mx-2 mb-2"
-                    value="{{ request('date') }}"
+                <input type="date" name="date" class="form-control" value="{{ request('date') }}"
                     onchange="this.form.submit()">
 
-                <button name="filter"
-                    value="day"
-                    class="btn {{ request('filter', 'day') == 'day' ? 'btn-dark' : 'btn-light' }} mx-1">
+                <button name="filter" value="day"
+                    class="btn {{ request('filter', 'day') == 'day' ? 'btn-dark' : 'btn-light' }}">
                     اليوم
                 </button>
 
-                <button name="filter"
-                    value="week"
-                    class="btn {{ request('filter') == 'week' ? 'btn-dark' : 'btn-light' }} mx-1">
+                <button name="filter" value="week"
+                    class="btn {{ request('filter') == 'week' ? 'btn-dark' : 'btn-light' }}">
                     الأسبوع
                 </button>
 
-                <button name="filter"
-                    value="month"
-                    class="btn {{ request('filter') == 'month' ? 'btn-dark' : 'btn-light' }} mx-1">
+                <button name="filter" value="month"
+                    class="btn {{ request('filter') == 'month' ? 'btn-dark' : 'btn-light' }}">
                     الشهر
+                </button>
+
+                <button type="button" onclick="window.location='{{ route('summary') }}'" class="btn btn-secondary">
+                    إعادة
                 </button>
 
             </form>
 
         </div>
 
-       
+
 
         {{-- =========================
             كروت الطلبات
@@ -61,36 +57,38 @@
         <div class="row">
 
             @foreach ($orderCards ?? [] as $card)
+                @if (isset($card['data']) && isset($card['labels']) && isset($card['key']))
+                    <div class="col-lg-4 col-md-6 mb-4">
 
-                <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                        <div class="card dashboard-stat-card shadow-sm border-0">
 
-                    <div class="card dashboard-stat-card shadow-sm border-0">
+                            <div class="card-body">
 
-                        <div class="card-body">
+                                <div class="stat-header">
 
-                            <div class="stat-header">
+                                    <h6>{{ $card['title'] }}</h6>
 
-                                <h6>{{ $card['title'] }}</h6>
+                                    <h3>{{ $card['value'] }}</h3>
 
-                                <h3>{{ $card['value'] }}</h3>
+                                </div>
 
-                            </div>
+                                <div class="chart-wrapper">
 
-                            <div class="chart-wrapper">
+                                    <canvas id="{{ $card['key'] }}"></canvas>
 
-                                <canvas id="{{ $card['key'] }}"></canvas>
+                                </div>
 
                             </div>
 
                         </div>
 
                     </div>
-
-                </div>
-
+                @endif
             @endforeach
 
         </div>
+
+
 
         {{-- =========================
             المبيعات
@@ -103,8 +101,7 @@
                     المبيعات لكل ساعة
                 </h4>
 
-                <canvas id="salesChart"
-                    height="90"></canvas>
+                <canvas id="salesChart" height="90"></canvas>
 
             </div>
 
@@ -127,7 +124,6 @@
                         </h4>
 
                         @foreach ($topProducts ?? [] as $product)
-
                             <div class="d-flex justify-content-between mb-3">
 
                                 <span>
@@ -139,7 +135,6 @@
                                 </strong>
 
                             </div>
-
                         @endforeach
 
                     </div>
@@ -160,7 +155,6 @@
                         </h4>
 
                         @foreach ($topBranches ?? [] as $branch)
-
                             <div class="d-flex justify-content-between mb-3">
 
                                 <span>
@@ -172,7 +166,6 @@
                                 </strong>
 
                             </div>
-
                         @endforeach
 
                     </div>
@@ -193,7 +186,6 @@
                         </h4>
 
                         @foreach ($topPayments ?? [] as $payment)
-
                             <div class="d-flex justify-content-between mb-3">
 
                                 <span>
@@ -205,7 +197,6 @@
                                 </strong>
 
                             </div>
-
                         @endforeach
 
                     </div>
@@ -222,7 +213,6 @@
         STYLE
     ========================== --}}
     <style>
-
         body {
             background: #f4f5f7;
         }
@@ -281,7 +271,6 @@
             width: 100% !important;
             height: 120px !important;
         }
-
     </style>
 
     {{-- =========================
@@ -292,10 +281,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-
         // QR
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
 
             new QRCode(document.getElementById("qrcode"), {
                 text: "{{ $storeUrl }}",
@@ -365,19 +353,19 @@
         function createMiniChart(chartId, data, labels) {
 
             const element = document.getElementById(chartId);
-
             if (!element) return;
+
+            const existing = Chart.getChart(element);
+            if (existing) {
+                existing.destroy();
+            }
 
             const ctx = element.getContext('2d');
 
             new Chart(ctx, {
-
                 type: 'line',
-
                 data: {
-
                     labels: labels,
-
                     datasets: [{
                         data: data,
                         borderColor: '#7E6AA8',
@@ -387,51 +375,38 @@
                         pointRadius: 3,
                         borderWidth: 2
                     }]
-
                 },
-
                 options: {
-
                     responsive: true,
                     maintainAspectRatio: false,
-
                     plugins: {
                         legend: {
                             display: false
                         }
                     },
-
                     scales: {
-
                         x: {
                             display: false
                         },
-
                         y: {
                             beginAtZero: true,
                             display: false
                         }
-
                     }
-
                 }
-
             });
-
         }
 
         const orderCards = @json($orderCards ?? []);
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
 
             orderCards.forEach(card => {
 
-                createMiniChart(
-                    card.key,
-                    card.data,
-                    card.labels
-                );
+                // ❌ تجاهل الكروت اللي مش charts
+                if (!card.data || !card.labels || !card.key) return;
 
+                createMiniChart(card.key, card.data, card.labels);
             });
 
         });
@@ -483,7 +458,6 @@
             }
 
         });
-
     </script>
 
 @stop
