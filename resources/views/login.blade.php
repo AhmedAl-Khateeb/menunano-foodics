@@ -12,7 +12,7 @@
 
     <style>
         body {
-            background: url('{{ asset('bg/MenuNano.png') }}') no-repeat center center fixed;
+            background: url('{{ asset('bg/MenuNano.png') }}')  no-repeat center center fixed;
             background-size: cover;
             height: 100vh;
             font-family: 'Source Sans Pro', sans-serif;
@@ -110,7 +110,7 @@
     </style>
 </head>
 
-<body class="hold-transition login-page" style="background: url(../bg/MenuNano.png) no-repeat center center fixed; background-size: cover;     margin-left: 20px; ">
+<body class="hold-transition login-page" >
     <div class="login-box">
         <div class="login-logo" style="align-content: flex-start;">
             <b>{{ \App\Models\Setting::where('key', 'name')->first()->value }}</b>
