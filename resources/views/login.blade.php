@@ -12,7 +12,7 @@
 
     <style>
         body {
-            background: url('{{ asset('images/login-background.jpg') }}') no-repeat center center fixed;
+            background: url('{{ asset('bg/MenuNano.png') }}') no-repeat center center fixed;
             background-size: cover;
             height: 100vh;
             font-family: 'Source Sans Pro', sans-serif;
