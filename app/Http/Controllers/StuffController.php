@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Staff;
+use App\Models\staff;
 use App\Traits\UploadImg;
 use Illuminate\Http\Request;
 
