@@ -9,191 +9,138 @@
 
     <!-- Google Font -->
     <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,600,700&display=fallback">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="{{ asset('plugins/fontawesome-free/css/all.min.css') }}">
 
     <!-- AdminLTE -->
     <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/login.css') }}">
 
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-
-            background: url('{{ asset('bg/MenuNano.png') }}') no-repeat center center fixed;
-            background-size: cover;
-
-            min-height: 100vh;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-
-            font-family: 'Source Sans Pro', sans-serif;
-        }
-
-        .login-box {
-            width: 100%;
-            max-width: 420px;
-
-            background: rgba(255, 255, 255, 0.88);
-
-            border-radius: 15px;
-
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-
-            padding: 30px;
-        }
-
-        .login-logo {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .login-logo b {
-            font-size: 30px;
-            color: #2c3e50;
-        }
-
-        .card {
-            background: transparent;
-            border: none;
-            box-shadow: none;
-        }
-
-        .card-body {
-            padding: 0;
-        }
-
-        .login-box-msg {
-            text-align: center;
-            font-size: 17px;
-            font-weight: 600;
-            color: #34495e;
-            margin-bottom: 25px;
-        }
-
-        .form-control {
-            height: 45px;
-            border-radius: 10px;
-            border: 1px solid #dcdde1;
-            background-color: #f5f6fa;
-            padding-left: 15px;
-        }
-
-        .form-control:focus {
-            border-color: #3498db;
-            box-shadow: 0 0 0 0.15rem rgba(52, 152, 219, 0.25);
-            background-color: #fff;
-        }
-
-        .btn-primary {
-            height: 45px;
-            border-radius: 10px;
-            background-color: #3498db;
-            border: none;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-
-        .alert {
-            border-radius: 10px;
-        }
-
-        .invalid-feedback {
-            display: block;
-        }
-
-        @media (max-width: 576px) {
-            .login-box {
-                margin: 20px;
-                padding: 25px;
-            }
-
-            .login-logo b {
-                font-size: 24px;
-            }
-        }
-    </style>
+   
 </head>
 
-<body class="hold-transition login-page">
+<body>
 
-    <div class="login-box">
+    <div class="login-container">
 
-        <div class="login-logo">
-            <b>
-                {{ \App\Models\Setting::where('key', 'name')->first()->value }}
-            </b>
+        <!-- Brand -->
+        <div class="brand">
+
+            <span class="brand-icon">
+                <i class="fas fa-utensils"></i>
+            </span>
+
+            <span class="brand-name">
+                Menu<span>Nano</span>
+            </span>
+
         </div>
 
-        <div class="card">
 
-            <div class="card-body login-card-body">
+        <!-- Login Card -->
+        <div class="login-card">
 
-                @if ($errors->has('login'))
-                    <div class="alert alert-danger">
-                        {{ $errors->first('login') }}
+            <!-- Heading -->
+            <h1 class="login-title">
+                Welcome Back
+            </h1>
+
+            <p class="login-subtitle">
+                Sign in to your account to continue
+            </p>
+
+
+            <!-- Login Errors -->
+            @if ($errors->has('login'))
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    {{ $errors->first('login') }}
+                </div>
+            @endif
+
+
+            <!-- Login Form -->
+            <form action="{{ route('login') }}" method="POST">
+
+                @csrf
+
+
+                <!-- Email -->
+                <div class="form-group">
+
+                    <label for="email">
+                        Email
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="far fa-envelope input-icon"></i>
+
+                        <input type="email" id="email" name="email" value="{{ old('email') }}"
+                            class="form-control @error('email') is-invalid @enderror" placeholder="Enter your email"
+                            autocomplete="email" required>
+
                     </div>
-                @endif
 
-                <p class="login-box-msg">
-                    Sign in to start your session
-                </p>
+                    @error('email')
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
+                    @enderror
 
-                <form action="{{ route('login') }}" method="POST">
-                    @csrf
+                </div>
 
-                    <!-- Email -->
-                    <div class="mb-3">
-                        <input
-                            type="email"
-                            name="email"
-                            value="{{ old('email') }}"
-                            class="form-control @error('email') is-invalid @enderror"
-                            placeholder="Email"
-                            required
-                        >
 
-                        @error('email')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
+                <!-- Password -->
+                <div class="form-group">
 
-                    <!-- Password -->
-                    <div class="mb-4">
-                        <input
-                            type="password"
-                            name="password"
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fas fa-lock input-icon"></i>
+
+                        <input type="password" id="password" name="password"
                             class="form-control @error('password') is-invalid @enderror"
-                            placeholder="Password"
-                            required
-                        >
+                            placeholder="Enter your password" autocomplete="current-password" required>
 
-                        @error('password')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                    <!-- Button -->
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-sign-in-alt mr-1"></i>
-                            Sign In
+                        <button type="button" class="password-toggle" id="togglePassword" aria-label="Show password">
+                            <i class="far fa-eye"></i>
                         </button>
+
                     </div>
 
-                </form>
+                    @error('password')
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                </div>
+
+
+                <!-- Login Button -->
+                <button type="submit" class="login-button">
+
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+
+                    Sign In
+
+                </button>
+
+            </form>
+
+
+            <!-- Footer -->
+            <div class="login-footer">
+
+                © {{ date('Y') }}
+                {{ \App\Models\Setting::where('key', 'name')->first()->value ?? 'MenuNano' }}.
+                All rights reserved.
 
             </div>
 
@@ -201,14 +148,9 @@
 
     </div>
 
-    <!-- jQuery -->
-    <script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
 
-    <!-- Bootstrap -->
-    <script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-
-    <!-- AdminLTE -->
-    <script src="{{ asset('dist/js/adminlte.min.js') }}"></script>
+    <!-- Password Toggle -->
+    <script src="{{ asset('dist/js/login.js') }}"></script>
 
 </body>
 
